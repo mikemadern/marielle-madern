@@ -51,6 +51,10 @@ export default defineNuxtConfig({
   // Niet gevraagd: llms.txt en Markdown-kopieën van elke pagina. Staat uit, kan later aan.
   aiReady: false,
 
+  // Bewaart oude bestanden van eerdere versies voor bezoekers met een oude pagina. Bij statische
+  // bestanden op Cloudflare is dat niet nodig, en het nam bestanden van testbouwen mee.
+  skewProtection: false,
+
   // Alles wordt bij het bouwen vooraf gemaakt (`pnpm generate`) en als statische bestanden
   // uitgerold op Cloudflare. Er draait geen server en geen database (besluit fase 4).
   nitro: {
