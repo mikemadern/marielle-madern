@@ -1,0 +1,32 @@
+seoTitel: Mariëlle Madern - oprechte en authentieke aanbidding
+description: Laat je raken door de oprechte en authentieke aanbidding van Mariëlle Madern. Nederlandstalige christelijke muziek die je raakt en tot rust brengt.
+heroRegels:
+  - tekst: Ik geef me aan U over
+    vet: false
+  - tekst: want U bent zoveel groter
+    vet: true
+  - tekst: dan wat ik denk
+    vet: false
+kicker: Laat je raken
+slogan: Door oprechte en authentieke aanbidding
+intro:
+  - Ik hoop dat je geraakt wordt op een nieuwe manier.
+  - Als mijn muziek je bij mag staan, je mee mag nemen in de rust en je zo in verbinding mag brengen met God, dan is het mij gelukt om muziek te maken zoals ik dat graag wil.
+introKnop:
+  tekst: Meer over mij
+  link: /over-mij/
+videoKicker: hoor en ervaar
+videoKop: Hoe Hij spreekt door muziek heen
+videolijst:
+  - kijk-eens-waar-je-nu-staat
+  - hart-van-glas
+  - voor-nu-en-voor-altijd
+  - u-ziet-mij
+  - spiegel
+  - in-het-licht
+  - noem-mijn-naam
+  - u-geeft-leven
+  - wat-een-liefde
+muziekKnop:
+  tekst: Over mijn muziek
+  link: /over-de-muziek/

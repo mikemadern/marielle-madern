@@ -33,7 +33,9 @@
   --knop-achtergrond: var(--kleur-terracotta-diep);
   --knop-achtergrond-hover: var(--kleur-groen);
   --knop-tekst: var(--kleur-wit);
-  --overlay-hero: rgb(65 66 60 / 0.55); /* tekstkleur, voor wit op foto of video */
+  --overlay-hero: rgb(
+    65 66 60 / 0.65
+  ); /* tekstkleur, voor wit op foto of video. Ook op een wit beeld haalt wit hier 3,9:1 */
 
   /* Focus: groen heeft 6,63:1 op wit en 6,11:1 op crème */
   --focus-kleur: var(--kleur-groen);

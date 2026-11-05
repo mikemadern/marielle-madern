@@ -6,7 +6,8 @@ volgorde: 2
 duur: "2:44"
 cover:
   src: /covers/hart-van-glas.webp
-  alt: Hart van glas
+  alt: "Hart van glas"
+videoBeeld: /videos/hart-van-glas.webp
 youtube: vmzR9MXRnWU
 spotify: 1tammyvuVAz4xVzUixsyBu
 liedtekst: |

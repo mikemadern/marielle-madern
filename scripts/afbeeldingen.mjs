@@ -39,7 +39,8 @@ for await (const pad of bestanden(bron)) {
     console.warn(`Overgeslagen, te klein (${width}px): ${relatief}`)
     continue
   }
-  for (const breedte of BREEDTES.filter((b) => b <= width)) {
+  // Een bron van 767 px telt als 768: een pixel verschil is geen reden om een formaat over te slaan
+  for (const breedte of BREEDTES.filter((b) => b <= width * 1.01)) {
     const uit = join(doel, `${relatief}-${breedte}.webp`)
     if (!(await nieuwer(pad, uit))) {
       overgeslagen++

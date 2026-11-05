@@ -6,13 +6,15 @@
     "afbeeldingen": "node scripts/afbeeldingen.mjs",
     "dev": "pnpm afbeeldingen && nuxt dev",
     "build": "pnpm generate",
-    "generate": "pnpm afbeeldingen && nuxt generate",
+    "generate": "pnpm controle && pnpm afbeeldingen && nuxt generate",
     "preview": "wrangler dev",
     "deploy": "pnpm generate && wrangler deploy",
     "lint": "eslint .",
     "format": "prettier --write .",
     "typecheck": "nuxt typecheck",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "controle": "node scripts/controle.mjs",
+    "lettertype": "node scripts/lettertype.mjs"
   },
   "dependencies": {
     "@nuxt/content": "^3.16.2",
@@ -25,14 +27,17 @@
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.17.0",
+    "axe-core": "^4.14.0",
     "eslint": "^10.14.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-vuejs-accessibility": "^2.6.3",
     "prettier": "^3.9.10",
     "sharp": "^0.35.5",
+    "subset-font": "^2.9.0",
     "typescript": "~6.0.3",
     "vue-tsc": "^3.3.14",
-    "wrangler": "^4.157.0"
+    "wrangler": "^4.157.0",
+    "yaml": "^2.9.1"
   },
   "engines": {
     "node": ">=22.5"

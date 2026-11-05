@@ -2,61 +2,55 @@
 title: "Privacyverklaring"
 seoTitel: "Privacyverklaring - Mariëlle Madern"
 description: "Zo gaat Mariëlle Madern om met je persoonsgegevens: welke gegevens, waarom, hoe lang we ze bewaren en welke rechten je hebt."
+kicker: "Wat erover te zeggen valt"
 ---
 
-## Mariëlle Madern
+Privacy is belangrijk. Hier lees je welke persoonsgegevens ik verwerk als je deze website bezoekt of contact met mij opneemt, waarom, en welke rechten je hebt.
 
-Deze website is verantwoordelijk voor de verwerking van persoonsgegevens zoals weergegeven in deze privacyverklaring.
+## Wie is verantwoordelijk
 
-**Contactgegevens**
+Mariëlle Madern is verantwoordelijk voor de verwerking van persoonsgegevens via mariellemadern.nl.
 
-mariellemadern.nl
-hallo@mariellemadern.nl
+Contact: [hallo@mariellemadern.nl](mailto:hallo@mariellemadern.nl)
 
-## Persoonsgegevens die worden verwerkt
+## Wat ik verwerk en waarom
 
-Je persoonsgegevens worden verwerkt doordat je gebruik maakt van deze website en/of omdat je deze gegevens zelf verstrekt.
+**Als je mij mailt** (bijvoorbeeld voor een boeking of een vraag) verwerk ik je naam, je e-mailadres en wat je zelf in je bericht zet, soms ook een telefoonnummer. Ik gebruik dat om je te antwoorden en om afspraken te maken. Ik bewaar je e-mail zolang dat nodig is om je vraag af te handelen.
 
-Hieronder vind je een overzicht van de persoonsgegevens die worden verwerkt:
+**Als je de CD bestelt** verwerk ik je naam, adres en e-mailadres, en het bedrag en de datum van je betaling. Ik gebruik dat om je CD te versturen en voor mijn administratie. Bestelgegevens bewaar ik zolang de wet dat voor de administratie vraagt.
 
-– Voor- en/of achternaam
-– E-mailadres
-– Gegevens over jouw activiteiten op deze website
+**Als je de website bezoekt** zien de systemen die de website uitleveren technische gegevens, zoals je IP-adres, het apparaat en de pagina die je opvraagt. Dat is nodig om de site te tonen en veilig te houden. Op dit moment verzamel ik geen bezoekcijfers.
 
-## Bijzondere en/of gevoelige persoonsgegevens die worden verwerkt
+## Cookies
 
-Deze website heeft niet de intentie gegevens te verzamelen over websitebezoekers die jonger zijn dan 16 jaar. Tenzij ze toestemming hebben van ouders of voogd. We kunnen echter niet controleren of een bezoeker ouder is dan 16 jaar. Wij raden ouders dan ook aan betrokken te zijn bij de online activiteiten van hun kinderen, om zo te voorkomen dat er gegevens over kinderen verzameld worden zonder ouderlijke toestemming. Als je er van overtuigd bent dat wij zonder die toestemming persoonlijke gegevens hebben verzameld over een minderjarige, neem dan contact met ons op via [hallo@mariellemadern.nl](mailto:hallo@mariellemadern.nl), dan verwijderen wij deze informatie.
+Deze website plaatst geen cookies voor statistieken, volgen of advertenties.
 
-## Met welk doel en op basis van welke grondslag wij persoonsgegevens verwerken
+## Diensten van anderen
 
-Deze website verwerkt jouw persoonsgegevens voor de volgende doeleinden:
+- **Cloudflare** levert de website uit en beschermt hem tegen misbruik. Daarbij ziet Cloudflare je IP-adres.
+- **Adobe Fonts** levert het lettertype. Als je een pagina opent, haalt je browser dat lettertype bij Adobe op. Daarbij ziet Adobe je IP-adres.
+- **YouTube** laadt pas als je op een video klikt om hem af te spelen. Dan ziet YouTube (Google) dat je de video bekijkt. Zonder klik wordt er niets van YouTube geladen. Ik gebruik de privacyvriendelijke inbedding van YouTube.
+- **Spotify, YouTube en Apple Music**: links naar deze diensten brengen je naar hun eigen website. Daar gelden hun voorwaarden.
+- **TransIP** verzorgt mijn e-mail. Daarom staat je bericht ook bij hen.
 
-– Verzenden van onze nieuwsbrief
-– Registratie voor evenementen
-– We analyseren jouw gedrag op de website om daarmee de website te verbeteren.
+Ik verkoop je gegevens niet en geef ze alleen door als dat nodig is om je bestelling of vraag af te handelen, of als de wet dat vraagt.
 
-## Geautomatiseerde besluitvorming
+## Kinderen
 
-Er worden geen besluiten genomen door computerprogramma’s of -systemen, zonder dat daar een mens tussen zit.
+Deze website is niet bedoeld om gegevens van kinderen onder de 16 jaar te verzamelen, tenzij hun ouder of voogd toestemming geeft. Ik kan niet controleren hoe oud een bezoeker is. Denk je dat ik zonder toestemming gegevens van een minderjarige heb gekregen? Mail mij, dan verwijder ik die.
 
-## Hoe lang persoonsgegevens worden bewaard
+## Je rechten
 
-Persoonsgegevens worden niet langer bewaard dan strikt nodig is om de doelen te realiseren waarvoor je gegevens worden verzameld.
+Je mag je persoonsgegevens inzien, laten verbeteren of laten verwijderen. Je mag ook bezwaar maken tegen de verwerking, je toestemming intrekken en vragen om je gegevens over te dragen aan jou of aan een ander.
 
-## Delen van persoonsgegevens met derden
+Stuur je verzoek naar [hallo@mariellemadern.nl](mailto:hallo@mariellemadern.nl). Om zeker te zijn dat het verzoek van jou komt, vraag ik je een kopie van je identiteitsbewijs mee te sturen. Maak daarop je pasfoto, de strook met nummers onderaan (MRZ), je paspoortnummer en je burgerservicenummer zwart. Zo blijft je privacy beschermd. Ik reageer zo snel mogelijk, binnen vier weken.
 
-Je gegevens worden niet verkocht en uitsluitend verstrekt aan derden indien dit nodig is voor de uitvoering van onze overeenkomst met jou of om te voldoen aan een wettelijke verplichting. Met bedrijven die jouw gegevens verwerken in onze opdracht, sluiten wij een bewerkersovereenkomst om te zorgen voor eenzelfde niveau van beveiliging en vertrouwelijkheid van jouw gegevens.
+Ben je het niet eens met hoe ik met je gegevens omga? Dan kun je een klacht indienen bij de [Autoriteit Persoonsgegevens](https://autoriteitpersoonsgegevens.nl/nl/contact-met-de-autoriteit-persoonsgegevens/tip-ons).
 
-## Gegevens inzien, aanpassen of verwijderen
+## Beveiliging
 
-Je hebt het recht om je persoonsgegevens in te zien, te corrigeren of te verwijderen. Daarnaast heb je het recht om je eventuele toestemming voor de gegevensverwerking in te trekken of bezwaar te maken tegen de verwerking van jouw persoonsgegevens en je hebt het recht op gegevevensoverdraagbaarheid. Dat betekent dat je bij ons een verzoek kan indienen om de persoonsgegevens die wij van jou beschikken in een computerbestand naar jou of een ander, door jou genoemde organisatie, te sturen.
+Ik neem de bescherming van je gegevens serieus en neem passende maatregelen tegen misbruik, verlies, onbevoegde toegang en onbedoelde wijzigingen. Heb je het idee dat je gegevens niet goed beveiligd zijn, of zijn er aanwijzingen van misbruik? Mail mij via [hallo@mariellemadern.nl](mailto:hallo@mariellemadern.nl).
 
-e kunt een verzoek tot inzage, correctie, verwijdering, gegevensoverdraging van je persoonsgegevens of verzoek tot intrekking van je toestemming of bezwaar op de verwerking van jouw persoonsgegevens sturen naar [hallo@mariellemadern.nl](mailto:hallo@mariellemadern.nl).
+## Wijzigingen
 
-Om er zeker van te zijn dat het verzoek tot inzage door jou is gedaan, vragen wij jou een kopie van je identiteitsbewijs met het verzoek mee te sturen. Maak in deze kopie je pasfoto, MRZ (machine readable zone, de strook met nummers onderaan het paspoort), paspoortnummer en Burgerservicenummer (BSN) zwart. Dit ter bescherming van je privacy. We reageren zo snel mogelijk, maar binnen vier weken, op jouw verzoek.
-
-Je hebt de mogelijkheid om een klacht in te dienen bij de nationale toezichthouder, de Autoriteit Persoonsgegevens. Dat kan via de volgende link: [https://autoriteitpersoonsgegevens.nl/nl/contact-met-de-autoriteit-persoonsgegevens/tip-ons](https://autoriteitpersoonsgegevens.nl/nl/contact-met-de-autoriteit-persoonsgegevens/tip-ons).
-
-## Hoe je persoonsgegevens beveiligd worden
-
-De bescherming van jouw persoonsgegevens wordt serieus genomen en er worden passende maatregelen getroffen om misbruik, verlies, onbevoegde toegang, ongewenste openbaarmaking en ongeoorloofde wijziging tegen te gaan. Als jij het idee hebt dat jouw gegevens toch niet goed beveiligd zijn of er aanwijzingen zijn van misbruik, neem dan contact op via[ hallo@mariellemadern.nl](mailto:hallo@mariellemadern.nl).
+Deze verklaring is voor het laatst bijgewerkt op 5 november 2026. Als de website verandert, bijvoorbeeld als er een formulier of bezoekcijfers bijkomen, pas ik deze tekst aan.

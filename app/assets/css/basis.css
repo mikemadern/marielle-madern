@@ -122,3 +122,59 @@ img {
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+/* Handschriftlettertype Atlantis, een subset van de gelicentieerde font. font-display: swap
+   toont eerst een reservelettertype, zodat de tekst nooit wacht. */
+@font-face {
+  font-family: 'Atlantis';
+  src: url('../fonts/atlantis.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+/* Handschrift boven een kop. Staat los van de kop, nooit erover. Goud groot haalt 3,26:1 op wit. */
+.accent {
+  margin-block: 0 var(--ruimte-2);
+  font-family: var(--font-accent);
+  font-size: var(--tekst-accent);
+  font-weight: 400;
+  line-height: var(--regelhoogte-accent);
+  color: var(--kleur-goud-groot);
+}
+
+/* Op een crème of lichtgouden achtergrond is Goud tekst nodig voor genoeg contrast */
+.sectie--zacht .accent,
+.sectie--accent .accent {
+  color: var(--kleur-goud-tekst);
+}
+
+/* Lopende tekst uit Markdown */
+.tekst {
+  max-inline-size: 48rem;
+}
+
+.tekst :is(ul, ol) {
+  max-inline-size: var(--regelbreedte-max);
+  padding-inline-start: 1.5rem;
+  margin-block: 0 var(--ruimte-element);
+}
+
+.tekst li {
+  margin-block-end: var(--ruimte-2);
+}
+
+.tekst h2 {
+  margin-block-start: var(--ruimte-7);
+}
+
+.tekst blockquote {
+  max-inline-size: var(--regelbreedte-max);
+  margin: 0 0 var(--ruimte-element);
+  padding-inline-start: var(--ruimte-5);
+  border-inline-start: 4px solid var(--kleur-groen);
+}
+
+.tekst blockquote p {
+  margin-block-end: 0;
+}

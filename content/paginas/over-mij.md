@@ -1,10 +1,9 @@
 ---
 title: "Over mij"
-description: "Lees het verhaal van Mariëlle Madern: een leven vol muziek, haar liefde voor God en hoe het verlangen ontstond om zelf aanbiddingsmuziek te maken."
 seoTitel: "Over Mariëlle Madern - haar verhaal en muziek"
+description: "Lees het verhaal van Mariëlle Madern: een leven vol muziek, haar liefde voor God en hoe het verlangen ontstond om zelf aanbiddingsmuziek te maken."
+kicker: "Muziek, een heel leven lang al"
 ---
-
-Muziek, een heel leven lang al
 
 Mijn naam is Mariëlle Madern-Overeem. Ik ben 33 jaar, getrouwd met Mike en moeder van twee prachtige kinderen, Adam en Amber.
 
@@ -12,6 +11,6 @@ God heeft altijd al een rol gespeeld in mijn leven. Door de jaren heen ben ik me
 
 Ook muziek loopt als een rode draad door mijn leven. Rond mijn achtste stond ik voor het eerst op een podium bij The Continental Kids. Hier heb ik 5 jaar mee getourd, enorm veel geleerd en ervaring opgedaan. Vanaf mijn 12e ben ik zanglessen gaan volgen, met een enkele onderbreking, tot mijn 19e. De laatste jaren ben ik onderdeel van verschillende aanbiddingsteams, een plek waar ik mij steeds meer thuis voel. Het brengt twee grote liefdes uit mijn leven perfect samen; mijn liefde voor muziek en de liefde voor mijn Maker.
 
-Hoewel ik al heel wat jaren zangervaring heb, had ik nooit de ambitie om zelf iets ‘groots’ te gaan doen. Het was en is voor mij persoonlijk dan ook een enorme stap om zo openlijk een verhaal te delen. Toch laat ik mij niet meer tegenhouden, omdat ik er van overtuigd ben dat God dit van mij vraagt. Jarenlang heb ik me afzijdig gehouden en me niet uitgesproken. En ook nu komt het niet aan op mijn mening, ik stap uit om een verhaal te vertellen; Zijn verhaal!
+Hoewel ik al heel wat jaren zangervaring heb, had ik nooit de ambitie om zelf iets ‘groots’ te gaan doen. Het was en is voor mij persoonlijk dan ook een enorme stap om zo openlijk een verhaal te delen. Toch laat ik mij niet meer tegenhouden, omdat ik ervan overtuigd ben dat God dit van mij vraagt. Jarenlang heb ik me afzijdig gehouden en me niet uitgesproken. En ook nu komt het niet aan op mijn mening, ik stap uit om een verhaal te vertellen; Zijn verhaal!
 
-Onzekerheid, schaamte en angst hebben mij lange tijd tegen gehouden, maar God was duidelijk: de tijd van onzekerheid is voorbij.
+Onzekerheid, schaamte en angst hebben mij lange tijd tegengehouden, maar God was duidelijk: de tijd van onzekerheid is voorbij.
