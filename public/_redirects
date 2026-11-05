@@ -1,0 +1,15 @@
+# Redirects van de oude WordPress-site (zie documenten/inhoud/sitemap.md, hoofdstuk 5)
+# Bevestigingspagina's van de formulieren die niet meer bestaan
+/bericht-verzonden/ / 301
+/bericht-verzonden / 301
+/bedankt/ / 301
+/bedankt / 301
+/je-ep-is-onderweg/ / 301
+/je-ep-is-onderweg / 301
+# Interne WordPress-naam van de homepage
+/marielle-madern/ / 301
+/marielle-madern / 301
+# Oude sitemaps
+/sitemap_index.xml /sitemap.xml 301
+/page-sitemap.xml /sitemap.xml 301
+/wp-sitemap.xml /sitemap.xml 301

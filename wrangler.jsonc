@@ -1,0 +1,14 @@
+// Cloudflare Workers met alleen statische bestanden: er is geen servercode.
+// Uitrollen: pnpm deploy (bouwt eerst met nuxt generate).
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "mariellemadern",
+  "compatibility_date": "2025-07-15",
+  "assets": {
+    "directory": ".output/public",
+    // Onbekende URL's krijgen 404.html met status 404
+    "not_found_handling": "404-page",
+    // /over-mij wordt doorgestuurd naar /over-mij/ (de slash blijft de canonieke vorm)
+    "html_handling": "auto-trailing-slash"
+  }
+}

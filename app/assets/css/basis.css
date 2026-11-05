@@ -1,0 +1,124 @@
+/* Basisstijl op basis van documenten/huisstijl/huisstijl.md. Waarden komen uit tokens.css. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--achtergrond);
+  color: var(--tekst);
+  font-family: var(--font-tekst);
+  font-size: var(--tekst-basis);
+  font-weight: var(--gewicht-normaal);
+  line-height: var(--regelhoogte-tekst);
+}
+
+h1,
+h2,
+h3 {
+  color: var(--kop);
+  font-weight: var(--gewicht-vet);
+  line-height: var(--regelhoogte-kop);
+  margin-block: 0 var(--ruimte-5);
+}
+
+h1 {
+  font-size: var(--tekst-hero);
+  font-weight: var(--gewicht-normaal);
+  letter-spacing: var(--lettertekenafstand-hero);
+}
+
+h2 {
+  font-size: var(--tekst-kop);
+}
+
+p {
+  margin-block: 0 var(--ruimte-element);
+  max-width: var(--regelbreedte-max);
+}
+
+a {
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+/* Focus altijd zichtbaar, 6,63:1 op wit */
+:focus-visible {
+  outline: var(--focus-breedte) solid var(--focus-kleur);
+  outline-offset: var(--focus-afstand);
+  border-radius: 2px;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+.container {
+  width: min(100% - 2 * var(--container-marge), var(--container-breedte));
+  margin-inline: auto;
+}
+
+.sectie {
+  padding-block: var(--ruimte-8);
+}
+
+.sectie--zacht {
+  background: var(--achtergrond-zacht);
+}
+
+.sectie--accent {
+  background: var(--achtergrond-accent);
+}
+
+/* "Ga naar de inhoud": alleen zichtbaar bij focus */
+.sla-over {
+  position: absolute;
+  inset-inline-start: var(--ruimte-4);
+  inset-block-start: -4rem;
+  padding: var(--ruimte-3) var(--ruimte-5);
+  background: var(--kleur-wit);
+  color: var(--tekst);
+  z-index: 100;
+}
+
+.sla-over:focus {
+  inset-block-start: var(--ruimte-4);
+}
+
+.knop {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: var(--doel-min);
+  padding: var(--ruimte-3) var(--ruimte-6);
+  border-radius: var(--radius-knop);
+  background: var(--knop-achtergrond);
+  color: var(--knop-tekst);
+  text-decoration: none;
+}
+
+.knop:hover {
+  background: var(--knop-achtergrond-hover);
+}
+
+/* Alleen voor schermlezers */
+.verborgen {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
