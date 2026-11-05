@@ -10,6 +10,12 @@ cover:
 videoBeeld: /videos/noem-mijn-naam.webp
 youtube: ciAU3-o9luY
 spotify: 02r50GviyEbvWVFiHmVocn
+verhaal: |
+  Noem mijn naam gaat over het verlangen naar een diepere relatie met God. Het zingt een verlangen uit naar wie je werkelijk bent, naar hoe je bedoeld bent door Hem die mijn Maker is. Die mij beter kent dan ik mijzelf. Het gaat over het verlangen mezelf meer te zijn zoals Hij mij bedoeld en bedacht heeft. Alleen Hij kent mij bij mijn diepste naam, mijn ware ik.
+bijzonder: |
+  In de Bijbel kun je lezen hoe belangrijk namen zijn. Meerdere mensen krijgen van God gedurende hun leven een andere naam, met daarbij een andere betekenis. De naam die we dragen kan veel zeggen over iets wat in ons ligt. Mijn eerste naam is Marina, wat ‘van het water’ betekent. De beelden in de video van Noem mijn naam zijn een knipoog naar mijn eerste officiële naam.
+
+  Noem mijn naam behaalde in 2023 een plek in de Top 1008 van het radiostation Groot Nieuws Radio.
 liedtekst: |
   Ik wil U horen
   Fluister in mij
@@ -78,13 +84,3 @@ liedtekst: |
 
   *© Adam Dekker*
 ---
-
-## Het verhaal achter het lied
-
-Noem mijn naam gaat over het verlangen naar een diepere relatie met God. Het zingt een verlangen uit naar wie je werkelijk bent, naar hoe je bedoeld bent door Hem die mijn Maker is. Die mij beter kent dan ik mijzelf. Het gaat over het verlangen mezelf meer te zijn zoals Hij mij bedoeld en bedacht heeft. Alleen Hij kent mij bij mijn diepste naam, mijn ware ik.
-
-## Wat dit nummer zo bijzonder maakt
-
-In de Bijbel kun je lezen hoe belangrijk namen zijn. Meerdere mensen krijgen van God gedurende hun leven een andere naam, met daarbij een andere betekenis. De naam die we dragen kan veel zeggen over iets wat in ons ligt. Mijn eerste naam is Marina, wat ‘van het water’ betekent. De beelden in de video van Noem mijn naam zijn een knipoog naar mijn eerste officiële naam.
-
-Noem mijn naam behaalde in 2023 een plek in de Top 1008 van het radiostation Groot Nieuws Radio.

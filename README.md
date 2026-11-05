@@ -43,6 +43,14 @@ content.config.ts     de velden van nummers en pagina's
 wrangler.jsonc        Cloudflare-instellingen
 ```
 
+## Lokaal bekijken zoals op Cloudflare
+
+```bash
+pnpm generate && pnpm preview
+```
+
+De site staat dan op http://localhost:8787 (bij `wrangler dev --port 8799` op 8799). Het handschrift boven de kop bekijk je met `?handschrift=boven` achter het adres.
+
 ## Een nummer toevoegen
 
 1. Zet de cover (vierkant, bij voorkeur 1280 px) in `app/bronafbeeldingen/covers/` en het voorbeeldbeeld van de video (16:9, 1280 px breed) in `app/bronafbeeldingen/videos/`, beide als `.webp`, `.jpg` of `.png` met de bestandsnaam van het nummer.

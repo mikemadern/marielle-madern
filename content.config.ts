@@ -18,7 +18,19 @@ export default defineContentConfig({
       source: { include: 'paginas/*.md', prefix: '/' },
       schema: z.object({
         seoTitel: z.string().max(60).optional(),
-        kicker: z.string().optional(),
+        // Kleur van de kopbalk bovenaan de pagina
+        kleur: z.enum(['sage', 'lichtgoud', 'blush']),
+        // Titel in de kopbalk als die afwijkt van title. **tekst** wordt vet
+        bannerTitel: z.string().optional(),
+        // Handschriftregel boven de kop, en de kop zelf
+        accent: z.string(),
+        kop: z.string().optional(),
+        accentKleur: z.enum(['goud', 'terracotta']).optional(),
+        // Volgorde van de nummers op Over de muziek (bestandsnamen)
+        nummerlijst: z.array(z.string()).optional(),
+        // Tekst midden op de pagina in plaats van links
+        midden: z.boolean().optional(),
+        knop: knop.optional(),
         bijgewerkt: z.date().optional(),
       }),
     }),
@@ -37,6 +49,9 @@ export default defineContentConfig({
         youtube: z.string().regex(/^[\w-]{11}$/, 'Alleen de video-ID van 11 tekens'),
         spotify: z.string().regex(/^[A-Za-z0-9]{22}$/, 'Alleen de track-ID van 22 tekens'),
         origineel: z.object({ titel: z.string(), artiest: z.string() }).optional(),
+        verhaal: z.string(),
+        bijzonder: z.string(),
+        bijzonderKop: z.string().optional(),
         liedtekst: z.string(),
       }),
     }),
@@ -72,6 +87,8 @@ export default defineContentConfig({
         videoKicker: z.string(),
         videoKop: z.string(),
         videolijst: z.array(z.string()),
+        // Volgorde van de nummers in de voet
+        voetlijst: z.array(z.string()),
         muziekKnop: knop,
       }),
     }),

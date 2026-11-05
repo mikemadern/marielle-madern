@@ -49,19 +49,31 @@
   /* Lettergroottes in rem, zodat bezoekers hun eigen tekstgrootte behouden. Basis is 19px (1,1875rem) zoals nu */
   --tekst-basis: 1.1875rem;
   --tekst-klein: 1rem;
-  --tekst-kop: clamp(1.75rem, 1.4rem + 1.6vw, 2.375rem); /* nu ongeveer 38px */
+  --tekst-kop: 2.375rem; /* 38px */
   --tekst-hero: clamp(2.25rem, 1.2rem + 4vw, 3.75rem); /* nu 60px */
-  --tekst-accent: clamp(2.75rem, 2rem + 3vw, 4.375rem); /* nu 70px, Atlantis */
+  --tekst-banner: clamp(
+    2.375rem,
+    0.95rem + 6.1vw,
+    4.75rem
+  ); /* titel in de kopbalk: 76px, op mobiel 38px */
+  --tekst-accent: 4.375rem; /* 70px, Atlantis, ook op mobiel */
 
-  --gewicht-licht: 300; /* alleen vanaf 24px */
+  --gewicht-licht: 300; /* hairline-achtige tekst, alleen voor grote tekst */
+  --gewicht-tekst: 400; /* lopende tekst, een stap dikker dan de huidige site (300) op jouw verzoek */
+  --gewicht-banner: 200; /* titel in de kopbalk, de huidige site gebruikt 100 */
   --gewicht-normaal: 400;
   --gewicht-vet: 600;
 
-  --regelhoogte-tekst: 1.7;
+  --regelhoogte-tekst: 1.5; /* zoals de huidige site (28,5 px bij 19 px) */
   --regelhoogte-kop: 1.2;
   --regelhoogte-accent: 1.1;
   --lettertekenafstand-hero: -0.033em; /* nu -2px bij 60px */
   --regelbreedte-max: 70ch; /* liedteksten en lopende tekst */
+
+  /* Indeling van de huidige site */
+  --kolom: 37.5rem; /* 600px, de smalle tekstkolom */
+  --kop-hoogte: 6.375rem; /* 102px, op mobiel 83px */
+  --banner-hoogte: 13.75rem; /* 220px, op mobiel 120px */
 
   /* Ruimte */
   --ruimte-1: 0.25rem;

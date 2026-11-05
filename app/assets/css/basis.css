@@ -1,4 +1,5 @@
-/* Basisstijl op basis van documenten/huisstijl/huisstijl.md. Waarden komen uit tokens.css. */
+/* Basisstijl, opgebouwd naar de huidige site (maten gemeten op mariellemadern.nl).
+   Waarden komen uit tokens.css. Afwijkingen voor WCAG AA zijn per regel toegelicht. */
 
 *,
 *::before,
@@ -17,32 +18,24 @@ body {
   color: var(--tekst);
   font-family: var(--font-tekst);
   font-size: var(--tekst-basis);
-  font-weight: var(--gewicht-normaal);
+  font-weight: var(--gewicht-tekst);
   line-height: var(--regelhoogte-tekst);
+}
+
+/* De bladtekeningen steken buiten het beeld. Zonder dit zou de pagina zijwaarts scrollen. */
+.pagina {
+  overflow-x: clip;
 }
 
 h1,
 h2,
 h3 {
+  margin: 0;
   color: var(--kop);
-  font-weight: var(--gewicht-vet);
-  line-height: var(--regelhoogte-kop);
-  margin-block: 0 var(--ruimte-5);
-}
-
-h1 {
-  font-size: var(--tekst-hero);
-  font-weight: var(--gewicht-normaal);
-  letter-spacing: var(--lettertekenafstand-hero);
-}
-
-h2 {
-  font-size: var(--tekst-kop);
 }
 
 p {
-  margin-block: 0 var(--ruimte-element);
-  max-width: var(--regelbreedte-max);
+  margin: 0 0 1em;
 }
 
 a {
@@ -63,24 +56,254 @@ img {
   height: auto;
 }
 
+/* Handschriftlettertype Atlantis (subset van de gelicentieerde font) */
+@font-face {
+  font-family: 'Atlantis';
+  src: url('../fonts/atlantis.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+/* ---------- Indeling ---------- */
+
 .container {
-  width: min(100% - 2 * var(--container-marge), var(--container-breedte));
+  inline-size: min(100% - 2 * var(--container-marge), var(--container-breedte));
   margin-inline: auto;
 }
 
+/* De smalle tekstkolom van 600 px in het midden */
+.kolom {
+  inline-size: min(100% - 2.5rem, var(--kolom));
+  margin-inline: auto;
+}
+
+/* Brede kop, zoals de kop op de homepage (1014 px) */
+.kolom--breed {
+  inline-size: min(100% - 2.5rem, 63.375rem);
+  margin-inline: auto;
+}
+
+.midden {
+  text-align: center;
+}
+
 .sectie {
-  padding-block: var(--ruimte-8);
+  padding-block-start: 6.875rem;
 }
 
-.sectie--zacht {
-  background: var(--achtergrond-zacht);
+.sectie--eind {
+  padding-block-end: 6.25rem;
 }
 
-.sectie--accent {
-  background: var(--achtergrond-accent);
+/* Op mobiel staat de eerste tekst 150 px onder de kopbalk, zoals op de huidige site */
+@media (max-width: 47.9375rem) {
+  .sectie {
+    padding-block-start: 9.375rem;
+  }
 }
 
-/* "Ga naar de inhoud": alleen zichtbaar bij focus */
+/* ---------- Handschrift boven een kop ---------- */
+
+/* Het handschrift valt deels over de kop, zoals op de huidige site: een tekstvak van 31 px
+   met daarin 70 px handschrift. De kop staat 20 px onder dat vak. */
+.accent {
+  margin: 0;
+  block-size: 1.9375rem;
+  font-family: var(--font-accent);
+  font-size: var(--tekst-accent);
+  font-weight: 400;
+  line-height: 3.125rem;
+  text-transform: lowercase;
+  /* Goud groot haalt 3,26:1 op wit. Het oorspronkelijke goud haalt 2,40:1 */
+  color: var(--kleur-goud-groot);
+}
+
+.accent--terracotta {
+  /* Terracotta haalt 3,77:1 op wit, genoeg voor grote tekst */
+  color: var(--kleur-terracotta);
+}
+
+.kop {
+  margin: 1.25rem 0 0;
+  font-size: var(--tekst-kop);
+  font-weight: var(--gewicht-vet);
+  line-height: 1;
+  text-transform: lowercase;
+  color: var(--kop);
+}
+
+.kopblok {
+  margin-block-end: 1.25rem;
+}
+
+/* ---------- Kopbalk met bladtekeningen ---------- */
+
+.banner {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-block-size: var(--banner-hoogte);
+  background: var(--banner-achtergrond);
+  color: var(--banner-tekst);
+}
+
+/* Titel in de kopbalk in de kleuren van de huidige site: wit op salie en lichtgoud, terracotta op blush.
+   LET OP, BEWUSTE AFWIJKING VAN WCAG AA (keuze van de opdrachtgever, hij komt hier later op terug):
+   wit op salie haalt 2,09:1, wit op lichtgoud 1,48:1 en terracotta op blush 2,72:1. Voor grote tekst is 3:1 nodig.
+   Alternatieven met contrastwaarden staan in documenten/inhoud/verschillen-huidige-site.md, hoofdstuk 4. */
+.banner--sage {
+  --banner-achtergrond: var(--kleur-salie);
+  --banner-tekst: var(--kleur-wit);
+  --blad-kleur: var(--kleur-groen);
+}
+
+.banner--lichtgoud {
+  --banner-achtergrond: var(--kleur-lichtgoud);
+  --banner-tekst: var(--kleur-wit);
+  --blad-kleur: var(--kleur-terracotta);
+}
+
+.banner--blush {
+  --banner-achtergrond: var(--kleur-blush);
+  --banner-tekst: var(--kleur-terracotta);
+  --blad-kleur: var(--kleur-terracotta);
+}
+
+.banner__titel {
+  position: relative;
+  z-index: 1;
+  padding: 0.625rem;
+  color: var(--banner-tekst);
+  font-size: var(--tekst-banner);
+  font-weight: var(--gewicht-banner);
+  line-height: 2;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
+.banner__titel b {
+  font-weight: 900;
+}
+
+.banner__blad {
+  position: absolute;
+  z-index: 0;
+  inline-size: 54.375rem;
+  aspect-ratio: 515.41 / 158.74;
+  /* De tekening is een masker, zo krijgt hij per pagina een eigen kleur */
+  background: var(--blad-kleur);
+  -webkit-mask: url('/illustraties/blad.svg') center / contain no-repeat;
+  mask: url('/illustraties/blad.svg') center / contain no-repeat;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.banner__blad--links {
+  inset-inline-start: -40rem;
+  inset-block-start: 8.125rem;
+  transform: rotate(-9deg);
+}
+
+.banner__blad--rechts {
+  inset-inline-end: -33.75rem;
+  inset-block-start: -1.125rem;
+  transform: rotate(-9deg) scaleX(-1);
+}
+
+@media (max-width: 47.9375rem) {
+  .banner {
+    min-block-size: 7.5rem;
+  }
+
+  .banner__blad--links {
+    inline-size: 10.5rem;
+    inset-inline-start: -5.875rem;
+    inset-block-start: 5.5rem;
+  }
+
+  .banner__blad--rechts {
+    display: none;
+  }
+}
+
+/* ---------- Knoppen ---------- */
+
+.knop {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 3.875rem;
+  padding: 0.9375rem 1.875rem;
+  border-radius: var(--radius-knop);
+  background: var(--knop-achtergrond);
+  color: var(--knop-tekst);
+  font-weight: 400;
+  text-decoration: none;
+}
+
+.knop:hover {
+  background: var(--knop-achtergrond-hover);
+}
+
+/* ---------- Lopende tekst ---------- */
+
+.tekst p {
+  max-inline-size: none;
+}
+
+.tekst ul,
+.tekst ol {
+  margin: 0 0 1em;
+  padding: 0;
+  list-style: none;
+}
+
+/* Opsommingen krijgen een terracotta pijltje, zoals op de huidige site */
+.tekst ul li {
+  position: relative;
+  padding-inline-start: 1.625rem;
+  margin-block-end: 0.5rem;
+}
+
+.tekst ul li::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0.25rem;
+  inset-block-start: 0.5em;
+  inline-size: 0.5rem;
+  block-size: 0.8rem;
+  background: var(--kleur-terracotta-diep);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 512'%3E%3Cpath d='M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
+
+.tekst ol {
+  padding-inline-start: 1.5rem;
+  list-style: decimal;
+}
+
+.tekst h2 {
+  margin-block: 2rem 0.75rem;
+  font-size: 2rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+/* Citaat in een verhaal, met zijn eigen regelovergangen */
+.citaat {
+  margin: 0 0 1em;
+  padding-inline-start: 1.25rem;
+  border-inline-start: 4px solid var(--kleur-groen);
+  white-space: pre-line;
+}
+
+.strofen {
+  white-space: pre-line;
+}
+
+/* ---------- Hulpklassen ---------- */
+
 .sla-over {
   position: absolute;
   inset-inline-start: var(--ruimte-4);
@@ -95,23 +318,6 @@ img {
   inset-block-start: var(--ruimte-4);
 }
 
-.knop {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-block-size: var(--doel-min);
-  padding: var(--ruimte-3) var(--ruimte-6);
-  border-radius: var(--radius-knop);
-  background: var(--knop-achtergrond);
-  color: var(--knop-tekst);
-  text-decoration: none;
-}
-
-.knop:hover {
-  background: var(--knop-achtergrond-hover);
-}
-
-/* Alleen voor schermlezers */
 .verborgen {
   position: absolute;
   inline-size: 1px;
@@ -121,60 +327,4 @@ img {
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
-}
-
-/* Handschriftlettertype Atlantis, een subset van de gelicentieerde font. font-display: swap
-   toont eerst een reservelettertype, zodat de tekst nooit wacht. */
-@font-face {
-  font-family: 'Atlantis';
-  src: url('../fonts/atlantis.woff2') format('woff2');
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-}
-
-/* Handschrift boven een kop. Staat los van de kop, nooit erover. Goud groot haalt 3,26:1 op wit. */
-.accent {
-  margin-block: 0 var(--ruimte-2);
-  font-family: var(--font-accent);
-  font-size: var(--tekst-accent);
-  font-weight: 400;
-  line-height: var(--regelhoogte-accent);
-  color: var(--kleur-goud-groot);
-}
-
-/* Op een crème of lichtgouden achtergrond is Goud tekst nodig voor genoeg contrast */
-.sectie--zacht .accent,
-.sectie--accent .accent {
-  color: var(--kleur-goud-tekst);
-}
-
-/* Lopende tekst uit Markdown */
-.tekst {
-  max-inline-size: 48rem;
-}
-
-.tekst :is(ul, ol) {
-  max-inline-size: var(--regelbreedte-max);
-  padding-inline-start: 1.5rem;
-  margin-block: 0 var(--ruimte-element);
-}
-
-.tekst li {
-  margin-block-end: var(--ruimte-2);
-}
-
-.tekst h2 {
-  margin-block-start: var(--ruimte-7);
-}
-
-.tekst blockquote {
-  max-inline-size: var(--regelbreedte-max);
-  margin: 0 0 var(--ruimte-element);
-  padding-inline-start: var(--ruimte-5);
-  border-inline-start: 4px solid var(--kleur-groen);
-}
-
-.tekst blockquote p {
-  margin-block-end: 0;
 }

@@ -13,6 +13,11 @@ spotify: 1ickrqlqX7IzRfItt2HnnJ
 origineel:
   titel: "Mirror"
   artiest: "BarlowGirl"
+bijzonderKop: "Wat dit lied zo bijzonder maakt"
+verhaal: |
+  Spiegel gaat over identiteit en zelfbeeld. Invloeden van buitenaf hebben de kijk op mijzelf beïnvloed en vertekend. Wie zie ik als ik in de spiegel kijk? Eerlijk gezegd bevalt het vaak niet wat ik zie in de spiegel. Maar wat gebeurt er als God mij Zijn spiegel voorhoudt? Hij die mij schiep naar Zijn evenbeeld. Wie ziet God als Hij naar mij kijkt? Hij ziet niet wat ik wel zie en ik mag leren zien wat Hij in mij ziet. Zijn schepsel, wonderlijk gevormd, mooi gemaakt.
+bijzonder: |
+  Spiegel is een bewerking van de originele track Mirror van BarlowGirl. Dit lied kwam op mijn pad via The Young Continentals. Zij hadden hem in 2005 op hun CD staan. Ik draaide het niet grijs, maar jaren later kwamen er stukjes toch steeds in me op en ben ik gaan zoeken naar het nummer. Het ging qua inhoud wel over mijn strijd; ik hield niet van mijn spiegelbeeld, er kleefde oordeel en afkeuring aan. Dat dit lied in deze reeks terechtgekomen is, is geen verrassing. Wel vond ik het belangrijk dat de nadruk kwam te liggen op hoe God naar ons kijkt. Dat is wat herstel brengt in een verwrongen zelfbeeld, Zijn liefdevolle waarheid.
 liedtekst: |
   Ik zie, ik zie wat U niet ziet
 
@@ -122,11 +127,3 @@ liedtekst: |
 
   *© Adam Dekker*
 ---
-
-## Het verhaal achter het lied
-
-Spiegel gaat over identiteit en zelfbeeld. Invloeden van buitenaf hebben de kijk op mijzelf beïnvloed en vertekend. Wie zie ik als ik in de spiegel kijk? Eerlijk gezegd bevalt het vaak niet wat ik zie in de spiegel. Maar wat gebeurt er als God mij Zijn spiegel voorhoudt? Hij die mij schiep naar Zijn evenbeeld. Wie ziet God als Hij naar mij kijkt? Hij ziet niet wat ik wel zie en ik mag leren zien wat Hij in mij ziet. Zijn schepsel, wonderlijk gevormd, mooi gemaakt.
-
-## Wat dit lied zo bijzonder maakt
-
-Spiegel is een bewerking van de originele track Mirror van BarlowGirl. Dit lied kwam op mijn pad via The Young Continentals. Zij hadden hem in 2005 op hun CD staan. Ik draaide het niet grijs, maar jaren later kwamen er stukjes toch steeds in me op en ben ik gaan zoeken naar het nummer. Het ging qua inhoud wel over mijn strijd; ik hield niet van mijn spiegelbeeld, er kleefde oordeel en afkeuring aan. Dat dit lied in deze reeks terechtgekomen is, is geen verrassing. Wel vond ik het belangrijk dat de nadruk kwam te liggen op hoe God naar ons kijkt. Dat is wat herstel brengt in een verwrongen zelfbeeld, Zijn liefdevolle waarheid.

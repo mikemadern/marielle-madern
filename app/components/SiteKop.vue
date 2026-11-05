@@ -1,14 +1,66 @@
+<script setup lang="ts">
+const open = ref(false)
+const route = useRoute()
+
+// Het menu klapt weer dicht na het kiezen van een pagina
+watch(
+  () => route.path,
+  () => {
+    open.value = false
+  },
+)
+
+const links = [
+  { to: '/over-mij/', tekst: 'Over mij' },
+  { to: '/over-de-muziek/', tekst: 'Over de muziek' },
+  { to: '/contact/', tekst: 'Contact' },
+]
+</script>
+
 <template>
-  <header class="kop">
-    <div class="container kop__binnen">
-      <NuxtLink to="/" class="kop__logo" aria-label="Mariëlle Madern, naar de homepage">
-        <img src="/logo/mariellemadern-logo-donker.svg" alt="" width="150" height="39" />
+  <header class="sitekop">
+    <div class="sitekop__binnen">
+      <NuxtLink to="/" class="sitekop__logo" aria-label="Mariëlle Madern, naar de homepage">
+        <img src="/logo/mariellemadern-logo-donker.svg" alt="" width="175" height="45" />
       </NuxtLink>
-      <nav aria-label="Hoofdmenu">
-        <ul class="kop__menu">
-          <li><NuxtLink to="/over-mij/">Over mij</NuxtLink></li>
-          <li><NuxtLink to="/over-de-muziek/">Over de muziek</NuxtLink></li>
-          <li><NuxtLink to="/contact/">Contact</NuxtLink></li>
+
+      <button
+        type="button"
+        class="sitekop__knop"
+        :aria-expanded="open"
+        aria-controls="hoofdmenu"
+        @click="open = !open"
+      >
+        <span class="verborgen">Menu</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" class="sitekop__icoon">
+          <path
+            v-if="!open"
+            d="M3 6h18M3 12h18M3 18h18"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            fill="none"
+          />
+          <path
+            v-else
+            d="M5 5l14 14M19 5L5 19"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            fill="none"
+          />
+        </svg>
+      </button>
+
+      <nav
+        id="hoofdmenu"
+        :class="['sitekop__menu', open && 'sitekop__menu--open']"
+        aria-label="Hoofdmenu"
+      >
+        <ul>
+          <li v-for="link in links" :key="link.to">
+            <NuxtLink :to="link.to">{{ link.tekst }}</NuxtLink>
+          </li>
         </ul>
       </nav>
     </div>
@@ -16,44 +68,102 @@
 </template>
 
 <style scoped>
-.kop {
-  padding-block: var(--ruimte-4);
+.sitekop {
+  position: relative;
+  z-index: 2;
+  block-size: var(--kop-hoogte);
+  /* Effen wit, zodat de bladtekening achter het menu nooit het contrast van de menutekst beinvloedt */
+  background: var(--achtergrond);
 }
 
-.kop__binnen {
+.sitekop__binnen {
+  position: relative;
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--ruimte-4);
+  inline-size: min(100% - 2.5rem, 58.75rem);
+  block-size: 100%;
+  margin-inline: auto;
 }
 
-.kop__logo {
+.sitekop__logo {
   display: inline-flex;
-  min-block-size: var(--doel-min);
   align-items: center;
+  min-block-size: var(--doel-min);
 }
 
-.kop__menu {
+.sitekop__knop {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--doel-min);
+  block-size: var(--doel-min);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--tekst);
+  cursor: pointer;
+}
+
+.sitekop__icoon {
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+}
+
+.sitekop__menu ul {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--ruimte-2) var(--ruimte-5);
+  gap: 1.15rem;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.kop__menu a {
+.sitekop__menu a {
   display: inline-flex;
-  min-block-size: var(--doel-min);
   align-items: center;
+  min-block-size: var(--doel-min);
   color: var(--tekst);
+  font-weight: 400;
   text-decoration: none;
 }
 
-.kop__menu a:hover,
-.kop__menu a[aria-current='page'] {
+.sitekop__menu a:hover {
   text-decoration: underline;
   text-underline-offset: 0.3em;
+}
+
+/* De huidige pagina in goud. Goud tekst haalt 4,89:1 op wit, het oorspronkelijke goud 2,40:1 */
+.sitekop__menu a.router-link-active,
+.sitekop__menu a[aria-current='page'] {
+  color: var(--kleur-goud-tekst);
+}
+
+@media (max-width: 47.9375rem) {
+  .sitekop {
+    block-size: 5.1875rem;
+  }
+
+  .sitekop__knop {
+    display: inline-flex;
+  }
+
+  .sitekop__menu {
+    display: none;
+    position: absolute;
+    inset-block-start: 100%;
+    inset-inline: -1.25rem;
+    padding: 0.5rem 1.25rem 1rem;
+    background: var(--kleur-wit);
+    box-shadow: 0 0.75rem 1.5rem rgb(65 66 60 / 0.12);
+  }
+
+  .sitekop__menu--open {
+    display: block;
+  }
+
+  .sitekop__menu ul {
+    flex-direction: column;
+    gap: 0;
+  }
 }
 </style>

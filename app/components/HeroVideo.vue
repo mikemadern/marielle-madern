@@ -1,20 +1,23 @@
 <script setup lang="ts">
-// Hero met een stille achtergrondvideo. Voorwaarden (WCAG 2.2.2 en zuinigheid):
-// - er is altijd een pauzeknop
-// - bij "minder beweging" of dataverbruik beperken start de video niet
-// - de video start pas als de pagina klaar is, zodat hij de eerste weergave niet vertraagt
+// Hero met een stille achtergrondvideo, zoals op de huidige site.
+// - Zonder voorkeur voor minder beweging speelt de video vanzelf, zonder knop (keuze van de opdrachtgever).
+// - Met "minder beweging" in de browser start de video niet. Dan staat er een knop om hem te starten, en
+//   daarna om hem te pauzeren. Alleen deze bezoekers zien de knop.
+// - Bij "dataverbruik beperken" is er geen video.
+// - De video start pas als de pagina klaar is, zodat hij de eerste weergave niet vertraagt.
 defineProps<{ regels: { tekst: string; vet: boolean }[] }>()
 
 const video = ref<HTMLVideoElement | null>(null)
-const magVideo = ref(false)
+const metVideo = ref(false)
+const minderBeweging = ref(false)
 const speelt = ref(false)
 
 onMounted(async () => {
-  const minderBeweging = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  minderBeweging.value = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const zuinig = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection
     ?.saveData
-  magVideo.value = !minderBeweging && !zuinig
-  if (!magVideo.value) return
+  metVideo.value = !zuinig
+  if (!metVideo.value || minderBeweging.value) return
   // Wacht tot het video-element in de pagina staat
   await nextTick()
 
@@ -38,7 +41,7 @@ function wissel() {
 <template>
   <section class="hero">
     <video
-      v-if="magVideo"
+      v-if="metVideo"
       ref="video"
       class="hero__video"
       muted
@@ -53,31 +56,38 @@ function wissel() {
       <source src="/video/hero.mp4" type="video/mp4" />
     </video>
     <div class="hero__laag" />
-    <div class="container hero__inhoud">
-      <p class="hero__citaat">
-        <template v-for="(regel, i) in regels" :key="i">
-          <strong v-if="regel.vet">{{ regel.tekst }}</strong>
-          <template v-else>{{ regel.tekst }}</template>
-          <br v-if="i < regels.length - 1" />
-        </template>
-      </p>
-    </div>
-    <button v-if="magVideo" type="button" class="hero__pauze" @click="wissel">
+    <p class="hero__citaat">
+      <template v-for="(regel, i) in regels" :key="i">
+        <strong v-if="regel.vet">{{ regel.tekst }}</strong>
+        <template v-else>{{ regel.tekst }}</template>
+        <br v-if="i < regels.length - 1" />
+      </template>
+    </p>
+    <button v-if="metVideo && minderBeweging" type="button" class="hero__pauze" @click="wissel">
       {{ speelt ? 'Pauzeer achtergrondvideo' : 'Speel achtergrondvideo af' }}
     </button>
   </section>
 </template>
 
 <style scoped>
+/* 600 px hoog (op mobiel 300 px), met de salie als achtergrond zoals nu */
 .hero {
   position: relative;
   display: grid;
   align-items: center;
-  min-block-size: min(70vh, 36rem);
-  background: var(--kleur-tekst);
+  justify-items: center;
+  min-block-size: 37.5rem;
+  background: var(--kleur-salie);
   color: var(--kleur-wit);
   overflow: hidden;
   text-align: center;
+}
+
+@media (max-width: 47.9375rem) {
+  .hero {
+    min-block-size: 18.75rem;
+    padding-block: 3rem;
+  }
 }
 
 .hero__video,
@@ -92,27 +102,23 @@ function wissel() {
   object-fit: cover;
 }
 
-/* Donkere laag in de tekstkleur, zodat wit op elk beeld goed leesbaar blijft */
+/* Donkere laag in de tekstkleur, zodat wit op elk beeld goed leesbaar blijft (65 procent) */
 .hero__laag {
   background: var(--overlay-hero);
 }
 
-.hero__inhoud {
-  position: relative;
-  padding-block: var(--ruimte-9);
-}
-
 .hero__citaat {
-  max-inline-size: none;
+  position: relative;
+  inline-size: min(100% - 2.5rem, 50rem);
   margin: 0;
   font-size: var(--tekst-hero);
-  font-weight: var(--gewicht-licht);
-  line-height: 1.2;
-  letter-spacing: var(--lettertekenafstand-hero);
+  font-weight: 400;
+  line-height: 1.1667;
+  letter-spacing: -0.0333em;
 }
 
 .hero__citaat strong {
-  font-weight: var(--gewicht-vet);
+  font-weight: 600;
 }
 
 .hero__pauze {
@@ -131,7 +137,7 @@ function wissel() {
 }
 
 .hero__pauze:hover {
-  background: var(--kleur-tekst);
+  background: var(--kleur-groen);
 }
 
 .hero__pauze:focus-visible {

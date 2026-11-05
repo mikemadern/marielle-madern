@@ -13,21 +13,19 @@ useSeoMeta({ robots: 'noindex, nofollow' })
 </script>
 
 <template>
-  <div>
+  <div class="pagina">
     <a class="sla-over" href="#inhoud">Ga naar de inhoud</a>
     <SiteKop />
     <main id="inhoud" tabindex="-1">
-      <section class="sectie">
-        <div class="container">
-          <h1>{{ titel }}</h1>
+      <PaginaBanner :titel="titel" kleur="sage" />
+      <section class="sectie sectie--eind">
+        <div class="kolom">
           <p v-if="isNietGevonden">
             Deze pagina bestaat niet (meer). Misschien is het adres veranderd of is er een typfout
             gemaakt.
           </p>
           <p v-else>Probeer het later nog eens.</p>
-          <p>
-            <NuxtLink class="knop" to="/">Naar de homepage</NuxtLink>
-          </p>
+          <p><NuxtLink class="knop" to="/">Naar de homepage</NuxtLink></p>
           <p><NuxtLink to="/over-de-muziek/">Of lees het verhaal achter de muziek</NuxtLink></p>
         </div>
       </section>

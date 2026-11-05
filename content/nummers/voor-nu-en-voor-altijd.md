@@ -13,6 +13,10 @@ spotify: 4LaroXueyhdTocknATCcw8
 origineel:
   titel: "Testify to love"
   artiest: "Ralph van Manen"
+verhaal: |
+  Voor nu en voor altijd gaat over blijven geloven in de Liefde, in Zijn liefde, in de liefde van God. De wereld laat vaak wat anders zien, maar als je het wil zien zit God, de schepper, verweven in al die kleine dingen. Hij is het Onverwoestbare, leven na leven is Hij er. Daar blijf ik in geloven, voor nu en voor altijd.
+bijzonder: |
+  Voor nu en voor altijd is een bewerking van de originele track Testify to love van Ralph van Manen. Na mijn eerste reeks liedjes wist ik zeker dat ik niets liever doe dan getuigen van Gods liefde. Hij is zo goed, zo groot, zo liefdevol en ik heb nog maar een fractie gezien van hoe groot, goed en liefdevol Hij echt is. Een lied waar ik dit het beste mee kon uitdrukken was het wel bekende Testify to love. “For as long as I shall live, I will testify to love.” Maar nog liever zing ik dat dan in mijn eigen taal, want eigen taal raakt anders.
 liedtekst: |
   Het zijn de armen wijd open
   Het is de uitgestoken hand
@@ -74,11 +78,3 @@ liedtekst: |
   **Ik blijf geloven in de Liefde
   In wat onverwoestbaar is*
 ---
-
-## Het verhaal achter het lied
-
-Voor nu en voor altijd gaat over blijven geloven in de Liefde, in Zijn liefde, in de liefde van God. De wereld laat vaak wat anders zien, maar als je het wil zien zit God, de schepper, verweven in al die kleine dingen. Hij is het Onverwoestbare, leven na leven is Hij er. Daar blijf ik in geloven, voor nu en voor altijd.
-
-## Wat dit nummer zo bijzonder maakt
-
-Voor nu en voor altijd is een bewerking van de originele track Testify to love van Ralph van Manen. Na mijn eerste reeks liedjes wist ik zeker dat ik niets liever doe dan getuigen van Gods liefde. Hij is zo goed, zo groot, zo liefdevol en ik heb nog maar een fractie gezien van hoe groot, goed en liefdevol Hij echt is. Een lied waar ik dit het beste mee kon uitdrukken was het wel bekende Testify to love. “For as long as I shall live, I will testify to love.” Maar nog liever zing ik dat dan in mijn eigen taal, want eigen taal raakt anders.

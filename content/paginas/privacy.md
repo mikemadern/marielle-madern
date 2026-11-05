@@ -2,7 +2,9 @@
 title: "Privacyverklaring"
 seoTitel: "Privacyverklaring - Mariëlle Madern"
 description: "Zo gaat Mariëlle Madern om met je persoonsgegevens: welke gegevens, waarom, hoe lang we ze bewaren en welke rechten je hebt."
-kicker: "Wat erover te zeggen valt"
+kleur: lichtgoud
+accent: "Privacy is belangrijk"
+kop: "Wat erover te zeggen valt"
 ---
 
 Privacy is belangrijk. Hier lees je welke persoonsgegevens ik verwerk als je deze website bezoekt of contact met mij opneemt, waarom, en welke rechten je hebt.

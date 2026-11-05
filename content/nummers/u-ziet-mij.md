@@ -13,6 +13,10 @@ spotify: 1imocz6HnFDweCR7Woyuy0
 origineel:
   titel: "The real me"
   artiest: "Natalie Grant"
+verhaal: |
+  U ziet mij gaat over het leven achter een masker. Over de overgave aan God om Hem toe te laten achter het masker en over hoe God liefdevol helpt om het masker af te zetten.
+bijzonder: |
+  U ziet mij is de laatste single van mijn debuut EP. En hoewel het de afsluiter is, is dit misschien wel het lied waar het mee begon. Het is een bewerking van het originele The real me van Natalie Grant. Net als Spiegel een lied dat ik heb leren kennen in mijn tijd bij The Continentals, in 2005. Ik vond het een mooi lied, maar heel veel woorden begreep ik niet. Pas later, toen ik me realiseerde dat ik niet precies wist wat ik zong, ging ik de betekenis van woorden opzoeken. Het lied is onbedoeld heel belangrijk voor me geworden. Het resoneerde al die tijd in mezelf omdat ik niets liever wil dan the real me zijn, de échte ik. U ziet mij spreekt mijn onzekere hart aan, iets wat hardnekkig in mij aanwezig was, ondanks de wetenschap van Gods goedheid en liefde.
 liedtekst: |
   Onzeker hart
   Daar ben je weer
@@ -79,11 +83,3 @@ liedtekst: |
   *© Adam Dekker**
   *
 ---
-
-## Het verhaal achter het lied
-
-U ziet mij gaat over het leven achter een masker. Over de overgave aan God om Hem toe te laten achter het masker en over hoe God liefdevol helpt om het masker af te zetten.
-
-## Wat dit nummer zo bijzonder maakt
-
-U ziet mij is de laatste single van mijn debuut EP. En hoewel het de afsluiter is, is dit misschien wel het lied waar het mee begon. Het is een bewerking van het originele The real me van Natalie Grant. Net als Spiegel een lied dat ik heb leren kennen in mijn tijd bij The Continentals, in 2005. Ik vond het een mooi lied, maar heel veel woorden begreep ik niet. Pas later, toen ik me realiseerde dat ik niet precies wist wat ik zong, ging ik de betekenis van woorden opzoeken. Het lied is onbedoeld heel belangrijk voor me geworden. Het resoneerde al die tijd in mezelf omdat ik niets liever wil dan the real me zijn, de échte ik. U ziet mij spreekt mijn onzekere hart aan, iets wat hardnekkig in mij aanwezig was, ondanks de wetenschap van Gods goedheid en liefde.

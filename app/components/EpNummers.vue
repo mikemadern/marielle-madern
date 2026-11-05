@@ -1,36 +1,37 @@
 <script setup lang="ts">
-// Nummers op de EP, onder de bestelinformatie
+// "Nummers op de EP" onder de bestelinformatie, zoals op de huidige site: elk nummer in een crème balk.
 const { data: uitgave } = await useAsyncData('uitgave-ep', () =>
   queryCollection('uitgaven').first(),
 )
 const { data: nummers } = await useAsyncData('ep-nummers', () =>
-  queryCollection('nummers')
-    .where('uitgave', '=', 'ep')
-    .order('volgorde', 'ASC')
-    .select('path', 'title')
-    .all(),
+  queryCollection('nummers').select('path', 'title').all(),
+)
+
+const tracks = computed(() =>
+  (uitgave.value?.nummers ?? []).flatMap((slug) => {
+    const n = (nummers.value ?? []).find((x) => x.path.endsWith(`/${slug}`))
+    return n ? [n] : []
+  }),
 )
 </script>
 
 <template>
-  <section v-if="uitgave" class="ep">
-    <NuxtImg
-      class="ep__cover"
-      :src="uitgave.cover"
-      :alt="`Hoes van de EP ${uitgave.title}`"
-      width="384"
-      height="384"
-      densities="x1 x2"
-    />
-    <div>
-      <h2>Nummers op de EP</h2>
-      <ol class="ep__lijst">
-        <li v-for="nummer in nummers" :key="nummer.path">
-          <NuxtLink :to="`${nummer.path}/`">{{ nummer.title }}</NuxtLink>
+  <section v-if="uitgave" class="sectie">
+    <div class="kolom">
+      <div class="midden">
+        <KopBlok accent="Nummers op de EP" kop="met instrumentale versies" />
+        <p>{{ uitgave.extraTekst }}</p>
+      </div>
+      <ul class="ep">
+        <li v-for="nummer in tracks" :key="nummer.path" class="ep__rij">
+          <Icoon naam="apple" class="ep__noot" />
+          <NuxtLink :to="`${nummer.path}/`" class="ep__titel">{{ nummer.title }}</NuxtLink>
         </li>
-        <li v-for="extra in uitgave.extra" :key="extra">{{ extra }}</li>
-      </ol>
-      <p>{{ uitgave.extraTekst }}</p>
+        <li v-for="extra in uitgave.extra" :key="extra" class="ep__rij">
+          <Icoon naam="apple" class="ep__noot" />
+          <span class="ep__titel">{{ extra }}</span>
+        </li>
+      </ul>
     </div>
   </section>
 </template>
@@ -38,24 +39,38 @@ const { data: nummers } = await useAsyncData('ep-nummers', () =>
 <style scoped>
 .ep {
   display: grid;
-  gap: var(--ruimte-6);
-  margin-block-start: var(--ruimte-8);
+  gap: 1.1875rem;
+  margin: 2rem 0 0;
+  padding: 0;
+  list-style: none;
 }
 
-@media (min-width: 48rem) {
-  .ep {
-    grid-template-columns: minmax(0, 24rem) minmax(0, 1fr);
-    align-items: start;
-  }
+.ep__rij {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  min-block-size: 3.8125rem;
+  padding-inline: 1.5rem;
+  border-radius: 3.125rem;
+  background: var(--kleur-creme);
 }
 
-.ep__cover {
-  inline-size: 100%;
-  block-size: auto;
-  border-radius: var(--radius-kaart);
+/* De noot is versiering. Goud mag hier, want het is geen tekst. */
+.ep__noot {
+  flex: none;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  color: var(--kleur-goud);
 }
 
-.ep__lijst {
-  padding-inline-start: 1.5rem;
+.ep__titel {
+  font-size: 1.425rem;
+  font-weight: 700;
+  color: var(--tekst);
+  text-decoration: none;
+}
+
+a.ep__titel:hover {
+  text-decoration: underline;
 }
 </style>

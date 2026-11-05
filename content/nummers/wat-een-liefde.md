@@ -13,6 +13,10 @@ spotify: 3U6ZLQxLa3o2KJXRlRpP3Q
 origineel:
   titel: "Love like this"
   artiest: "Lauren Daigle"
+verhaal: |
+  Wat een liefde gaat over de kracht van Gods liefde en waar de liefde van God toe in staat is. Dwaal ik af, haalt Hij mij terug. Verlies ik focus, geeft Hij richting. Dreig ik te verdrinken, trekt Hij mij omhoog. Zijn liefde verdrijft angst, Zijn waarheid bevrijdt, in Hem is licht en leven.
+bijzonder: |
+  Wat een liefde is een bewerking van de originele track Love like this van Lauren Daigle. Hierin stelt zij de vraag ‘What have I done to deserve love like this?’. Deze vraag riep bij mij onzekerheid en twijfel op ‘Heb ik Zijn liefde wel verdiend?’. Ik leefde lange tijd alsof ik Zijn liefde kon verliezen, als ik veel fouten maakte dat Hij me in de steek zou laten. Maar ik weet nu beter! Eens een kind van je vader, altijd een kind van je vader, zo ook bij God de Vader. Dit wilde ik meenemen in de vertaling, de twijfel vervangen voor zekerheid.
 liedtekst: |
   Als ik niet meer door kan
   Bent U mijn doortocht
@@ -52,11 +56,3 @@ liedtekst: |
 
   *© Adam Dekker*
 ---
-
-## Het verhaal achter het lied
-
-Wat een liefde gaat over de kracht van Gods liefde en waar de liefde van God toe in staat is. Dwaal ik af, haalt Hij mij terug. Verlies ik focus, geeft Hij richting. Dreig ik te verdrinken, trekt Hij mij omhoog. Zijn liefde verdrijft angst, Zijn waarheid bevrijdt, in Hem is licht en leven.
-
-## Wat dit nummer zo bijzonder maakt
-
-Wat een liefde is een bewerking van de originele track Love like this van Lauren Daigle. Hierin stelt zij de vraag ‘What have I done to deserve love like this?’. Deze vraag riep bij mij onzekerheid en twijfel op ‘Heb ik Zijn liefde wel verdiend?’. Ik leefde lange tijd alsof ik Zijn liefde kon verliezen, als ik veel fouten maakte dat Hij me in de steek zou laten. Maar ik weet nu beter! Eens een kind van je vader, altijd een kind van je vader, zo ook bij God de Vader. Dit wilde ik meenemen in de vertaling, de twijfel vervangen voor zekerheid.

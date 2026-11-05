@@ -18,12 +18,17 @@ useSeoMeta({
 </script>
 
 <template>
-  <article v-if="pagina" class="sectie">
-    <div class="container">
-      <div class="tekst">
-        <p v-if="pagina.kicker" class="accent">{{ pagina.kicker }}</p>
-        <h1>{{ pagina.title }}</h1>
-        <ContentRenderer :value="pagina" />
+  <article v-if="pagina">
+    <PaginaBanner :titel="pagina.bannerTitel ?? pagina.title" :kleur="pagina.kleur" />
+    <div class="sectie sectie--eind">
+      <div :class="['kolom', pagina.midden && 'midden']">
+        <KopBlok :accent="pagina.accent" :kop="pagina.kop" :accent-kleur="pagina.accentKleur" />
+        <div class="tekst">
+          <ContentRenderer :value="pagina" />
+        </div>
+        <p v-if="pagina.knop">
+          <a class="knop" :href="pagina.knop.link">{{ pagina.knop.tekst }}</a>
+        </p>
       </div>
       <EpNummers v-if="pagina.path === '/bestel-de-ep'" />
     </div>

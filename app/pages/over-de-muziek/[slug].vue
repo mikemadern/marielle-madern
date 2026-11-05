@@ -5,9 +5,6 @@ const slug = String(route.params.slug)
 const { data: nummer } = await useAsyncData(`nummer-${slug}`, () =>
   queryCollection('nummers').path(`/over-de-muziek/${slug}`).first(),
 )
-const { data: alle } = await useAsyncData('nummers-volgorde', () =>
-  queryCollection('nummers').select('path', 'title', 'uitgave', 'volgorde').all(),
-)
 
 if (!nummer.value) {
   throw createError({ statusCode: 404, statusMessage: 'Nummer niet gevonden', fatal: true })
@@ -18,156 +15,143 @@ useSeoMeta({
   description: nummer.value.description,
 })
 
-// Strofen zijn gescheiden door een lege regel, de regels binnen een strofe blijven staan
-const strofen = computed(() => nummer.value?.liedtekst.trim().split(/\n\s*\n/) ?? [])
-
-// Vorig en volgend nummer: eerst de EP, daarna de singles
-const gesorteerd = computed(() =>
-  [...(alle.value ?? [])].sort(
-    (a, b) =>
-      (a.uitgave === b.uitgave ? 0 : a.uitgave === 'ep' ? -1 : 1) || a.volgorde - b.volgorde,
-  ),
-)
-const positie = computed(() => gesorteerd.value.findIndex((n) => n.path === nummer.value?.path))
-const vorig = computed(() => gesorteerd.value[positie.value - 1])
-const volgend = computed(() => gesorteerd.value[positie.value + 1])
+// Alinea's zijn gescheiden door een lege regel. Een alinea die met “ begint is een citaat.
+const alineas = (tekst: string | undefined) => (tekst ?? '').trim().split(/\n\s*\n/)
+const verhaal = computed(() => alineas(nummer.value?.verhaal))
+const bijzonder = computed(() => alineas(nummer.value?.bijzonder))
+const strofen = computed(() => alineas(nummer.value?.liedtekst))
 </script>
 
 <template>
   <article v-if="nummer">
-    <header class="sectie sectie--accent">
-      <div class="container">
-        <nav aria-label="Kruimelpad" class="kruimel">
-          <ol>
-            <li><NuxtLink to="/">Home</NuxtLink></li>
-            <li><NuxtLink to="/over-de-muziek/">Over de muziek</NuxtLink></li>
-            <li aria-current="page">{{ nummer.title }}</li>
-          </ol>
-        </nav>
-        <h1>{{ nummer.title }}</h1>
-        <p v-if="nummer.origineel" class="origineel">
-          Een bewerking van “{{ nummer.origineel.titel }}” van {{ nummer.origineel.artiest }}.
-        </p>
-      </div>
-    </header>
+    <PaginaBanner :titel="nummer.title" kleur="lichtgoud" />
 
     <div class="sectie">
-      <div class="container nummer">
-        <div class="nummer__media">
-          <VideoSpeler :id="nummer.youtube" :titel="nummer.title" :beeld="nummer.videoBeeld" />
-          <ul class="nummer__links">
-            <li>
-              <a :href="`https://open.spotify.com/track/${nummer.spotify}`">
-                Luister op Spotify: {{ nummer.title }}
-              </a>
-            </li>
-            <li>
-              <a :href="`https://youtu.be/${nummer.youtube}`">
-                Bekijk op YouTube: {{ nummer.title }}
-              </a>
-            </li>
-          </ul>
-          <p>Duur: {{ nummer.duur }}</p>
-          <NuxtImg
-            class="nummer__cover"
-            :src="nummer.cover.src"
-            :alt="`Hoes van ${nummer.cover.alt}`"
-            width="384"
-            height="384"
-            densities="x1 x2"
-          />
-        </div>
-
-        <div class="nummer__tekst tekst">
-          <ContentRenderer :value="nummer" />
-          <h2>Liedtekst</h2>
-          <p v-for="(strofe, i) in strofen" :key="i" class="strofe">{{ strofe }}</p>
+      <div class="kolom">
+        <KopBlok :accent="`Waar gaat ${nummer.title} over`" kop="Het verhaal achter het lied" />
+        <div class="tekst">
+          <template v-for="(alinea, i) in verhaal" :key="i">
+            <blockquote v-if="alinea.startsWith('“')" class="citaat">{{ alinea }}</blockquote>
+            <p v-else>{{ alinea }}</p>
+          </template>
         </div>
       </div>
+    </div>
 
-      <nav class="container naast" aria-label="Andere nummers">
-        <NuxtLink v-if="vorig" :to="`${vorig.path}/`" rel="prev"
-          >← Vorig nummer: {{ vorig.title }}</NuxtLink
-        >
-        <NuxtLink v-if="volgend" :to="`${volgend.path}/`" rel="next"
-          >Volgend nummer: {{ volgend.title }} →</NuxtLink
-        >
-      </nav>
+    <div class="sectie sectie--pil">
+      <div class="kolom">
+        <div class="pil">
+          <Icoon naam="apple" class="pil__noot" />
+          <p class="pil__titel">{{ nummer.title }}</p>
+          <a
+            class="pil__link"
+            :href="`https://open.spotify.com/track/${nummer.spotify}`"
+            :aria-label="`Luister op Spotify: ${nummer.title}`"
+          >
+            <Icoon naam="spotify" />
+          </a>
+          <a
+            class="pil__link"
+            :href="`https://youtu.be/${nummer.youtube}`"
+            :aria-label="`Bekijk op YouTube: ${nummer.title}`"
+          >
+            <Icoon naam="youtube" />
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="sectie">
+      <div class="kolom">
+        <KopBlok
+          :accent="nummer.title"
+          :kop="nummer.bijzonderKop ?? 'Wat dit nummer zo bijzonder maakt'"
+        />
+        <div class="bijzonder">
+          <NuxtImg
+            class="bijzonder__cover"
+            :src="nummer.cover.src"
+            :alt="`Hoes van ${nummer.title}`"
+            width="120"
+            height="120"
+            densities="x1 x2"
+          />
+          <div class="tekst">
+            <template v-for="(alinea, i) in bijzonder" :key="i">
+              <blockquote v-if="alinea.startsWith('“')" class="citaat">{{ alinea }}</blockquote>
+              <p v-else>{{ alinea }}</p>
+            </template>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sectie sectie--eind">
+      <div class="kolom">
+        <KopBlok accent="Liedtekst" :kop="nummer.title" />
+        <div class="tekst">
+          <p v-for="(strofe, i) in strofen" :key="i" class="strofen">{{ strofe }}</p>
+        </div>
+      </div>
     </div>
   </article>
 </template>
 
 <style scoped>
-.kruimel ol {
+/* De crème balk met het nummer en de links naar Spotify en YouTube, 50 px onder het verhaal */
+.sectie--pil {
+  padding-block-start: 4.375rem;
+}
+
+.pil {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--ruimte-2);
-  margin: 0 0 var(--ruimte-5);
-  padding: 0;
-  list-style: none;
-  font-size: var(--tekst-klein);
+  align-items: center;
+  gap: 1rem;
+  min-block-size: 3.8125rem;
+  padding-inline: 1.5rem;
+  border-radius: 3.125rem;
+  background: var(--kleur-creme);
 }
 
-.kruimel li + li::before {
-  content: '/';
-  margin-inline-end: var(--ruimte-2);
+.pil__noot {
+  flex: none;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  color: var(--kleur-terracotta-diep);
 }
 
-.kruimel a {
-  color: var(--tekst);
-}
-
-.origineel {
+.pil__titel {
+  flex: 1;
   margin: 0;
+  font-size: 1.425rem;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
-.nummer {
-  display: grid;
-  gap: var(--ruimte-7);
-}
-
-@media (min-width: 60rem) {
-  .nummer {
-    grid-template-columns: minmax(0, 28rem) minmax(0, 1fr);
-    align-items: start;
-  }
-}
-
-.nummer__links {
-  margin: var(--ruimte-4) 0;
-  padding: 0;
-  list-style: none;
-}
-
-.nummer__links a {
+.pil__link {
   display: inline-flex;
-  min-block-size: var(--doel-min);
   align-items: center;
+  justify-content: center;
+  inline-size: var(--doel-min);
+  block-size: var(--doel-min);
+  color: var(--kleur-terracotta-diep);
 }
 
-.nummer__cover {
-  inline-size: 100%;
-  max-inline-size: 24rem;
-  block-size: auto;
-  margin-block-start: var(--ruimte-5);
-  border-radius: var(--radius-kaart);
-}
-
-.strofe {
-  white-space: pre-line;
-}
-
-.naast {
+.bijzonder {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
-  gap: var(--ruimte-4);
-  margin-block-start: var(--ruimte-8);
+  align-items: flex-start;
+  gap: 1.25rem;
+  margin-block-start: 1.25rem;
 }
 
-.naast a {
-  display: inline-flex;
-  min-block-size: var(--doel-min);
-  align-items: center;
+.bijzonder .tekst {
+  flex: 1 1 18rem;
+}
+
+.bijzonder__cover {
+  flex: none;
+  inline-size: 7.5rem;
+  block-size: 7.5rem;
 }
 </style>

@@ -10,6 +10,12 @@ cover:
 videoBeeld: /videos/hart-van-glas.webp
 youtube: vmzR9MXRnWU
 spotify: 1tammyvuVAz4xVzUixsyBu
+verhaal: |
+  Hart van glas gaat over echtscheiding. Het lied is geen verwijt, maar vooral om onder woorden te brengen wat ik als kind ervaren heb, in de hoop dat het bemoedigend zal zijn voor andere kinderen van gescheiden ouders. Niet voorbijgaand aan de realiteit, maar blijvend liefdevol en tegelijkertijd hoopvol.
+bijzonder: |
+  Wat me het meest geraakt heeft in de tijd van mijn ouders’ scheiding waren familie, vrienden of bekenden die ‘partij kozen’. Het voelde als dat de helft van mij daarmee werd afgewezen. Ik voelde me verraden. Heftig gevoel, maar wel waar.
+
+  Met ‘Hart van glas’ wil ik geen verwijten op tafel gooien. Enkel een verhaal vertellen en daarmee hopelijk hoop en troost bieden. En laten zien dat scheiding uiteindelijk niet het einde van alles betekent, al kan dat voor een kind wel zo voelen.
 liedtekst: |
   De scherven op de grond
   Ik zie ze nog liggen
@@ -49,13 +55,3 @@ liedtekst: |
   Samen een plekje
   In m’n hart van glas
 ---
-
-## Het verhaal achter het lied
-
-Hart van glas gaat over echtscheiding. Het lied is geen verwijt, maar vooral om onder woorden te brengen wat ik als kind ervaren heb, in de hoop dat het bemoedigend zal zijn voor andere kinderen van gescheiden ouders. Niet voorbijgaand aan de realiteit, maar blijvend liefdevol en tegelijkertijd hoopvol.
-
-## Wat dit nummer zo bijzonder maakt
-
-Wat me het meest geraakt heeft in de tijd van mijn ouders’ scheiding waren familie, vrienden of bekenden die ‘partij kozen’. Het voelde als dat de helft van mij daarmee werd afgewezen. Ik voelde me verraden. Heftig gevoel, maar wel waar.
-
-Met ‘Hart van glas’ wil ik geen verwijten op tafel gooien. Enkel een verhaal vertellen en daarmee hopelijk hoop en troost bieden. En laten zien dat scheiding uiteindelijk niet het einde van alles betekent, al kan dat voor een kind wel zo voelen.

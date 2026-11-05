@@ -60,7 +60,8 @@ export default defineNuxtConfig({
   nitro: {
     prerender: {
       crawlLinks: true,
-      routes: ['/'],
+      // /bestel-de-ep/ staat nergens in het menu en wordt dus niet vanzelf gevonden
+      routes: ['/', '/bestel-de-ep/'],
     },
   },
 })

@@ -1,52 +1,90 @@
 <script setup lang="ts">
-const { data: nummers } = await useAsyncData('voet-nummers', () =>
-  queryCollection('nummers').order('title', 'ASC').select('path', 'title').all(),
+const { data: home } = await useAsyncData('voet-home', () =>
+  queryCollection('home').select('voetlijst').first(),
 )
+const { data: nummers } = await useAsyncData('voet-nummers', () =>
+  queryCollection('nummers').select('path', 'title').all(),
+)
+
+// Volgorde van de nummers staat in content/home.yml
+const lijst = computed(() =>
+  (home.value?.voetlijst ?? []).flatMap((slug) => {
+    const n = (nummers.value ?? []).find((x) => x.path.endsWith(`/${slug}`))
+    return n ? [n] : []
+  }),
+)
+
+const jaar = new Date().getFullYear()
+
+const kanalen = [
+  { naam: 'Facebook', link: 'https://www.facebook.com/marielle.overeem', icoon: 'facebook' },
+  { naam: 'Instagram', link: 'https://www.instagram.com/mariellemadern/', icoon: 'instagram' },
+  { naam: 'YouTube', link: 'https://www.youtube.com/@MarielleMadern', icoon: 'youtube' },
+  {
+    naam: 'Spotify',
+    link: 'https://open.spotify.com/artist/0JhC8OIE2esDeiv4Citl3j',
+    icoon: 'spotify',
+  },
+  {
+    naam: 'LinkedIn',
+    link: 'https://www.linkedin.com/in/mari%C3%ABlle-madern/',
+    icoon: 'linkedin',
+  },
+  {
+    naam: 'Apple Music',
+    link: 'https://music.apple.com/nl/artist/mari%C3%ABlle-madern/1692097525',
+    icoon: 'apple',
+  },
+] as const
 </script>
 
 <template>
   <footer class="voet">
-    <div class="container voet__raster">
-      <nav aria-label="Menu in de voet">
-        <h2 class="voet__kop">Menu</h2>
+    <div class="voet__binnen">
+      <nav aria-labelledby="voet-snel">
+        <h2 id="voet-snel" class="voet__kop">Snel naar</h2>
         <ul class="voet__lijst">
           <li><NuxtLink to="/over-mij/">Over mij</NuxtLink></li>
           <li><NuxtLink to="/over-de-muziek/">Over de muziek</NuxtLink></li>
-          <li><NuxtLink to="/bestel-de-ep/">Bestel de EP</NuxtLink></li>
           <li><NuxtLink to="/contact/">Contact</NuxtLink></li>
-          <li><NuxtLink to="/privacy/">Privacyverklaring</NuxtLink></li>
         </ul>
       </nav>
 
-      <nav aria-label="Alle nummers">
-        <h2 class="voet__kop">Nummers</h2>
+      <nav aria-labelledby="voet-muziek">
+        <h2 id="voet-muziek" class="voet__kop">De muziek die ik maak</h2>
         <ul class="voet__lijst">
-          <li v-for="nummer in nummers" :key="nummer.path">
+          <li v-for="nummer in lijst" :key="nummer.path">
             <NuxtLink :to="`${nummer.path}/`">{{ nummer.title }}</NuxtLink>
           </li>
         </ul>
       </nav>
 
       <div>
-        <h2 class="voet__kop">Contact</h2>
+        <h2 class="voet__kop">Neem contact op</h2>
         <p>
-          <a href="mailto:hallo@mariellemadern.nl">hallo@mariellemadern.nl</a>
+          <a class="voet__mail" href="mailto:hallo@mariellemadern.nl">hallo@mariellemadern.nl</a>
         </p>
-        <nav aria-label="Kanalen van Mariëlle">
-          <ul class="voet__lijst">
-            <li><a href="https://www.youtube.com/@MarielleMadern">YouTube</a></li>
-            <li><a href="https://open.spotify.com/artist/0JhC8OIE2esDeiv4Citl3j">Spotify</a></li>
-            <li>
-              <a href="https://music.apple.com/nl/artist/mari%C3%ABlle-madern/1692097525"
-                >Apple Music</a
-              >
-            </li>
-            <li><a href="https://www.facebook.com/marielle.overeem">Facebook</a></li>
-            <li><a href="https://www.instagram.com/mariellemadern/">Instagram</a></li>
-            <li><a href="https://www.linkedin.com/in/mari%C3%ABlle-madern/">LinkedIn</a></li>
-          </ul>
-        </nav>
       </div>
+
+      <nav aria-labelledby="voet-volg">
+        <h2 id="voet-volg" class="voet__kop">Volg mij</h2>
+        <ul class="voet__iconen">
+          <li v-for="kanaal in kanalen" :key="kanaal.naam">
+            <a :href="kanaal.link" :aria-label="kanaal.naam">
+              <Icoon :naam="kanaal.icoon" />
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+
+    <div class="voet__onder">
+      <p>Copyright {{ jaar }} Mariëlle Madern - alle rechten voorbehouden</p>
+      <nav aria-label="Privacy en contact">
+        <NuxtLink to="/privacy/">Privacy</NuxtLink>
+        <span aria-hidden="true"> • </span>
+        <NuxtLink to="/contact/">Contact</NuxtLink>
+      </nav>
     </div>
   </footer>
 </template>
@@ -54,34 +92,94 @@ const { data: nummers } = await useAsyncData('voet-nummers', () =>
 <style scoped>
 .voet {
   background: var(--achtergrond-zacht);
-  padding-block: var(--ruimte-8);
+  padding-block: 5rem 3rem;
 }
 
-.voet__raster {
+.voet__binnen,
+.voet__onder {
+  inline-size: min(100% - 2.5rem, 68.75rem);
+  margin-inline: auto;
+}
+
+.voet__binnen {
   display: grid;
-  gap: var(--ruimte-7);
+  gap: 2.5rem;
 }
 
-@media (min-width: 48rem) {
-  .voet__raster {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+@media (min-width: 40rem) {
+  .voet__binnen {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64rem) {
+  .voet__binnen {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
 .voet__kop {
-  margin-block-end: var(--ruimte-3);
-  font-size: 1.25rem;
+  margin-block-end: 0.75rem;
+  font-size: 1rem;
+  font-weight: 500;
 }
 
-.voet__lijst {
+.voet__lijst,
+.voet__iconen {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.voet a {
+.voet__lijst a,
+.voet__mail {
   display: inline-flex;
-  min-block-size: var(--doel-min);
   align-items: center;
+  min-block-size: 2.375rem;
+  color: var(--tekst);
+  font-weight: 400;
+  text-decoration: none;
+}
+
+.voet__lijst a:hover,
+.voet__mail:hover {
+  text-decoration: underline;
+}
+
+/* E-mailadres in terracotta diep: het oorspronkelijke terracotta haalt 3,48:1 op crème */
+.voet__mail {
+  color: var(--kleur-terracotta-diep);
+  text-decoration: underline;
+}
+
+.voet__iconen {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.voet__iconen a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  color: var(--kleur-terracotta-diep);
+}
+
+.voet__onder {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem 2rem;
+  margin-block-start: 3rem;
+  font-size: 0.875rem;
+}
+
+.voet__onder p {
+  margin: 0;
+}
+
+.voet__onder a {
+  color: var(--kleur-terracotta-diep);
 }
 </style>

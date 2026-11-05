@@ -47,13 +47,22 @@ const bron = (pad, src, veld) => {
   if (!gevonden) fout(pad, `${veld}: bronafbeelding ${src} staat niet in app/bronafbeeldingen`)
 }
 
+// Welke nummers bestaan (voor de lijsten in pagina's en homepage)
+const bestaandeNummers = bestandenIn('nummers', '.md').map((f) => basename(f, '.md'))
+
 // Pagina's
 for (const pad of bestandenIn('paginas', '.md')) {
   const { data: d } = kopblok(pad)
   tekst(pad, d, 'title')
   tekst(pad, d, 'description', { min: 70, max: 160 })
   tekst(pad, d, 'seoTitel', { max: 60, verplicht: false })
-  tekst(pad, d, 'kicker', { verplicht: false })
+  if (!['sage', 'lichtgoud', 'blush'].includes(d.kleur))
+    fout(pad, 'kleur moet sage, lichtgoud of blush zijn')
+  tekst(pad, d, 'accent')
+  tekst(pad, d, 'kop', { verplicht: false })
+  tekst(pad, d, 'bannerTitel', { verplicht: false })
+  for (const slug of d.nummerlijst ?? [])
+    if (!bestaandeNummers.includes(slug)) fout(pad, `nummerlijst: nummer ${slug} bestaat niet`)
 }
 
 // Nummers
@@ -85,8 +94,12 @@ for (const pad of bestandenIn('nummers', '.md')) {
     fout(pad, 'origineel heeft titel en artiest nodig')
   if (typeof d.liedtekst !== 'string' || d.liedtekst.trim().length < 20)
     fout(pad, 'liedtekst ontbreekt of is erg kort')
-  if (!body.includes('## Het verhaal achter het lied'))
-    fout(pad, 'de kop "Het verhaal achter het lied" ontbreekt')
+  if (typeof d.verhaal !== 'string' || d.verhaal.trim().length < 20)
+    fout(pad, 'verhaal ontbreekt of is erg kort')
+  if (typeof d.bijzonder !== 'string' || d.bijzonder.trim().length < 20)
+    fout(pad, 'bijzonder (wat dit nummer zo bijzonder maakt) ontbreekt')
+  if (body.trim())
+    fout(pad, 'de tekst staat in de velden van het kopblok, de body hoort leeg te zijn')
 }
 
 // Homepage
@@ -101,6 +114,8 @@ tekst(homePad, home, 'seoTitel', { max: 60 })
 tekst(homePad, home, 'description', { min: 70, max: 160 })
 if (!Array.isArray(home.heroRegels) || !home.heroRegels.length)
   fout(homePad, 'heroRegels ontbreekt')
+for (const slug of home.voetlijst ?? [])
+  if (!nummers.includes(slug)) fout(homePad, `voetlijst: nummer ${slug} bestaat niet`)
 for (const slug of home.videolijst ?? [])
   if (!nummers.includes(slug)) fout(homePad, `videolijst: nummer ${slug} bestaat niet`)
 

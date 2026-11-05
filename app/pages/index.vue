@@ -30,39 +30,81 @@ useSeoMeta({ description: home.value.description })
     <HeroVideo :regels="home.heroRegels" />
 
     <section class="sectie">
-      <div class="container tekstblok">
-        <p class="accent">{{ home.kicker }}</p>
-        <h1>{{ home.slogan }}</h1>
-        <p v-for="alinea in home.intro" :key="alinea">{{ alinea }}</p>
-        <NuxtLink class="knop" :to="home.introKnop.link">{{ home.introKnop.tekst }}</NuxtLink>
+      <div class="midden">
+        <div class="kolom--breed">
+          <KopBlok :accent="home.kicker" :kop="home.slogan" :niveau="1" />
+        </div>
+        <div class="kolom tekst">
+          <p v-for="alinea in home.intro" :key="alinea">{{ alinea }}</p>
+        </div>
+        <p>
+          <NuxtLink class="knop" :to="home.introKnop.link">{{ home.introKnop.tekst }}</NuxtLink>
+        </p>
       </div>
     </section>
 
-    <section class="sectie sectie--zacht">
-      <div class="container">
-        <div class="tekstblok">
-          <p class="accent">{{ home.videoKicker }}</p>
-          <h2>{{ home.videoKop }}</h2>
+    <section class="sectie sectie--eind">
+      <div class="midden">
+        <KopBlok :accent="home.videoKicker" :kop="home.videoKop" normaal />
+        <div class="videos">
+          <Videolijst :videos="videos" />
         </div>
-        <Videolijst :videos="videos" />
-        <p class="tekstblok knoppen">
+        <div class="knoppen">
           <NuxtLink class="knop" :to="home.muziekKnop.link">{{ home.muziekKnop.tekst }}</NuxtLink>
-        </p>
+          <ul class="kanalen">
+            <li>
+              <a href="https://www.youtube.com/@MarielleMadern" aria-label="YouTube"
+                ><Icoon naam="youtube"
+              /></a>
+            </li>
+            <li>
+              <a href="https://open.spotify.com/artist/0JhC8OIE2esDeiv4Citl3j" aria-label="Spotify"
+                ><Icoon naam="spotify"
+              /></a>
+            </li>
+            <li>
+              <a
+                href="https://music.apple.com/nl/artist/mari%C3%ABlle-madern/1692097525"
+                aria-label="Apple Music"
+                ><Icoon naam="apple"
+              /></a>
+            </li>
+          </ul>
+        </div>
       </div>
     </section>
   </div>
 </template>
 
 <style scoped>
-.tekstblok {
-  text-align: center;
-}
-
-.tekstblok p {
-  margin-inline: auto;
+.videos {
+  margin-block-start: 3.5rem;
 }
 
 .knoppen {
-  margin-block: var(--ruimte-7) 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem 1.5rem;
+  margin-block-start: 2rem;
+  padding-inline: 1.25rem;
+}
+
+.kanalen {
+  display: flex;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kanalen a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--doel-min);
+  block-size: var(--doel-min);
+  color: var(--kleur-terracotta-diep);
 }
 </style>

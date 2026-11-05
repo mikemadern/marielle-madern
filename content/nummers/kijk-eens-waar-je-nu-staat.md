@@ -10,6 +10,12 @@ cover:
 videoBeeld: /videos/kijk-eens-waar-je-nu-staat.webp
 youtube: 40oNF7e4R9k
 spotify: 4EtEELmpDdfWWvHADL113f
+verhaal: |
+  Kijk eens waar je nu staat raakt zoveel van de strijd die ik in en met mezelf heb gevoerd, en is tegelijk zo bemoedigend, hoopvol en helend. Kijkend naar de huidige omstandigheden kunnen we zomaar ontevreden zijn, meer of beter willen. Maar wat als je kijkt waar je vandaan gekomen bent? Dan zul je zien dat waar je nu staat helemaal geen slechte plek is. Kijk eens waar je nu staat, hoe mooi heb je ’t gedaan.
+bijzonder: |
+  Met dit lied wil ik die verbinding terugbrengen. De verbinding met het kind dat in mij leeft. Vertellen wat er mis ging maar ook vertellen hoe het leven verlopen is, dat het niet alleen over verliezen ging maar ook over vinden en gevonden worden.
+
+  Extra speciaal is de vocale bijdrage van mijn zoon Adam.
 liedtekst: |
   Hallo ik
   Ik kijk terug en zie je staan
@@ -69,13 +75,3 @@ liedtekst: |
   Kijk eens waar we nu staan
   Kijk eens waar we nu staan
 ---
-
-## Het verhaal achter het lied
-
-Kijk eens waar je nu staat raakt zoveel van de strijd die ik in en met mezelf heb gevoerd, en is tegelijk zo bemoedigend, hoopvol en helend. Kijkend naar de huidige omstandigheden kunnen we zomaar ontevreden zijn, meer of beter willen. Maar wat als je kijkt waar je vandaan gekomen bent? Dan zul je zien dat waar je nu staat helemaal geen slechte plek is. Kijk eens waar je nu staat, hoe mooi heb je ’t gedaan.
-
-## Wat dit nummer zo bijzonder maakt
-
-Met dit lied wil ik die verbinding terugbrengen. De verbinding met het kind dat in mij leeft. Vertellen wat er mis ging maar ook vertellen hoe het leven verlopen is, dat het niet alleen over verliezen ging maar ook over vinden en gevonden worden.
-
-Extra speciaal is de vocale bijdrage van mijn zoon Adam.

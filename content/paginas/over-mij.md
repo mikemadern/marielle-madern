@@ -2,7 +2,9 @@
 title: "Over mij"
 seoTitel: "Over Mariëlle Madern - haar verhaal en muziek"
 description: "Lees het verhaal van Mariëlle Madern: een leven vol muziek, haar liefde voor God en hoe het verlangen ontstond om zelf aanbiddingsmuziek te maken."
-kicker: "Muziek, een heel leven lang al"
+kleur: sage
+accent: "Mariëlle Madern"
+kop: "Muziek, een heel leven lang al"
 ---
 
 Mijn naam is Mariëlle Madern-Overeem. Ik ben 33 jaar, getrouwd met Mike en moeder van twee prachtige kinderen, Adam en Amber.
