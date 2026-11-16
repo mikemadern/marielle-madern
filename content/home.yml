@@ -36,6 +36,18 @@ luisterYoutube: Bekijk op YouTube
 verhaalKnop: Lees het verhaal
 afspeelKnop: Speel af
 duurWoord: "Duur: "
+epAccent: nu beschikbaar
+epRegel: Zes nummers en twee instrumentale versies. Je bestelt per e-mail en ontvangt daarna een betaalverzoek.
+epPrijs: De cd kost {prijs}, inclusief verzending.
+epCoverAlt: "Hoes van de EP U ziet mij: een lachende vrouw met lang haar en een lichte blouse kijkt opzij, voor groen gebladerte."
+epKnop:
+  tekst: Bestel de EP
+  link: /bestel-de-ep/
+contactKop: Voor boekingen of andere vragen
+contactRegel: Voor boekingen, samenwerkingen en vragen over mijn muziek.
+contactKnop:
+  tekst: Neem contact op
+  link: /contact/
 muziekKnop:
   tekst: Over mijn muziek
   link: /over-de-muziek/

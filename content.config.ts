@@ -102,6 +102,16 @@ export default defineContentConfig({
         verhaalKnop: z.string(),
         afspeelKnop: z.string(),
         duurWoord: z.string(),
+        // EP-blok: de prijs staat in uitgaven/*.yml, {prijs} in epPrijs wordt daarmee vervangen
+        epAccent: z.string(),
+        epRegel: z.string(),
+        epPrijs: z.string(),
+        epCoverAlt: z.string(),
+        epKnop: knop,
+        // Contactblok
+        contactKop: z.string(),
+        contactRegel: z.string(),
+        contactKnop: knop,
         // Volgorde van de nummers in de voet
         voetlijst: z.array(z.string()),
         muziekKnop: knop,

@@ -144,6 +144,11 @@ img {
   color: var(--kleur-terracotta);
 }
 
+.accent--diep {
+  /* Terracotta diep haalt 3,5:1 op blush, genoeg voor grote tekst. Het gewone terracotta haalt 2,72:1 */
+  color: var(--kleur-terracotta-diep);
+}
+
 .accent--goudtekst {
   /* Op crème haalt het grote goud geen 3:1. Dit goud haalt 4,51:1 */
   color: var(--kleur-goud-tekst);
