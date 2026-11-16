@@ -134,8 +134,18 @@ for (const veld of [
   'verhaalKnop',
   'afspeelKnop',
   'duurWoord',
+  'epAccent',
+  'epRegel',
+  'epPrijs',
+  'epCoverAlt',
+  'contactKop',
+  'contactRegel',
 ])
   tekst(homePad, home, veld)
+if (typeof home.epPrijs === 'string' && !home.epPrijs.includes('{prijs}'))
+  fout(homePad, 'epPrijs moet {prijs} bevatten (daar komt het bedrag uit de uitgave)')
+for (const veld of ['epKnop', 'contactKnop'])
+  if (!home[veld]?.tekst || !home[veld]?.link) fout(homePad, `${veld} heeft tekst en link nodig`)
 
 // Uitgaven
 for (const pad of bestandenIn('uitgaven', '.yml')) {

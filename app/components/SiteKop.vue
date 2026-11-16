@@ -10,6 +10,16 @@ watch(
   },
 )
 
+// Escape sluit het menu en zet de focus terug op de menuknop
+const menuKnop = ref<HTMLButtonElement | null>(null)
+function bijToets(e: KeyboardEvent) {
+  if (e.key !== 'Escape' || !open.value) return
+  open.value = false
+  menuKnop.value?.focus()
+}
+onMounted(() => document.addEventListener('keydown', bijToets))
+onBeforeUnmount(() => document.removeEventListener('keydown', bijToets))
+
 const links = [
   { to: '/over-mij/', tekst: 'Over mij' },
   { to: '/over-de-muziek/', tekst: 'Over de muziek' },
@@ -25,6 +35,7 @@ const links = [
       </NuxtLink>
 
       <button
+        ref="menuKnop"
         type="button"
         class="sitekop__knop"
         :aria-expanded="open"
