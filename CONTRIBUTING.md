@@ -9,7 +9,7 @@ Korte afspraken, zodat `main` altijd werkend en overzichtelijk blijft.
 3. **Pull request** — open een PR naar `main` en zet `Closes #<nummer>` in de beschrijving. Volg de checklist in het PR-template.
 4. **Merge** — zodra de checks groen zijn en de PR is goedgekeurd. Alleen *rebase-merge* is ingesteld, en de branch wordt daarna automatisch verwijderd.
 
-Een merge zet de site **niet** vanzelf live. Uitrollen naar Cloudflare gebeurt met de hand (`pnpm deploy`), zie het [`README.md`](README.md).
+Een merge in `main` rolt de site automatisch uit naar de proefsite, via Workers Builds in Cloudflare (na de livegang naar mariellemadern.nl). Een PR krijgt een eigen preview-adres. Handmatig uitrollen kan met `pnpm run deploy` (zonder `run` start pnpm zijn eigen, ingebouwde commando), zie het [`README.md`](README.md).
 
 ## Milestones
 
