@@ -4,6 +4,7 @@ description: "Een lied over de strijd met jezelf en kijken naar waar je vandaan 
 uitgave: single
 volgorde: 3
 duur: "3:47"
+kaartregel: "Over de strijd met jezelf en waar je vandaan komt."
 cover:
   src: /covers/kijk-eens-waar-je-nu-staat.webp
   alt: "Kijk eens waar je nu staat"

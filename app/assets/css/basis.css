@@ -96,6 +96,26 @@ img {
   padding-block-end: 6.25rem;
 }
 
+/* Blokken met een eigen achtergrondkleur: ruimte boven en onder. */
+.sectie--vlak {
+  padding-block: 6rem;
+}
+
+/* Voor een blok zonder eigen kop erboven */
+.sectie--vlak-krap {
+  padding-block: 4rem;
+}
+
+@media (max-width: 47.9375rem) {
+  .sectie--vlak {
+    padding-block: 4.5rem;
+  }
+
+  .sectie--vlak-krap {
+    padding-block: 3rem;
+  }
+}
+
 /* Op mobiel staat de eerste tekst 150 px onder de kopbalk, zoals op de huidige site */
 @media (max-width: 47.9375rem) {
   .sectie {
@@ -122,6 +142,11 @@ img {
 .accent--terracotta {
   /* Terracotta haalt 3,77:1 op wit, genoeg voor grote tekst */
   color: var(--kleur-terracotta);
+}
+
+.accent--goudtekst {
+  /* Op crème haalt het grote goud geen 3:1. Dit goud haalt 4,51:1 */
+  color: var(--kleur-goud-tekst);
 }
 
 .kop {
@@ -235,7 +260,7 @@ img {
   justify-content: center;
   min-block-size: 3.875rem;
   padding: 0.9375rem 1.875rem;
-  border-radius: var(--radius-knop);
+  border-radius: 999px;
   background: var(--knop-achtergrond);
   color: var(--knop-tekst);
   font-weight: 400;
@@ -244,6 +269,34 @@ img {
 
 .knop:hover {
   background: var(--knop-achtergrond-hover);
+}
+
+/* Lichte knop met pictogram, voor de luisterlinks op een crème achtergrond */
+.knop--licht {
+  gap: 0.625rem;
+  border: 2px solid var(--kleur-terracotta-diep);
+  background: var(--kleur-wit);
+  color: var(--tekst);
+  transition:
+    background-color 150ms,
+    border-color 150ms,
+    color 150ms;
+}
+
+.knop.knop--licht .icoon {
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  color: var(--kleur-terracotta-diep);
+}
+
+.knop--licht:hover {
+  border-color: var(--kleur-groen);
+  background: var(--kleur-groen);
+  color: var(--kleur-wit);
+}
+
+.knop.knop--licht:hover .icoon {
+  color: var(--kleur-wit);
 }
 
 /* ---------- Lopende tekst ---------- */

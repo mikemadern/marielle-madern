@@ -4,6 +4,7 @@ description: "Een lied over echtscheiding, vanuit het kind dat het meemaakte: ge
 uitgave: single
 volgorde: 2
 duur: "2:44"
+kaartregel: "Over echtscheiding: geen verwijt, maar hoop."
 cover:
   src: /covers/hart-van-glas.webp
   alt: "Hart van glas"
