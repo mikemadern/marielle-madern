@@ -51,7 +51,7 @@ function wissel() {
         /afbeeldingen/hero/poster-768.webp   768w,
         /afbeeldingen/hero/poster-1280.webp 1280w
       "
-      sizes="(max-width: 767px) 384px, 1280px"
+      sizes="100vw"
       alt=""
       aria-hidden="true"
       width="1920"
