@@ -81,21 +81,29 @@ defineEmits<{ kies: [slug: string] }>()
   }
 }
 
-/* De knop is het hele beeld. De rand is er altijd (doorzichtig), zodat het beeld niet verspringt */
+/* De knop is het hele beeld */
 .kaart__beeldknop {
   position: relative;
   display: block;
   inline-size: 100%;
   padding: 0;
-  border: 2px solid transparent;
+  border: 0;
   border-radius: 1rem;
   background: transparent;
   color: var(--kleur-wit);
   cursor: pointer;
 }
 
+/* Het nummer in de speler: een ring van 2 px met 2 px wit ertussen, ook zichtbaar op een donker beeld.
+   Een schaduw in plaats van een rand: de focusring (outline) blijft zo ongemoeid. */
 .kaart__beeldknop[aria-current='true'] {
-  border-color: var(--kleur-groen);
+  box-shadow:
+    0 0 0 2px var(--achtergrond),
+    0 0 0 4px var(--kleur-groen);
+}
+
+.kaart__beeldknop[aria-current='true']:focus-visible {
+  outline-offset: 6px;
 }
 
 .kaart__beeld {
@@ -103,7 +111,7 @@ defineEmits<{ kies: [slug: string] }>()
   inline-size: 100%;
   block-size: auto;
   aspect-ratio: 16 / 9;
-  border-radius: calc(1rem - 2px);
+  border-radius: 1rem;
   object-fit: cover;
 }
 
@@ -174,9 +182,13 @@ defineEmits<{ kies: [slug: string] }>()
     font-size: 1.0625rem;
   }
 
+  /* Op de kleine beelden raakt een rondje van 44 px de getekende titel: 36 px, het hele beeld blijft klikbaar */
   .kaart__rondje {
     inset-block-end: 0.5rem;
     inset-inline-start: 0.5rem;
+    inline-size: 2.25rem;
+    block-size: 2.25rem;
+    padding: 0.4375rem;
   }
 }
 </style>
