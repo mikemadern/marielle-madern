@@ -57,7 +57,7 @@ De site staat dan op http://localhost:8787 (bij `wrangler dev --port 8799` op 87
 
 Vanaf 2026-11-16 gaat elke wijziging via een branch en een pull request (PR) op GitHub. Zodra de repository in Cloudflare is gekoppeld (Workers Builds), bouwt en rolt Cloudflare automatisch uit:
 
-- Een branch of PR krijgt een eigen preview-adres, in de vorm `<naam>-mariellemadern.mmadern.workers.dev`. Dit adres is publiek.
+- Een branch of PR krijgt een eigen preview (`wrangler preview`, vernoemd naar de branch). Het adres staat bij de check "Workers Builds" op de PR en in Cloudflare onder Previews. Dit adres is publiek.
 - Een samenvoeging in `main` rolt uit naar https://mariellemadern.mmadern.workers.dev, en na de livegang naar mariellemadern.nl.
 - Handmatig uitrollen kan nog steeds met `pnpm run deploy`.
 

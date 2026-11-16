@@ -7,9 +7,11 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "mariellemadern",
   "compatibility_date": "2025-07-15",
-  // Preview-adres per versie en per PR (<naam>-mariellemadern.mmadern.workers.dev).
-  // Blijft aan, ook als het workers.dev-adres na de livegang uitgaat.
+  // Preview-adres per versie. Blijft aan, ook als het workers.dev-adres na de livegang uitgaat.
   "preview_urls": true,
+  // Verplicht voor `wrangler preview`, dat Workers Builds voor branches en PR's draait.
+  // Leeg: een preview gebruikt dezelfde instellingen als hierboven en `assets` hieronder.
+  "previews": {},
   "assets": {
     "directory": ".output/public",
     // Onbekende URL's krijgen 404.html met status 404
