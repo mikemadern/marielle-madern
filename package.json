@@ -2,6 +2,7 @@
   "name": "website",
   "type": "module",
   "private": true,
+  "packageManager": "pnpm@12.16.1",
   "scripts": {
     "afbeeldingen": "node scripts/afbeeldingen.mjs",
     "dev": "pnpm afbeeldingen && nuxt dev",
