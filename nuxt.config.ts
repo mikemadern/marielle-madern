@@ -58,6 +58,10 @@ export default defineNuxtConfig({
   // Alles wordt bij het bouwen vooraf gemaakt (`pnpm generate`) en als statische bestanden
   // uitgerold op Cloudflare. Er draait geen server en geen database (besluit fase 4).
   nitro: {
+    // Altijd statisch, ook in de bouwomgeving van Cloudflare (Workers Builds). Zonder dit kiest Nitro
+    // daar zelf het preset `cloudflare-module`, met een servermap, een D1-database, een doorverwijzing
+    // naar een andere wrangler-config (`.wrangler/deploy/config.json`) en een aangepast `_headers`.
+    preset: 'static',
     prerender: {
       crawlLinks: true,
       // /bestel-de-ep/ staat nergens in het menu en wordt dus niet vanzelf gevonden
