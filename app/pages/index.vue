@@ -1,25 +1,62 @@
 <script setup lang="ts">
-import type { VideoItem } from '~/components/Videolijst.vue'
+import type { NummerItem } from '~/components/NummerKaarten.vue'
 
 const { data: home } = await useAsyncData('home', () => queryCollection('home').first())
 const { data: nummers } = await useAsyncData('home-nummers', () =>
-  queryCollection('nummers').select('path', 'title', 'duur', 'videoBeeld', 'youtube').all(),
+  queryCollection('nummers')
+    .select('path', 'title', 'duur', 'videoBeeld', 'youtube', 'spotify', 'appleMusic', 'kaartregel')
+    .all(),
 )
 
 if (!home.value) {
   throw createError({ statusCode: 500, statusMessage: 'Homepage-inhoud ontbreekt', fatal: true })
 }
 
-// Volgorde van de videolijst staat in content/home.yml
-const videos = computed<VideoItem[]>(() => {
+// Volgorde van de kaarten staat in content/home.yml
+const items = computed<NummerItem[]>(() => {
   const lijst = nummers.value ?? []
   return (home.value?.videolijst ?? []).flatMap((slug) => {
     const n = lijst.find((x) => x.path.endsWith(`/${slug}`))
     return n
-      ? [{ slug, titel: n.title, duur: n.duur, beeld: n.videoBeeld, youtube: n.youtube }]
+      ? [
+          {
+            slug,
+            titel: n.title,
+            duur: n.duur,
+            beeld: n.videoBeeld,
+            youtube: n.youtube,
+            spotify: n.spotify,
+            appleMusic: n.appleMusic || undefined,
+            regel: n.kaartregel,
+            pad: `${n.path}/`,
+          },
+        ]
       : []
   })
 })
+
+// Het nummer in de grote speler: bij het laden het uitgelichte nummer, daarna wat de bezoeker kiest
+const gekozen = ref(home.value.uitgelicht)
+const huidig = computed(() => items.value.find((n) => n.slug === gekozen.value) ?? items.value[0])
+// Bij het uitgelichte nummer staat zijn eigen regel, bij een ander nummer de regel van zijn kaart
+const regel = computed(() =>
+  gekozen.value === home.value?.uitgelicht ? home.value.uitgelichtRegel : huidig.value?.regel,
+)
+
+// Elke klik op een kaart verhoogt de teller: de speler begint dan meteen met dat nummer
+const start = ref(0)
+const spelerBlok = useTemplateRef<{ $el: HTMLElement }>('spelerBlok')
+
+async function kies(slug: string) {
+  gekozen.value = slug
+  start.value++
+  await nextTick()
+  const minderBeweging = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  spelerBlok.value?.$el.scrollIntoView({
+    block: 'center',
+    behavior: minderBeweging ? 'auto' : 'smooth',
+  })
+}
 
 useHead({ title: home.value.seoTitel })
 useSeoMeta({ description: home.value.description })
@@ -29,7 +66,7 @@ useSeoMeta({ description: home.value.description })
   <div v-if="home">
     <HeroVideo :regels="home.heroRegels" />
 
-    <section class="sectie">
+    <section class="sectie sectie--eind">
       <div class="midden">
         <div class="kolom--breed">
           <KopBlok :accent="home.kicker" :kop="home.slogan" :niveau="1" />
@@ -43,33 +80,44 @@ useSeoMeta({ description: home.value.description })
       </div>
     </section>
 
-    <section class="sectie sectie--eind">
-      <div class="midden">
-        <KopBlok :accent="home.videoKicker" :kop="home.videoKop" normaal />
-        <div class="videos">
-          <Videolijst :videos="videos" />
+    <section aria-labelledby="luister-kop">
+      <div v-if="huidig" class="luister__speler sectie--vlak">
+        <div class="container midden">
+          <KopBlok
+            :accent="home.videoKicker"
+            :kop="home.videoKop"
+            accent-kleur="goudtekst"
+            kop-id="luister-kop"
+            normaal
+          />
+          <div class="luister__blok">
+            <UitgelichtNummer
+              ref="spelerBlok"
+              :nummer="huidig"
+              :regel="regel ?? ''"
+              :start="start"
+              :speler-noot="home.spelerNoot"
+              :verhaal-knop="home.verhaalKnop"
+              :luister-spotify="home.luisterSpotify"
+              :luister-apple-music="home.luisterAppleMusic"
+              :luister-youtube="home.luisterYoutube"
+            />
+          </div>
         </div>
-        <div class="knoppen">
-          <NuxtLink class="knop" :to="home.muziekKnop.link">{{ home.muziekKnop.tekst }}</NuxtLink>
-          <ul class="kanalen">
-            <li>
-              <a href="https://www.youtube.com/@MarielleMadern" aria-label="YouTube"
-                ><Icoon naam="youtube"
-              /></a>
-            </li>
-            <li>
-              <a href="https://open.spotify.com/artist/0JhC8OIE2esDeiv4Citl3j" aria-label="Spotify"
-                ><Icoon naam="spotify"
-              /></a>
-            </li>
-            <li>
-              <a
-                href="https://music.apple.com/nl/artist/mari%C3%ABlle-madern/1692097525"
-                aria-label="Apple Music"
-                ><Icoon naam="apple"
-              /></a>
-            </li>
-          </ul>
+      </div>
+      <div class="sectie--vlak-krap">
+        <div class="container midden">
+          <NummerKaarten
+            :nummers="items"
+            :gekozen="gekozen"
+            :afspeel-knop="home.afspeelKnop"
+            :verhaal-knop="home.verhaalKnop"
+            :duur-woord="home.duurWoord"
+            @kies="kies"
+          />
+          <p class="luister__meer">
+            <NuxtLink class="knop" :to="home.muziekKnop.link">{{ home.muziekKnop.tekst }}</NuxtLink>
+          </p>
         </div>
       </div>
     </section>
@@ -77,34 +125,15 @@ useSeoMeta({ description: home.value.description })
 </template>
 
 <style scoped>
-.videos {
+.luister__speler {
+  background: var(--achtergrond-zacht);
+}
+
+.luister__blok {
   margin-block-start: 3.5rem;
 }
 
-.knoppen {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem 1.5rem;
-  margin-block-start: 2rem;
-  padding-inline: 1.25rem;
-}
-
-.kanalen {
-  display: flex;
-  gap: 0.25rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.kanalen a {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  inline-size: var(--doel-min);
-  block-size: var(--doel-min);
-  color: var(--kleur-terracotta-diep);
+.luister__meer {
+  margin: 3rem 0 0;
 }
 </style>

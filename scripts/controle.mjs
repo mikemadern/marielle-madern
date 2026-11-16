@@ -82,6 +82,9 @@ for (const pad of bestandenIn('nummers', '.md')) {
   gebruikt.add(sleutel)
   if (!/^\d{1,2}:\d{2}$/.test(String(d.duur ?? '')))
     fout(pad, 'duur moet m:ss zijn, bijvoorbeeld "3:47" (tussen aanhalingstekens)')
+  tekst(pad, d, 'kaartregel', { min: 10, max: 90 })
+  if (d.appleMusic !== undefined && !String(d.appleMusic).startsWith('https://music.apple.com/'))
+    fout(pad, 'appleMusic moet een volledige link zijn die met https://music.apple.com/ begint')
   if (!d.cover?.src || !d.cover?.alt) fout(pad, 'cover heeft src en alt nodig')
   else bron(pad, d.cover.src, 'cover')
   if (!d.videoBeeld) fout(pad, 'videoBeeld ontbreekt')
@@ -118,6 +121,21 @@ for (const slug of home.voetlijst ?? [])
   if (!nummers.includes(slug)) fout(homePad, `voetlijst: nummer ${slug} bestaat niet`)
 for (const slug of home.videolijst ?? [])
   if (!nummers.includes(slug)) fout(homePad, `videolijst: nummer ${slug} bestaat niet`)
+if (!nummers.includes(home.uitgelicht))
+  fout(homePad, `uitgelicht: nummer ${home.uitgelicht} bestaat niet`)
+else if (!(home.videolijst ?? []).includes(home.uitgelicht))
+  fout(homePad, `uitgelicht: nummer ${home.uitgelicht} staat niet in de videolijst`)
+for (const veld of [
+  'uitgelichtRegel',
+  'spelerNoot',
+  'luisterSpotify',
+  'luisterAppleMusic',
+  'luisterYoutube',
+  'verhaalKnop',
+  'afspeelKnop',
+  'duurWoord',
+])
+  tekst(homePad, home, veld)
 
 // Uitgaven
 for (const pad of bestandenIn('uitgaven', '.yml')) {

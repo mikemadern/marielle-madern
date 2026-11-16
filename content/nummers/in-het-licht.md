@@ -4,6 +4,7 @@ description: "Een uitnodiging van de Vader om uit de schaduw te stappen en in Zi
 uitgave: ep
 volgorde: 1
 duur: "4:21"
+kaartregel: "Een uitnodiging van de Vader om in Zijn licht te stappen."
 cover:
   src: /covers/in-het-licht.webp
   alt: "In het licht"

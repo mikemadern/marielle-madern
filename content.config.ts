@@ -43,11 +43,15 @@ export default defineContentConfig({
         uitgave: z.enum(['ep', 'single']),
         volgorde: z.number().int().positive(),
         duur: z.string().regex(/^\d{1,2}:\d{2}$/, 'Gebruik m:ss, bijvoorbeeld 3:47'),
+        // Eén korte regel voor de kaart op de homepage
+        kaartregel: z.string(),
         uitgebracht: z.date().optional(),
         cover: afbeelding,
         videoBeeld: z.string(),
         youtube: z.string().regex(/^[\w-]{11}$/, 'Alleen de video-ID van 11 tekens'),
         spotify: z.string().regex(/^[A-Za-z0-9]{22}$/, 'Alleen de track-ID van 22 tekens'),
+        // De volledige Apple Music-link naar dit nummer (https://music.apple.com/...). Leeg: de knop gaat naar de artiestpagina
+        appleMusic: z.string().url().optional(),
         origineel: z.object({ titel: z.string(), artiest: z.string() }).optional(),
         verhaal: z.string(),
         bijzonder: z.string(),
@@ -87,6 +91,17 @@ export default defineContentConfig({
         videoKicker: z.string(),
         videoKop: z.string(),
         videolijst: z.array(z.string()),
+        // Het nummer dat bij het laden in de grote speler staat (bestandsnaam, moet in videolijst staan)
+        uitgelicht: z.string(),
+        uitgelichtRegel: z.string(),
+        spelerNoot: z.string(),
+        // Knoppen en woorden bij het uitgelichte nummer en de kaarten
+        luisterSpotify: z.string(),
+        luisterAppleMusic: z.string(),
+        luisterYoutube: z.string(),
+        verhaalKnop: z.string(),
+        afspeelKnop: z.string(),
+        duurWoord: z.string(),
         // Volgorde van de nummers in de voet
         voetlijst: z.array(z.string()),
         muziekKnop: knop,

@@ -5,17 +5,22 @@ defineProps<{
   accent: string
   kop?: string
   niveau?: 1 | 2
-  accentKleur?: 'goud' | 'terracotta'
+  accentKleur?: 'goud' | 'terracotta' | 'goudtekst'
   normaal?: boolean
+  // Het id van de kop, voor aria-labelledby van de sectie eromheen
+  kopId?: string
 }>()
 </script>
 
 <template>
   <div class="kopblok">
-    <p :class="['accent', accentKleur === 'terracotta' && 'accent--terracotta']">{{ accent }}</p>
+    <p :class="['accent', accentKleur && accentKleur !== 'goud' && `accent--${accentKleur}`]">
+      {{ accent }}
+    </p>
     <component
       :is="`h${niveau ?? 2}`"
       v-if="kop"
+      :id="kopId"
       class="kop"
       :style="normaal ? 'text-transform: none' : undefined"
       >{{ kop }}</component

@@ -4,6 +4,7 @@ description: "Een lied over Gods liefde die je terughaalt en angst verdrijft. Le
 uitgave: ep
 volgorde: 6
 duur: "4:27"
+kaartregel: "Over de kracht van Gods liefde."
 cover:
   src: /covers/wat-een-liefde.webp
   alt: "Wat een liefde"

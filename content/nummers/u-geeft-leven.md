@@ -4,6 +4,7 @@ description: "Een aanmoediging om stil te staan bij de Schepper en je aan Hem ov
 uitgave: ep
 volgorde: 5
 duur: "4:26"
+kaartregel: "Een aanmoediging om stil te staan bij de Schepper."
 cover:
   src: /covers/u-geeft-leven.webp
   alt: "U geeft leven"

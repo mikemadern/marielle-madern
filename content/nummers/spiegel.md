@@ -4,6 +4,7 @@ description: "Een lied over identiteit en zelfbeeld: wie zie ik in de spiegel en
 uitgave: ep
 volgorde: 2
 duur: "4:09"
+kaartregel: "Over identiteit en zelfbeeld."
 cover:
   src: /covers/spiegel.webp
   alt: "Spiegel"
