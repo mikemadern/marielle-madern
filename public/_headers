@@ -14,3 +14,10 @@
 # Afbeeldingen hebben geen hash in de naam, dus een week
 /afbeeldingen/*
   Cache-Control: public, max-age=604800
+
+# Het testadres en de preview-adressen op workers.dev blijven uit zoekmachines. De regel raakt alleen hostnamen
+# die eindigen op workers.dev met twee labels ervoor (bijvoorbeeld mariellemadern.account.workers.dev of
+# <versie>-mariellemadern.account.workers.dev). Het eigen domein mariellemadern.nl valt er niet onder.
+# Bron: Cloudflare Workers, static assets, Headers ("Prevent your workers.dev URLs showing in search results").
+https://:version.:subdomain.workers.dev/*
+  X-Robots-Tag: noindex
