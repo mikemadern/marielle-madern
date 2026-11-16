@@ -169,6 +169,7 @@ const kanalen = [
 .voet__onder {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
   gap: 0.5rem 2rem;
   margin-block-start: 3rem;
@@ -180,6 +181,10 @@ const kanalen = [
 }
 
 .voet__onder a {
+  /* Klikvlak minstens 1,5rem hoog (24 px), anders is de link te klein om te raken */
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 1.5rem;
   color: var(--kleur-terracotta-diep);
 }
 </style>
