@@ -1,0 +1,1 @@
+Proefbestand voor de workflow Preview bot-PR (issue #12). Deze PR wordt niet gemerged.
