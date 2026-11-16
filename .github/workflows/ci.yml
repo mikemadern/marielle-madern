@@ -22,9 +22,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # De pnpm-versie komt uit "packageManager" in package.json. Hier geen versie
+      # opgeven: de action geeft een fout als de versie op twee plaatsen staat.
       - uses: pnpm/action-setup@v6
-        with:
-          version: 12
 
       - uses: actions/setup-node@v7
         with:
