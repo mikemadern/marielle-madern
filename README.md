@@ -17,12 +17,14 @@ pnpm install
 | `pnpm dev`        | Ontwikkelserver op http://localhost:3000                                                          |
 | `pnpm generate`   | Bouwt de hele site naar `.output/public`                                                          |
 | `pnpm preview`    | Draait het resultaat van `pnpm generate` lokaal in de Cloudflare-omgeving (http://localhost:8787) |
-| `pnpm deploy`     | Bouwt en rolt uit naar Cloudflare (eerst `pnpm exec wrangler login`)                              |
+| `pnpm run deploy` | Bouwt en rolt uit naar Cloudflare (eerst `pnpm exec wrangler login`)                              |
 | `pnpm controle`   | Controleert alle inhoud in `content/` (draait ook bij `pnpm generate`)                            |
 | `pnpm lettertype` | Maakt de WOFF2-subset van Atlantis opnieuw (vraagt het bron-TTF als argument)                     |
 | `pnpm lint`       | Controleert de code, inclusief toegankelijkheidsregels voor templates                             |
 | `pnpm format`     | Zet de code in de afgesproken opmaak                                                              |
 | `pnpm typecheck`  | Controleert de types                                                                              |
+
+Let op: gebruik `pnpm run deploy`. Zonder `run` start pnpm zijn eigen, ingebouwde commando `deploy` (voor workspaces) en niet ons script.
 
 ## Indeling
 
@@ -50,6 +52,16 @@ pnpm generate && pnpm preview
 ```
 
 De site staat dan op http://localhost:8787 (bij `wrangler dev --port 8799` op 8799). Het handschrift boven de kop bekijk je met `?handschrift=boven` achter het adres.
+
+## Werken met branches en uitrollen
+
+Vanaf 2026-11-16 gaat elke wijziging via een branch en een pull request (PR) op GitHub. Zodra de repository in Cloudflare is gekoppeld (Workers Builds), bouwt en rolt Cloudflare automatisch uit:
+
+- Een branch of PR krijgt een eigen preview-adres, in de vorm `<naam>-mariellemadern.mmadern.workers.dev`. Dit adres is publiek.
+- Een samenvoeging in `main` rolt uit naar https://mariellemadern.mmadern.workers.dev, en na de livegang naar mariellemadern.nl.
+- Handmatig uitrollen kan nog steeds met `pnpm run deploy`.
+
+Instellingen in Cloudflare: branch `main`, bouwcommando `pnpm run build`, deploycommando `npx wrangler deploy`. De pnpm-versie staat vast in `package.json` (`packageManager`) en de Node-versie in `.node-version`, zodat Cloudflare hetzelfde gebruikt als wij.
 
 ## Een nummer toevoegen
 
