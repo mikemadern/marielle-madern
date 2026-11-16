@@ -1,0 +1,31 @@
+version: 2
+
+updates:
+  # npm-packages via pnpm (Nuxt, Vue, ...); Dependabot werkt pnpm-lock.yaml bij
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Amsterdam
+    open-pull-requests-limit: 5
+    groups:
+      # Minor- en patch-updates in één PR; major-updates komen los binnen.
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  # Actions in .github/workflows
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Amsterdam
+    groups:
+      # Net als bij npm: minor en patch gebundeld, major-updates komen los binnen.
+      actions:
+        patterns: ["*"]
+        update-types: [minor, patch]
