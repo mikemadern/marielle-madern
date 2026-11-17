@@ -4,10 +4,10 @@ Korte afspraken, zodat `main` altijd werkend en overzichtelijk blijft.
 
 ## Werkwijze
 
-1. **Issue** — begin met een [issue](https://github.com/mikemadern/marielle-madern/issues/new/choose) (fout of wijziging) en geef het een **milestone**.
-2. **Branch** — maak een branch vanaf `main`, bijvoorbeeld `fix/korte-omschrijving` of `feature/korte-omschrijving`. Direct pushen naar `main` kan niet.
-3. **Pull request** — open een PR naar `main` en zet `Closes #<nummer>` in de beschrijving. Volg de checklist in het PR-template.
-4. **Merge** — zodra de checks groen zijn en de PR is goedgekeurd. Alleen *rebase-merge* is ingesteld, en de branch wordt daarna automatisch verwijderd.
+1. **Issue**: begin met een [issue](https://github.com/mikemadern/marielle-madern/issues/new/choose) (fout of wijziging) en geef het een **milestone**.
+2. **Branch**: maak een branch vanaf `main`, bijvoorbeeld `fix/korte-omschrijving` of `feature/korte-omschrijving`. Direct pushen naar `main` kan niet.
+3. **Pull request**: open een PR naar `main` en zet `Closes #<nummer>` in de beschrijving. Volg de checklist in het PR-template.
+4. **Merge**: zodra de checks groen zijn en de PR is goedgekeurd. Alleen *rebase-merge* is ingesteld, en de branch wordt daarna automatisch verwijderd.
 
 Een merge in `main` rolt de site automatisch uit naar de proefsite, via Workers Builds in Cloudflare (na de livegang naar mariellemadern.nl). Een PR vanaf een branch in deze repo krijgt van Cloudflare een eigen preview-adres. Een PR vanaf de fork van het bot-account krijgt die via de workflow *Preview bot-PR*: het adres staat in een reactie op de PR. Handmatig uitrollen kan met `pnpm run deploy` (zonder `run` start pnpm zijn eigen, ingebouwde commando), zie het [`README.md`](README.md).
 
