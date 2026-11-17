@@ -66,6 +66,18 @@ for (const pad of bestandenIn('paginas', '.md')) {
   }
 }
 
+// De nummers van de EP staan in content/uitgaven; een nummer met uitgave: ep moet daar staan, anders
+// verdwijnt het van Over de muziek
+const epNummers = new Set()
+for (const pad of bestandenIn('uitgaven', '.yml')) {
+  try {
+    for (const slug of parse(readFileSync(join(wortel, pad), 'utf-8'))?.nummers ?? [])
+      epNummers.add(slug)
+  } catch {
+    // een fout in het bestand zelf meldt de controle van de uitgaven hieronder
+  }
+}
+
 // Nummers
 const nummers = []
 const uitgaveVan = {}
@@ -75,6 +87,8 @@ for (const pad of bestandenIn('nummers', '.md')) {
   const slug = basename(pad, '.md')
   nummers.push(slug)
   uitgaveVan[slug] = d.uitgave
+  if (d.uitgave === 'ep' && !epNummers.has(slug))
+    fout(pad, 'uitgave is ep, maar het nummer staat niet in content/uitgaven')
   tekst(pad, d, 'title')
   tekst(pad, d, 'description', { min: 70, max: 160 })
   if (!['ep', 'single'].includes(d.uitgave)) fout(pad, 'uitgave moet ep of single zijn')
@@ -151,7 +165,6 @@ for (const veld of ['epKnop', 'contactKnop'])
   if (!home[veld]?.tekst || !home[veld]?.link) fout(homePad, `${veld} heeft tekst en link nodig`)
 
 // Uitgaven
-const epNummers = new Set()
 for (const pad of bestandenIn('uitgaven', '.yml')) {
   let d = {}
   try {
@@ -167,7 +180,6 @@ for (const pad of bestandenIn('uitgaven', '.yml')) {
         pad,
         `nummer ${slug} staat bij de EP, maar heeft in zijn eigen bestand uitgave: ${uitgaveVan[slug]}`,
       )
-    epNummers.add(slug)
   }
   if (typeof d.cdPrijs !== 'number' || typeof d.verzendkosten !== 'number')
     fout(pad, 'cdPrijs en verzendkosten moeten getallen zijn')
@@ -197,14 +209,6 @@ function zoekEmDash(map) {
   }
 }
 for (const map of ['app', 'content', 'public']) if (existsSync(join(wortel, map))) zoekEmDash(map)
-
-// Een nummer met uitgave: ep moet in de gegevens van de EP staan, anders verdwijnt het van Over de muziek
-for (const slug of nummers)
-  if (uitgaveVan[slug] === 'ep' && !epNummers.has(slug))
-    fout(
-      `content/nummers/${slug}.md`,
-      'uitgave is ep, maar het nummer staat niet in content/uitgaven',
-    )
 
 if (fouten.length) {
   console.error(`Content: ${fouten.length} fout(en)\n` + fouten.map((f) => `  - ${f}`).join('\n'))
