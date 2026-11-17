@@ -15,6 +15,8 @@ Eindelijk is het zover, mijn EP ‘U ziet mij’ is beschikbaar! Wil je een exem
 
 Je betaalt **€ 11,95** voor de CD (€ 7,95) en de inpak- en verzendkosten (€ 4,–). Met het bestellen help je mee nieuwe muziek te ontwikkelen.
 
+Bestel je meer dan één cd? Dan reken ik voor elke extra cd € 7,95, en de verzending van € 4,00 betaal je maar één keer.
+
 Zo bestel je: stuur een e-mail naar [hallo@mariellemadern.nl](mailto:hallo@mariellemadern.nl) met je naam, je adres (straat, huisnummer, postcode en plaats) en het aantal CD’s. Je ontvangt dan een betaalverzoek. Zodra je betaling binnen is, verstuur ik je CD.
 
-Wil je een btw-factuur ontvangen? Of meer dan één CD bestellen? Zet dat in je e-mail, dan laat ik je weten wat het kost.
+Wil je een btw-factuur ontvangen? Zet dat dan in je e-mail.
