@@ -1,3 +1,18 @@
 allowBuilds:
   esbuild: true
   workerd: true
+
+# Beveiligingsfixes voor indirecte afhankelijkheden die hun afnemers (nog) niet zelf meenemen.
+# Elke regel raakt alleen de kwetsbare versies uit de melding. Weghalen zodra de afnemers zelf
+# een veilige versie vragen (controleer met `pnpm why <pakket>`).
+minimumReleaseAgeExclude:
+  - minimatch@11.0.9
+
+overrides:
+  # GHSA-mrhx-c7xc-m3w5 (hoog), via @nuxt/content, dat nog zod 3 vraagt. @nuxt/content kan met
+  # zod 4 overweg: het herkent zod 4 en gebruikt dan zijn eigen zod 4-route.
+  'zod@<4.6.6': ^4.6.7
+  # GHSA-3g3m-2fjr-6pw4 (gemiddeld), via @vercel/nft (nitropack)
+  'glob@>=9.0.0 <14.0.2': ^14.0.6
+  # GHSA-g3hv-75wg-m249 (gemiddeld), via eslint, @nuxt/content en glob
+  'minimatch@>=7.0.0 <11.0.1': ^11.0.9
