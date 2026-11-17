@@ -1,7 +1,7 @@
 // Controleert alle bestanden in content/ op ontbrekende of verkeerde velden.
 // Nuxt Content doet dat zelf niet streng: een fout in het kopblok geeft anders stilletjes een kapotte pagina.
 // Draait bij elke bouw (pnpm generate). Zie documenten/inhoud/contentmodel.md.
-import { existsSync, readdirSync, readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parse } from 'yaml'
@@ -161,6 +161,31 @@ for (const pad of bestandenIn('uitgaven', '.yml')) {
   if (typeof d.cdPrijs !== 'number' || typeof d.verzendkosten !== 'number')
     fout(pad, 'cdPrijs en verzendkosten moeten getallen zijn')
 }
+
+// Geen lang gedachtestreepje (em dash) in de tekst van de site: niet het teken zelf, niet &mdash;,
+// &#8212; of &#x2014; en niet als \u2014. Gebruik een komma, punt, dubbele punt of haakjes, en
+// ' | ' tussen delen van een titel. Het korte streepje (en dash) en het koppelteken mogen wel.
+const EM_DASH = /\u2014|&mdash;|&#8212;|&#x2014;|\\u2014/i
+const TEKST_BESTAND =
+  /\.(md|vue|ts|mjs|js|json|ya?ml|svg|txt|html|css|xml)$|(^|\/)_(headers|redirects)$/
+function zoekEmDash(map) {
+  for (const naam of readdirSync(join(wortel, map))) {
+    const pad = `${map}/${naam}`
+    if (statSync(join(wortel, pad)).isDirectory()) zoekEmDash(pad)
+    else if (TEKST_BESTAND.test(pad)) {
+      readFileSync(join(wortel, pad), 'utf-8')
+        .split('\n')
+        .forEach((regel, i) => {
+          if (EM_DASH.test(regel))
+            fout(
+              `${pad}:${i + 1}`,
+              'lang gedachtestreepje (em dash), gebruik een komma, punt, dubbele punt of haakjes',
+            )
+        })
+    }
+  }
+}
+for (const map of ['app', 'content', 'public']) if (existsSync(join(wortel, map))) zoekEmDash(map)
 
 if (fouten.length) {
   console.error(`Content: ${fouten.length} fout(en)\n` + fouten.map((f) => `  - ${f}`).join('\n'))
