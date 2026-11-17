@@ -10,7 +10,7 @@ epRegel: "Zes nummers en twee instrumentale versies."
 epKnop:
   tekst: "Bestel de EP"
   link: "/bestel-de-ep/"
-singlesAccent: "Het verhaal achter mijn singles"
+singlesAccent: "Mijn singles"
 singlesKop: "Waarom elk nummer zo bijzonder is"
 singlesRegel: "De verhalen achter mijn singles: Voor nu en voor altijd, Hart van glas en Kijk eens waar je nu staat."
 ---
