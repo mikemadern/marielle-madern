@@ -47,9 +47,6 @@ const bron = (pad, src, veld) => {
   if (!gevonden) fout(pad, `${veld}: bronafbeelding ${src} staat niet in app/bronafbeeldingen`)
 }
 
-// Welke nummers bestaan (voor de lijsten in pagina's en homepage)
-const bestaandeNummers = bestandenIn('nummers', '.md').map((f) => basename(f, '.md'))
-
 // Pagina's
 for (const pad of bestandenIn('paginas', '.md')) {
   const { data: d } = kopblok(pad)
@@ -61,17 +58,23 @@ for (const pad of bestandenIn('paginas', '.md')) {
   tekst(pad, d, 'accent')
   tekst(pad, d, 'kop', { verplicht: false })
   tekst(pad, d, 'bannerTitel', { verplicht: false })
-  for (const slug of d.nummerlijst ?? [])
-    if (!bestaandeNummers.includes(slug)) fout(pad, `nummerlijst: nummer ${slug} bestaat niet`)
+  // Over de muziek: de teksten van het EP-deel en het singles-deel
+  if (basename(pad, '.md') === 'over-de-muziek') {
+    for (const veld of ['epAccent', 'epRegel', 'singlesAccent', 'singlesKop', 'singlesRegel'])
+      tekst(pad, d, veld)
+    if (!d.epKnop?.tekst || !d.epKnop?.link) fout(pad, 'epKnop heeft tekst en link nodig')
+  }
 }
 
 // Nummers
 const nummers = []
+const uitgaveVan = {}
 const gebruikt = new Set()
 for (const pad of bestandenIn('nummers', '.md')) {
   const { data: d, body } = kopblok(pad)
   const slug = basename(pad, '.md')
   nummers.push(slug)
+  uitgaveVan[slug] = d.uitgave
   tekst(pad, d, 'title')
   tekst(pad, d, 'description', { min: 70, max: 160 })
   if (!['ep', 'single'].includes(d.uitgave)) fout(pad, 'uitgave moet ep of single zijn')
@@ -148,6 +151,7 @@ for (const veld of ['epKnop', 'contactKnop'])
   if (!home[veld]?.tekst || !home[veld]?.link) fout(homePad, `${veld} heeft tekst en link nodig`)
 
 // Uitgaven
+const epNummers = new Set()
 for (const pad of bestandenIn('uitgaven', '.yml')) {
   let d = {}
   try {
@@ -156,8 +160,15 @@ for (const pad of bestandenIn('uitgaven', '.yml')) {
     fout(pad, `geen geldige YAML (${e.message.split('\n')[0]})`)
   }
   bron(pad, d.cover, 'cover')
-  for (const slug of d.nummers ?? [])
+  for (const slug of d.nummers ?? []) {
     if (!nummers.includes(slug)) fout(pad, `nummer ${slug} bestaat niet`)
+    else if (uitgaveVan[slug] !== 'ep')
+      fout(
+        pad,
+        `nummer ${slug} staat bij de EP, maar heeft in zijn eigen bestand uitgave: ${uitgaveVan[slug]}`,
+      )
+    epNummers.add(slug)
+  }
   if (typeof d.cdPrijs !== 'number' || typeof d.verzendkosten !== 'number')
     fout(pad, 'cdPrijs en verzendkosten moeten getallen zijn')
 }
@@ -186,6 +197,14 @@ function zoekEmDash(map) {
   }
 }
 for (const map of ['app', 'content', 'public']) if (existsSync(join(wortel, map))) zoekEmDash(map)
+
+// Een nummer met uitgave: ep moet in de gegevens van de EP staan, anders verdwijnt het van Over de muziek
+for (const slug of nummers)
+  if (uitgaveVan[slug] === 'ep' && !epNummers.has(slug))
+    fout(
+      `content/nummers/${slug}.md`,
+      'uitgave is ep, maar het nummer staat niet in content/uitgaven',
+    )
 
 if (fouten.length) {
   console.error(`Content: ${fouten.length} fout(en)\n` + fouten.map((f) => `  - ${f}`).join('\n'))

@@ -26,8 +26,14 @@ export default defineContentConfig({
         accent: z.string(),
         kop: z.string().optional(),
         accentKleur: z.enum(['goud', 'terracotta']).optional(),
-        // Volgorde van de nummers op Over de muziek (bestandsnamen)
-        nummerlijst: z.array(z.string()).optional(),
+        // Over de muziek: het EP-deel (kop en nummers komen uit uitgaven/*.yml) en het singles-deel
+        // (de nummers met uitgave: single, op volgorde, de nieuwste eerst)
+        epAccent: z.string().optional(),
+        epRegel: z.string().optional(),
+        epKnop: knop.optional(),
+        singlesAccent: z.string().optional(),
+        singlesKop: z.string().optional(),
+        singlesRegel: z.string().optional(),
         // Tekst midden op de pagina in plaats van links
         midden: z.boolean().optional(),
         knop: knop.optional(),
