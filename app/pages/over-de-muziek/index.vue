@@ -3,19 +3,30 @@ const { data: pagina } = await useAsyncData('pagina-over-de-muziek', () =>
   queryCollection('paginas').path('/over-de-muziek').first(),
 )
 const { data: nummers } = await useAsyncData('nummers-overzicht', () =>
-  queryCollection('nummers').select('path', 'title', 'cover').all(),
+  queryCollection('nummers').select('path', 'title', 'cover', 'uitgave', 'volgorde').all(),
+)
+// De EP: titel en de zes nummers in de volgorde van de cd staan in content/uitgaven
+const { data: uitgave } = await useAsyncData('uitgave-overzicht', () =>
+  queryCollection('uitgaven').first(),
 )
 
 if (!pagina.value) {
   throw createError({ statusCode: 404, statusMessage: 'Pagina niet gevonden', fatal: true })
 }
 
-// Volgorde van de covers staat in content/paginas/over-de-muziek.md
-const lijst = computed(() =>
-  (pagina.value?.nummerlijst ?? []).flatMap((slug) => {
+// De covers van de EP, in de volgorde van de cd
+const epNummers = computed(() =>
+  (uitgave.value?.nummers ?? []).flatMap((slug) => {
     const n = (nummers.value ?? []).find((x) => x.path.endsWith(`/${slug}`))
     return n ? [n] : []
   }),
+)
+
+// De singles: alle nummers met uitgave: single, de nieuwste (hoogste volgorde) eerst
+const singles = computed(() =>
+  (nummers.value ?? [])
+    .filter((n) => n.uitgave === 'single')
+    .sort((a, b) => b.volgorde - a.volgorde),
 )
 
 useSeoMeta({
@@ -37,11 +48,40 @@ useSeoMeta({
       </div>
     </div>
 
-    <div class="sectie sectie--eind">
+    <section class="sectie" aria-labelledby="ep-kop">
       <div class="kolom">
-        <KopBlok accent="Het verhaal achter mijn singles" kop="Waarom elk nummer zo bijzonder is" />
+        <KopBlok :accent="pagina.epAccent ?? ''" :kop="uitgave?.title" kop-id="ep-kop" normaal />
+        <p v-if="pagina.epRegel">{{ pagina.epRegel }}</p>
         <ul class="covers">
-          <li v-for="nummer in lijst" :key="nummer.path">
+          <li v-for="nummer in epNummers" :key="nummer.path">
+            <NuxtLink :to="`${nummer.path}/`" :aria-label="nummer.title">
+              <NuxtImg
+                :src="nummer.cover.src"
+                alt=""
+                width="300"
+                height="300"
+                densities="x1 x2"
+                loading="lazy"
+              />
+            </NuxtLink>
+          </li>
+        </ul>
+        <p v-if="pagina.epKnop" class="ep__knop">
+          <NuxtLink class="knop" :to="pagina.epKnop.link">{{ pagina.epKnop.tekst }}</NuxtLink>
+        </p>
+      </div>
+    </section>
+
+    <section class="sectie sectie--eind" aria-labelledby="singles-kop">
+      <div class="kolom">
+        <KopBlok
+          :accent="pagina.singlesAccent ?? ''"
+          :kop="pagina.singlesKop"
+          kop-id="singles-kop"
+        />
+        <p v-if="pagina.singlesRegel">{{ pagina.singlesRegel }}</p>
+        <ul class="covers">
+          <li v-for="nummer in singles" :key="nummer.path">
             <NuxtLink :to="`${nummer.path}/`" :aria-label="nummer.title">
               <NuxtImg
                 :src="nummer.cover.src"
@@ -55,7 +95,7 @@ useSeoMeta({
           </li>
         </ul>
       </div>
-    </div>
+    </section>
   </article>
 </template>
 
@@ -67,6 +107,10 @@ useSeoMeta({
   margin: 1.25rem 0 0;
   padding: 0;
   list-style: none;
+}
+
+.ep__knop {
+  margin: 2rem 0 0;
 }
 
 .covers a {
