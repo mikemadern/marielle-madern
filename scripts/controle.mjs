@@ -164,6 +164,18 @@ if (typeof home.epPrijs === 'string' && !home.epPrijs.includes('{prijs}'))
 for (const veld of ['epKnop', 'contactKnop'])
   if (!home[veld]?.tekst || !home[veld]?.link) fout(homePad, `${veld} heeft tekst en link nodig`)
 
+// Toegestane lijst voor de deelafbeeldingen: elk genoemd nummer moet bestaan
+const deelPad = 'app/data/deelafbeeldingen.json'
+try {
+  const deel = JSON.parse(readFileSync(join(wortel, deelPad), 'utf-8'))
+  if (!Array.isArray(deel.hoezen)) fout(deelPad, 'hoezen moet een lijst zijn')
+  for (const slug of deel.hoezen ?? [])
+    if (!nummers.includes(slug)) fout(deelPad, `hoezen: nummer ${slug} bestaat niet`)
+  if (typeof deel.epHoes !== 'boolean') fout(deelPad, 'epHoes moet true of false zijn')
+} catch (e) {
+  fout(deelPad, `ontbreekt of is geen geldige JSON (${e.message.split('\n')[0]})`)
+}
+
 // Uitgaven
 for (const pad of bestandenIn('uitgaven', '.yml')) {
   let d = {}

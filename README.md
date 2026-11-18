@@ -41,6 +41,8 @@ public/               bestanden die ongewijzigd worden uitgerold
   _redirects          redirects van de oude WordPress-site
   afbeeldingen/       wordt gemaakt door pnpm afbeeldingen (niet in git)
 scripts/afbeeldingen.mjs   maakt de WebP-formaten van app/bronafbeeldingen
+scripts/deelafbeeldingen.mjs  maakt de deelafbeeldingen (og:image, 1200 x 630) in public/afbeeldingen/og; welke hoezen erop mogen staat in app/data/deelafbeeldingen.json
+scripts/controle-uitvoer.mjs  controleert de gebouwde pagina's (canonical, og- en twitter-tags, deelafbeeldingen, hero-poster), draait aan het eind van pnpm generate
 content.config.ts     de velden van nummers en pagina's
 wrangler.jsonc        Cloudflare-instellingen
 ```

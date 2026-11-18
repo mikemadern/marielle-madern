@@ -14,6 +14,7 @@ useSeoMeta({
   title: `${nummer.value.title}: liedtekst - Mariëlle Madern`,
   description: nummer.value.description,
 })
+useNummerDeelafbeelding(slug, nummer.value.title)
 
 // Alinea's zijn gescheiden door een lege regel. Een alinea die met “ begint is een citaat.
 const alineas = (tekst: string | undefined) => (tekst ?? '').trim().split(/\n\s*\n/)
