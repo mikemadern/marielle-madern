@@ -56,7 +56,7 @@ if (onbekend.length) {
   process.exit(1)
 }
 
-function titelElement(item, grootte, extra = {}) {
+function titelElement(item, grootte, extra = {}, wrap = 'wrap') {
   return el(
     'div',
     {
@@ -69,22 +69,42 @@ function titelElement(item, grootte, extra = {}) {
       textAlign: 'center',
       justifyContent: 'center',
       maxWidth: 512,
-      textWrap: 'balance',
+      textWrap: wrap,
       ...extra,
     },
     { children: item.titel },
   )
 }
 
-// Het aantal regels van de titel meten: satori zonder ingebed lettertype zet elke regel als eigen <text>
-async function telRegels(item, grootte) {
-  const svg = await satori(el('div', { width: 512 }, { children: titelElement(item, grootte) }), {
-    width: 512,
-    height: 400,
-    fonts,
-    embedFont: false,
-  })
-  return new Set([...svg.matchAll(/<text[^>]* y="([\d.]+)"/g)].map((m) => m[1])).size
+// De titel meten: satori zonder ingebed lettertype zet elk woord als eigen <text> met x, y en breedte. Daaruit
+// komen het aantal regels, de uiterste randen en hoe ver het midden van de regels van het midden van de kolom
+// ligt. De kolom is 512 breed (600 paneel min 2 x 44) en ligt precies in de vierkante uitsnede (x 344 tot 856).
+const KOLOM = 512
+async function meetTitel(item, grootte, extra, wrap) {
+  const tree = el(
+    'div',
+    { width: KOLOM, alignItems: 'center', flexDirection: 'column' },
+    {
+      children: titelElement(item, grootte, extra, wrap),
+    },
+  )
+  const svg = await satori(tree, { width: KOLOM, height: 400, fonts, embedFont: false })
+  const regels = new Map()
+  for (const [, attrs, inhoud] of svg.matchAll(/<text([^>]*)>([^<]*)<\/text>/g)) {
+    if (!inhoud.trim()) continue
+    const num = (naam) => Number(attrs.match(new RegExp(`\\s${naam}="([\\d.]+)"`))[1])
+    const lijn = regels.get(num('y')) ?? { min: Infinity, max: -Infinity }
+    lijn.min = Math.min(lijn.min, num('x'))
+    lijn.max = Math.max(lijn.max, num('x') + num('width'))
+    regels.set(num('y'), lijn)
+  }
+  const lijnen = [...regels.values()]
+  const afwijking = Math.max(...lijnen.map((l) => Math.abs((l.min + l.max) / 2 - KOLOM / 2)))
+  return {
+    regels: lijnen.length,
+    breedte: Math.round(Math.max(...lijnen.map((l) => l.max - l.min))),
+    afwijking: Math.round(afwijking * 10) / 10,
+  }
 }
 
 async function hoesUri(pad) {
@@ -92,18 +112,23 @@ async function hoesUri(pad) {
   return 'data:image/png;base64,' + buffer.toString('base64')
 }
 
-async function boom(item) {
-  let grootte
+// Grootte en marges van de titel per variant (Designer, design/deelafbeeldingen.md, punt 3 en 4)
+function titelStijl(item) {
+  if (item.variant === 'home') return { grootte: 36, extra: { lineHeight: 1.25, marginTop: 4 } }
+  if (item.variant === 'hoes')
+    return { grootte: titelGrootte(item.titel.length, 'hoes'), extra: { marginTop: 22 } }
+  return { grootte: titelGrootte(item.titel.length, 'pagina'), extra: {} }
+}
+
+async function boom(item, stijl, wrap) {
   let inhoud
   if (item.variant === 'home') {
     inhoud = [
       img(logo, 440, 114),
       img(blad, 170, 52, { marginTop: 22, marginBottom: 14 }),
-      // De regel van de home breekt gewoon op de breedte (geen balans): 'Oprechte en authentieke' / 'aanbidding'
-      titelElement(item, 36, { lineHeight: 1.25, marginTop: 4, textWrap: 'wrap' }),
+      titelElement(item, stijl.grootte, stijl.extra, wrap),
     ]
   } else if (item.variant === 'hoes') {
-    grootte = titelGrootte(item.titel.length, 'hoes')
     inhoud = [
       el(
         'div',
@@ -116,15 +141,14 @@ async function boom(item) {
         },
         { children: img(await hoesUri(item.hoes), 248, 248, { borderRadius: 13 }) },
       ),
-      titelElement(item, grootte, { marginTop: 22 }),
+      titelElement(item, stijl.grootte, stijl.extra, wrap),
       img(logo, 190, 49, { marginTop: 18 }),
     ]
   } else {
-    grootte = titelGrootte(item.titel.length, 'pagina')
     inhoud = [
       img(logo, 300, 78),
       img(blad, 170, 52, { marginTop: 22, marginBottom: 14 }),
-      titelElement(item, grootte),
+      titelElement(item, stijl.grootte, stijl.extra, wrap),
     ]
   }
   const tree = el(
@@ -166,7 +190,7 @@ async function boom(item) {
       ],
     },
   )
-  return { tree, grootte }
+  return tree
 }
 
 mkdirSync(OUT_DIR, { recursive: true })
@@ -175,17 +199,29 @@ const fouten = []
 
 for (const item of items) {
   if (only.length && !only.includes(item.key)) continue
-  const { tree, grootte } = await boom(item)
-  let regels = 1
-  if (grootte) {
-    regels = await telRegels(item, grootte)
-    if (regels > 2) {
-      fouten.push(
-        `${item.key}: de titel "${item.titel}" is ${regels} regels op ${grootte} px; hoogstens 2 (kort de titel in of overleg met de Designer)`,
-      )
-      continue
-    }
+  const stijl = titelStijl(item)
+  // Eerst gewoon afbreken. Past de titel niet op één regel, dan evenwichtig afbreken over twee regels
+  // (textWrap: balance); bij één woord op één regel zet satori dat met balance niet in het midden. De regel
+  // van de home breekt altijd gewoon op de breedte ('Oprechte en authentieke' / 'aanbidding').
+  let wrap = 'wrap'
+  let meting = await meetTitel(item, stijl.grootte, {}, wrap)
+  if (meting.regels > 1 && item.variant !== 'home') {
+    wrap = 'balance'
+    meting = await meetTitel(item, stijl.grootte, {}, wrap)
   }
+  const probleem =
+    meting.regels > 2
+      ? `de titel "${item.titel}" is ${meting.regels} regels op ${stijl.grootte} px; hoogstens 2 (kort de titel in of overleg met de Designer)`
+      : meting.breedte > KOLOM
+        ? `de titel "${item.titel}" is ${meting.breedte} px breed, de kolom is ${KOLOM} (de vierkante uitsnede loopt van x 344 tot 856)`
+        : meting.afwijking > 2
+          ? `de titel "${item.titel}" staat ${meting.afwijking} px naast het midden`
+          : null
+  if (probleem) {
+    fouten.push(`${item.key}: ${probleem}`)
+    continue
+  }
+  const tree = await boom(item, stijl, wrap)
   const svg = await satori(tree, { width: WIDTH, height: HEIGHT, fonts })
   const jpg = await sharp(Buffer.from(svg))
     .jpeg({ quality: 82, mozjpeg: true, progressive: true })
@@ -200,7 +236,9 @@ for (const item of items) {
     titel: item.titel,
     kleur: item.kleur,
     hoes: item.hoes !== null,
-    regels,
+    regels: meting.regels,
+    titelBreedte: meting.breedte,
+    titelAfwijking: meting.afwijking,
     breedte: WIDTH,
     hoogte: HEIGHT,
     bytes: jpg.length,

@@ -60,6 +60,11 @@ for (const item of items) {
     )
   if (regel && regel.regels > 2)
     fouten.push(`${naam}: de titel staat op ${regel.regels} regels, hoogstens 2`)
+  // De titel staat in het midden van het paneel en binnen de kolom (en dus binnen de vierkante uitsnede, x 344 tot 856)
+  if (regel && !(regel.titelBreedte <= 512))
+    fouten.push(`${naam}: de titel is ${regel.titelBreedte} px breed, hoogstens 512`)
+  if (regel && !(regel.titelAfwijking <= 2))
+    fouten.push(`${naam}: de titel staat ${regel.titelAfwijking} px naast het midden, hoogstens 2`)
 }
 
 const namen = new Set(items.map((item) => item.key))

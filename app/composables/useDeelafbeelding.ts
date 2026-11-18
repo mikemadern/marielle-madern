@@ -1,6 +1,6 @@
-// Deelafbeelding van een pagina (og:image en twitter:image). De bestanden maakt scripts/deelafbeeldingen.mjs:
-// 'algemeen' (logo), 'ep' (hoes van de EP) of de bestandsnaam van een nummer. Het adres wordt vanzelf
-// absoluut (https://mariellemadern.nl/...) door site.url.
+// Deelafbeelding van een pagina (og:image en twitter:image). De afbeeldingen staan in public/afbeeldingen/og en
+// worden gemaakt door pnpm og (scripts/og): 'home', de naam van een pagina in content/paginas (over-mij, contact, bestel-de-ep)
+// of de naam van een nummer. Het adres wordt vanzelf absoluut (https://mariellemadern.nl/...) door site.url.
 import toegestaan from '../../scripts/deelafbeeldingen-toegestaan.json'
 
 export function useDeelafbeelding(naam: string, alt: string) {
@@ -37,7 +37,7 @@ export function usePaginaDeelafbeelding(pad: string, titel: string) {
   useDeelafbeelding(
     naam,
     metEpHoes
-      ? `${titel} U ziet mij van Mariëlle Madern, met de hoes`
+      ? `${titel}: U ziet mij van Mariëlle Madern, met de hoes van de EP`
       : `Mariëlle Madern: ${titel}`,
   )
 }
