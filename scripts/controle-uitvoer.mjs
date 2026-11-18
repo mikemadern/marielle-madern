@@ -32,6 +32,13 @@ function metaTags(html) {
 const meta = (tags, sleutel) =>
   tags.find((t) => t.property === sleutel || t.name === sleutel)?.content
 
+// De toegestane lijst en het manifest van de deelafbeeldingen (scripts/og, public/afbeeldingen/og)
+const toegestaan = JSON.parse(
+  readFileSync(join(wortel, 'scripts', 'deelafbeeldingen-toegestaan.json'), 'utf-8'),
+)
+const manifest = JSON.parse(
+  readFileSync(join(uitvoer, 'afbeeldingen', 'og', 'manifest.json'), 'utf-8'),
+)
 const lijst = [...paginas(uitvoer)]
 if (lijst.length < 15)
   fouten.push(`Er zijn maar ${lijst.length} pagina's gebouwd, verwacht minstens 15`)
@@ -56,6 +63,14 @@ for (const pad of lijst) {
     if (!existsSync(bestandPad)) fout(`og:image bestaat niet in de bouw: ${ogImage}`)
     else if (statSync(bestandPad).size > 150_000) fout(`${ogImage} is groter dan 150 KB`)
   }
+  // De afbeelding staat in het manifest, en de alt bevat de tekst die op de afbeelding staat
+  const naam = ogImage?.match(/\/afbeeldingen\/og\/([^/]+)\.jpg$/)?.[1]
+  if (naam) {
+    const regel = manifest[naam]
+    if (!regel) fout(`${naam}.jpg staat niet in het manifest (pnpm og)`)
+    else if (!meta(tags, 'og:image:alt')?.toLowerCase().includes(regel.titel.toLowerCase()))
+      fout(`og:image:alt bevat de tekst op de afbeelding niet: "${regel.titel}"`)
+  }
   if (meta(tags, 'twitter:image') !== ogImage) fout('twitter:image is niet gelijk aan og:image')
   if (!meta(tags, 'og:image:alt')?.trim()) fout('og:image:alt ontbreekt')
   if (!meta(tags, 'twitter:image:alt')?.trim()) fout('twitter:image:alt ontbreekt')
@@ -66,13 +81,10 @@ for (const pad of lijst) {
   if (meta(tags, 'og:locale') !== 'nl_NL')
     fout(`og:locale is ${meta(tags, 'og:locale')}, verwacht nl_NL`)
 
-  // De deelafbeelding van de homepage hoort bij het uitgelichte nummer (home.yml, veld uitgelicht); zonder dat veld het logo
+  // De homepage heeft zijn eigen afbeelding (home.jpg: logo en de regel van de home)
   if (route === '/') {
-    // content/home.yml, veld uitgelicht; zonder dat veld het logo
-    const homeYml = readFileSync(join(wortel, 'content', 'home.yml'), 'utf-8')
-    const verwacht = homeYml.match(/^uitgelicht:\s*(\S+)/m)?.[1] ?? 'algemeen'
-    if (!ogImage?.endsWith(`/afbeeldingen/og/${verwacht}.jpg`))
-      fout(`de deelafbeelding van de homepage moet ${verwacht}.jpg zijn, niet ${ogImage}`)
+    if (!ogImage?.endsWith('/afbeeldingen/og/home.jpg'))
+      fout(`de deelafbeelding van de homepage moet home.jpg zijn, niet ${ogImage}`)
     controleerHero(html, fout)
   }
 }
@@ -91,14 +103,8 @@ function controleerHero(html, fout) {
 }
 
 // Privacy: een hoes mag alleen als deelafbeelding als het nummer op de toegestane lijst staat
-const toegestaan = JSON.parse(
-  readFileSync(join(wortel, 'scripts', 'deelafbeeldingen-toegestaan.json'), 'utf-8'),
-)
-const manifest = JSON.parse(
-  readFileSync(join(uitvoer, 'afbeeldingen', 'og', 'manifest.json'), 'utf-8'),
-)
 for (const [naam, m] of Object.entries(manifest)) {
-  const mag = naam === 'ep' ? toegestaan.ep === true : toegestaan.nummers.includes(naam)
+  const mag = naam === 'bestel-de-ep' ? toegestaan.ep === true : toegestaan.nummers.includes(naam)
   if (m.hoes && !mag)
     fouten.push(
       `${naam}.jpg gebruikt een hoes die niet op de toegestane lijst staat (scripts/deelafbeeldingen-toegestaan.json)`,

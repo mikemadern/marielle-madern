@@ -5,9 +5,9 @@
   "packageManager": "pnpm@12.16.1",
   "scripts": {
     "afbeeldingen": "node scripts/afbeeldingen.mjs",
-    "dev": "pnpm afbeeldingen && pnpm deelafbeeldingen && pnpm bladmuziek && nuxt dev",
+    "dev": "pnpm afbeeldingen && pnpm bladmuziek && nuxt dev",
     "build": "pnpm generate",
-    "generate": "pnpm controle && pnpm afbeeldingen && pnpm deelafbeeldingen && pnpm bladmuziek && pnpm test:worker && nuxt generate && pnpm controle:uitvoer",
+    "generate": "pnpm controle && pnpm afbeeldingen && pnpm bladmuziek && pnpm test:worker && pnpm og:check && nuxt generate && pnpm controle:uitvoer",
     "preview": "wrangler dev",
     "deploy": "pnpm generate && wrangler deploy",
     "lint": "eslint .",
@@ -16,7 +16,8 @@
     "postinstall": "nuxt prepare",
     "controle": "node scripts/controle.mjs",
     "controle:uitvoer": "node scripts/controle-uitvoer.mjs",
-    "deelafbeeldingen": "node scripts/deelafbeeldingen.mjs",
+    "og": "node scripts/og/maak.mjs",
+    "og:check": "node scripts/og/check.mjs",
     "bladmuziek": "node scripts/bladmuziek-lijst.mjs",
     "test:worker": "node --test worker/*.test.mjs",
     "lettertype": "node scripts/lettertype.mjs"
@@ -31,12 +32,14 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@fontsource/mukta": "5.3.0",
     "@nuxt/eslint": "^1.17.0",
     "axe-core": "^4.14.0",
     "eslint": "^10.14.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-vuejs-accessibility": "^2.6.3",
     "prettier": "^3.10.1",
+    "satori": "0.47.1",
     "sharp": "^0.35.5",
     "subset-font": "^2.9.0",
     "typescript": "~6.0.3",

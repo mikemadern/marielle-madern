@@ -33,7 +33,7 @@ useSeoMeta({
   title: pagina.value.seoTitel ?? pagina.value.title,
   description: pagina.value.description,
 })
-useDeelafbeelding('algemeen', 'Logo van Mariëlle Madern')
+useDeelafbeelding('over-de-muziek', 'Over de muziek van Mariëlle Madern')
 </script>
 
 <template>
