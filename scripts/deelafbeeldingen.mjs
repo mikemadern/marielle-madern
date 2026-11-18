@@ -1,6 +1,6 @@
 // Maakt per pagina een deelafbeelding (og:image en twitter:image) van 1200 x 630 pixels, als JPEG in
 // public/afbeeldingen/og/. Voorbeeld: een nummerpagina toont de hoes op de crème achtergrond, de overige
-// pagina's het logo (en een nummer dat niet op de toegestane lijst staat, zie app/data/deelafbeeldingen.json). Er is geen lettertype nodig: de hoes heeft de titel en naam al in beeld, de titel
+// pagina's het logo. Er is geen lettertype nodig: de hoes heeft de titel en naam al in beeld, de titel
 // van de pagina staat in og:title.
 // Draait bij elke bouw (pnpm generate), na pnpm afbeeldingen. Nieuwe nummers komen vanzelf mee.
 // Waarom JPEG en niet WebP? WhatsApp, Facebook en LinkedIn tonen JPEG en PNG het betrouwbaarst.
@@ -19,10 +19,6 @@ const KWALITEIT = 82
 const MAX_BYTES = 150_000
 
 const wortel = fileURLToPath(new URL('..', import.meta.url))
-// Toegestane lijst: alleen deze hoezen komen op een deelafbeelding (besluit eigenaar), de rest krijgt het logo
-const toegestaan = JSON.parse(
-  await readFile(join(wortel, 'app', 'data', 'deelafbeeldingen.json'), 'utf-8'),
-)
 const bron = join(wortel, 'app', 'bronafbeeldingen')
 const doel = join(wortel, 'public', 'afbeeldingen', 'og')
 const logoPad = join(wortel, 'public', 'logo', 'mariellemadern-logo-donker.svg')
@@ -51,20 +47,29 @@ async function kopblok(pad) {
   return parse(m?.[1] ?? '') ?? {}
 }
 
-// Wat er gemaakt moet worden: naam van het bestand, en de bron (een hoes van de toegestane lijst, of null voor het logo)
+// Welke hoezen als deelafbeelding mogen (besluit van de eigenaar, 2026-11-18). Een nieuw nummer staat hier
+// niet op en krijgt dus het logo, tot de eigenaar akkoord geeft en het nummer op de lijst komt. De hero-poster
+// en een portret van Mariëlle worden hier nooit gebruikt.
+const toegestaanPad = join(wortel, 'scripts', 'deelafbeeldingen-toegestaan.json')
+const toegestaan = JSON.parse(await readFile(toegestaanPad, 'utf-8'))
+const zonderHoes = []
+
+// Wat er gemaakt moet worden: naam van het bestand, en de bron (een hoes, of null voor het logo)
 const lijst = [{ naam: 'algemeen', bron: null }]
 for (const f of (await readdir(join(wortel, 'content', 'nummers')))
   .filter((f) => f.endsWith('.md'))
   .sort()) {
   const d = await kopblok(join(wortel, 'content', 'nummers', f))
   const naam = f.replace(/\.md$/, '')
-  lijst.push({ naam, bron: toegestaan.hoezen.includes(naam) ? zoekBron(d.cover?.src) : null })
+  const mag = toegestaan.nummers.includes(naam)
+  if (!mag) zonderHoes.push(naam)
+  lijst.push({ naam, bron: mag ? zoekBron(d.cover?.src) : null })
 }
 for (const f of (await readdir(join(wortel, 'content', 'uitgaven'))).filter((f) =>
   f.endsWith('.yml'),
 )) {
   const d = parse(await readFile(join(wortel, 'content', 'uitgaven', f), 'utf-8')) ?? {}
-  lijst.push({ naam: 'ep', bron: toegestaan.epHoes ? zoekBron(d.cover) : null })
+  lijst.push({ naam: 'ep', bron: toegestaan.ep === true ? zoekBron(d.cover) : null })
 }
 
 const nieuwer = async (a, b) => {
@@ -86,6 +91,7 @@ for (const { naam, bron: pad } of lijst) {
   const verouderd =
     (await nieuwer(invoer, uit)) ||
     (await nieuwer(fileURLToPath(import.meta.url), uit)) ||
+    (await nieuwer(toegestaanPad, uit)) ||
     (await nieuwer(join(wortel, 'app', 'assets', 'css', 'tokens.css'), uit))
   if (verouderd) {
     const voorgrond = pad
@@ -127,3 +133,5 @@ if (fouten.length) {
   process.exit(1)
 }
 console.log(`Deelafbeeldingen: ${gemaakt} gemaakt, ${lijst.length - gemaakt} al actueel.`)
+if (zonderHoes.length)
+  console.log(`Zonder hoes (niet op de toegestane lijst, logo gebruikt): ${zonderHoes.join(', ')}`)
