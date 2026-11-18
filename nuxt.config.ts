@@ -26,7 +26,8 @@ export default defineNuxtConfig({
     name: 'Mariëlle Madern',
     description:
       'Nederlandstalige christelijke aanbiddingsmuziek van Mariëlle Madern, door oprechte en authentieke aanbidding.',
-    defaultLocale: 'nl',
+    // Met regio, zodat ook og:locale (nl_NL) wordt gezet
+    defaultLocale: 'nl-NL',
     // De huidige URL's eindigen op een slash en dat blijft zo (besluit 2026-11-05)
     trailingSlash: true,
   },

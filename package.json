@@ -5,9 +5,9 @@
   "packageManager": "pnpm@12.16.1",
   "scripts": {
     "afbeeldingen": "node scripts/afbeeldingen.mjs",
-    "dev": "pnpm afbeeldingen && nuxt dev",
+    "dev": "pnpm afbeeldingen && pnpm deelafbeeldingen && nuxt dev",
     "build": "pnpm generate",
-    "generate": "pnpm controle && pnpm afbeeldingen && nuxt generate",
+    "generate": "pnpm controle && pnpm afbeeldingen && pnpm deelafbeeldingen && nuxt generate && pnpm controle:uitvoer",
     "preview": "wrangler dev",
     "deploy": "pnpm generate && wrangler deploy",
     "lint": "eslint .",
@@ -15,6 +15,8 @@
     "typecheck": "nuxt typecheck",
     "postinstall": "nuxt prepare",
     "controle": "node scripts/controle.mjs",
+    "controle:uitvoer": "node scripts/controle-uitvoer.mjs",
+    "deelafbeeldingen": "node scripts/deelafbeeldingen.mjs",
     "lettertype": "node scripts/lettertype.mjs"
   },
   "dependencies": {
