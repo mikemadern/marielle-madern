@@ -71,16 +71,8 @@ async function kies(slug: string) {
 useHead({ title: home.value.seoTitel })
 useSeoMeta({ description: home.value.description })
 
-// De deelafbeelding van de homepage is de hoes van het uitgelichte nummer (content/home.yml, veld uitgelicht)
-const uitgelicht = (nummers.value ?? []).find((n) => n.path.endsWith(`/${home.value?.uitgelicht}`))
-if (!uitgelicht) {
-  throw createError({
-    statusCode: 500,
-    statusMessage: 'Uitgelicht nummer bestaat niet',
-    fatal: true,
-  })
-}
-useNummerDeelafbeelding(home.value.uitgelicht, uitgelicht.title)
+// De deelafbeelding van de homepage: het logo en de regel uit content/home.yml (scripts/og)
+useDeelafbeelding('home', `Mariëlle Madern: ${home.value.deelafbeeldingRegel}`)
 </script>
 
 <template>

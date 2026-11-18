@@ -24,7 +24,9 @@ logs
 !.env.example
 
 # Eigen toevoegingen
-public/afbeeldingen/
+# De WebP-formaten worden bij elke bouw gemaakt; de deelafbeeldingen (og) staan wel in git (pnpm og)
+public/afbeeldingen/*
+!public/afbeeldingen/og/
 # Gemaakt bij elke bouw door scripts/bladmuziek-lijst.mjs
 worker/bladmuziek.json
 .wrangler

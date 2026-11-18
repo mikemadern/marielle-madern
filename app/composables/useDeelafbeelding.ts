@@ -17,14 +17,27 @@ export function useDeelafbeelding(naam: string, alt: string) {
   })
 }
 
-// Een nummer: de hoes als het nummer op de toegestane lijst staat (scripts/deelafbeeldingen-toegestaan.json), anders het logo.
-// De bestandsnaam is in beide gevallen de naam van het nummer.
+// Een nummer: titel en hoes als het nummer op de toegestane lijst staat (scripts/deelafbeeldingen-toegestaan.json),
+// anders titel en logo. De bestandsnaam is de naam van het nummer. De alt bevat de tekst op de afbeelding.
 export function useNummerDeelafbeelding(slug: string, titel: string) {
   const metHoes = toegestaan.nummers.includes(slug)
-  useDeelafbeelding(slug, metHoes ? `Hoes van ${titel}` : 'Logo van Mariëlle Madern')
+  useDeelafbeelding(
+    slug,
+    metHoes
+      ? `Hoes van ${titel}, nummer van Mariëlle Madern`
+      : `${titel}, nummer van Mariëlle Madern`,
+  )
 }
 
-// Bestel de EP: de hoes van de EP als de eigenaar dat heeft toegestaan, anders het logo
-export function useEpDeelafbeelding() {
-  useDeelafbeelding('ep', toegestaan.ep ? 'Hoes van de EP U ziet mij' : 'Logo van Mariëlle Madern')
+// Een pagina uit content/paginas: de bestandsnaam is de naam van de pagina (over-mij, contact, bestel-de-ep).
+// Bestel de EP toont de hoes van de EP, als de eigenaar dat heeft toegestaan.
+export function usePaginaDeelafbeelding(pad: string, titel: string) {
+  const naam = pad.replace(/^\/|\/$/g, '')
+  const metEpHoes = naam === 'bestel-de-ep' && toegestaan.ep
+  useDeelafbeelding(
+    naam,
+    metEpHoes
+      ? `${titel} U ziet mij van Mariëlle Madern, met de hoes`
+      : `Mariëlle Madern: ${titel}`,
+  )
 }

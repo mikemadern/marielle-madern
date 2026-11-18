@@ -43,7 +43,7 @@ public/               bestanden die ongewijzigd worden uitgerold
 worker/                     de kleine Worker voor /api/* (bladmuziek per e-mail), met tests (pnpm test:worker)
 scripts/bladmuziek-lijst.mjs  maakt worker/bladmuziek.json: de nummers met `bladmuziek: true`
 scripts/afbeeldingen.mjs   maakt de WebP-formaten van app/bronafbeeldingen
-scripts/deelafbeeldingen.mjs  maakt de deelafbeeldingen (og:image, 1200 x 630) in public/afbeeldingen/og; welke hoezen erop mogen staat in scripts/deelafbeeldingen-toegestaan.json
+scripts/og/  maakt (pnpm og) en controleert (pnpm og:check) de deelafbeeldingen (og:image, 1200 x 630) in public/afbeeldingen/og; welke hoezen erop mogen staat in scripts/deelafbeeldingen-toegestaan.json
 scripts/controle-uitvoer.mjs  controleert de gebouwde pagina's (canonical, og- en twitter-tags, deelafbeeldingen, hero-poster), draait aan het eind van pnpm generate
 content.config.ts     de velden van nummers en pagina's
 wrangler.jsonc        Cloudflare-instellingen
@@ -75,6 +75,14 @@ Instellingen in Cloudflare: branch `main`, bouwcommando `pnpm run build`, deploy
 3. Zet titel en description **altijd tussen dubbele aanhalingstekens**. Een dubbele punt zonder aanhalingstekens breekt het kopblok.
 4. Draai `pnpm controle` en controleer met `pnpm dev`. Voeg het nummer toe aan `videolijst` in `content/home.yml` als het op de homepage moet staan.
 5. Geef elk nummer een `kaartregel`: één korte regel voor de kaart op de homepage. Is er een Apple Music-link naar het nummer zelf, zet die dan in `appleMusic` (volledige link). Zonder dat veld gaat de knop naar de artiestpagina. Het nummer in de grote speler bij het laden staat in `uitgelicht` in `content/home.yml` (moet in `videolijst` staan).
+
+## Deelafbeeldingen
+
+Elke pagina en elk nummer heeft een eigen afbeelding voor het delen van een link (`og:image` en `twitter:image`, 1200 x 630, JPG). Ze staan in git in `public/afbeeldingen/og/`, samen met `manifest.json`, en worden **niet** bij de bouw gemaakt: de bouw controleert alleen (`pnpm og:check`, zonder netwerk) of ze nog kloppen met de titel, de kleur, de hoes, het logo, het blaadje, de takken, het lettertype en het sjabloon.
+
+- **Veranderd of nieuw?** Een nieuwe pagina in `content/paginas/`, een nieuw nummer, een andere titel of kleur: draai `pnpm og` (alles) of `pnpm og -- over-mij` (één afbeelding, naam van de pagina of het nummer) en commit `public/afbeeldingen/og/`. Zonder dat faalt de bouw met de naam van de afbeelding die niet meer klopt.
+- **Sjabloon:** `scripts/og/maak.mjs` (opmaak van de Designer in `design/deelafbeeldingen.md`), techniek satori en sharp, lettertype Mukta 400 (SIL Open Font License 1.1, `@fontsource/mukta`). Verander je de opmaak, verhoog dan `SJABLOON_VERSIE` in `scripts/og/data.mjs`.
+- **Hoezen:** alleen nummers op de lijst in `scripts/deelafbeeldingen-toegestaan.json` krijgen hun hoes op de afbeelding; een nieuw nummer krijgt het logo, tot de eigenaar akkoord geeft. De bouw faalt als een afbeelding een hoes gebruikt die niet op de lijst staat. Een titel die op meer dan twee regels komt laat `pnpm og` falen.
 
 ## Bladmuziek per e-mail (staat uit)
 
