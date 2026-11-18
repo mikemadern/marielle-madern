@@ -5,14 +5,11 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import sharp from 'sharp'
-import { parse } from 'yaml'
 
 const SITE = 'https://mariellemadern.nl'
 const wortel = fileURLToPath(new URL('..', import.meta.url))
 const uitvoer = join(wortel, '.output', 'public')
 const fouten = []
-// De gegevens van de homepage: het uitgelichte nummer bepaalt zijn deelafbeelding
-const home = parse(readFileSync(join(wortel, 'content', 'home.yml'), 'utf-8')) ?? {}
 
 function* paginas(map) {
   for (const item of readdirSync(map, { withFileTypes: true })) {
@@ -71,7 +68,9 @@ for (const pad of lijst) {
 
   // De deelafbeelding van de homepage hoort bij het uitgelichte nummer (home.yml, veld uitgelicht); zonder dat veld het logo
   if (route === '/') {
-    const verwacht = home.uitgelicht ?? 'algemeen'
+    // content/home.yml, veld uitgelicht; zonder dat veld het logo
+    const homeYml = readFileSync(join(wortel, 'content', 'home.yml'), 'utf-8')
+    const verwacht = homeYml.match(/^uitgelicht:\s*(\S+)/m)?.[1] ?? 'algemeen'
     if (!ogImage?.endsWith(`/afbeeldingen/og/${verwacht}.jpg`))
       fout(`de deelafbeelding van de homepage moet ${verwacht}.jpg zijn, niet ${ogImage}`)
     controleerHero(html, fout)
@@ -89,6 +88,21 @@ function controleerHero(html, fout) {
   const src = poster.match(/\ssrc="([^"]+)"/)?.[1]
   if (!src || !existsSync(join(uitvoer, src)))
     fout(`het poster-bestand bestaat niet in de bouw: ${src}`)
+}
+
+// Privacy: een hoes mag alleen als deelafbeelding als het nummer op de toegestane lijst staat
+const toegestaan = JSON.parse(
+  readFileSync(join(wortel, 'scripts', 'deelafbeeldingen-toegestaan.json'), 'utf-8'),
+)
+const manifest = JSON.parse(
+  readFileSync(join(uitvoer, 'afbeeldingen', 'og', 'manifest.json'), 'utf-8'),
+)
+for (const [naam, m] of Object.entries(manifest)) {
+  const mag = naam === 'ep' ? toegestaan.ep === true : toegestaan.nummers.includes(naam)
+  if (m.hoes && !mag)
+    fouten.push(
+      `${naam}.jpg gebruikt een hoes die niet op de toegestane lijst staat (scripts/deelafbeeldingen-toegestaan.json)`,
+    )
 }
 
 // De afbeeldingen zelf: 1200 x 630, JPEG
