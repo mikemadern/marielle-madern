@@ -17,7 +17,7 @@ export const MAX_BYTES = 150_000
 
 // Verander je iets aan de opmaak in maak.mjs, verhoog dit getal: dan klopt geen enkele hash meer en maakt
 // pnpm og alles opnieuw.
-export const SJABLOON_VERSIE = 1
+export const SJABLOON_VERSIE = 2
 
 export const KLEUREN = { sage: '#acb897', lichtgoud: '#e3d49b', blush: '#f2d5cd' }
 export const TEKST = '#41423c'
