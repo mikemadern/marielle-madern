@@ -6,6 +6,8 @@ import { afterEach, beforeEach, describe, test } from 'node:test'
 import { behandel, geconfigureerd } from './bladmuziek.mjs'
 
 const SITE = 'https://voorbeeld.example'
+const HOSTNAME = 'voorbeeld.example'
+const ACTIE = 'bladmuziek'
 const LIJST = { 'hart-van-glas': { titel: 'Hart van glas' } }
 const PDF = new Uint8Array([37, 80, 68, 70, 45, 49, 46, 52, 10]) // "%PDF-1.4"
 const GOED = {
@@ -21,7 +23,7 @@ let logregels
 let origineel
 
 // Een stukje nagebouwde omgeving met alles aan; een test zet er iets van uit
-function maakOmgeving({ bestand = true, limiet = true } = {}) {
+function maakOmgeving({ bestand = true, limiet = true, ipLimiet = true } = {}) {
   const limiter = (zet) => ({
     keys: [],
     async limit({ key }) {
@@ -41,13 +43,17 @@ function maakOmgeving({ bestand = true, limiet = true } = {}) {
           : null
       },
     },
+    LIMIET_IP: limiter(ipLimiet),
     LIMIET_ADRES: limiter(limiet),
     LIMIET_ALGEMEEN: limiter(true),
   }
 }
 
 // Nagebootste fetch: Turnstile en Resend, met instelbare uitkomsten
-function maakFetch({ turnstile = { success: true }, resend = [200, 200] } = {}) {
+function maakFetch({
+  turnstile = { success: true, hostname: HOSTNAME, action: ACTIE },
+  resend = [200, 200],
+} = {}) {
   let nummer = 0
   return async (url, init) => {
     gesprekken.push({ url: String(url), init })
@@ -95,6 +101,7 @@ describe('routes en uitgeschakeld', () => {
       'RESEND_API_KEY',
       'TURNSTILE_SECRET',
       'BLADMUZIEK',
+      'LIMIET_IP',
       'LIMIET_ADRES',
       'LIMIET_ALGEMEEN',
     ]) {
@@ -121,6 +128,26 @@ describe('verzoek controleren', () => {
       body: JSON.stringify(GOED),
     })
     assert.equal((await run(zonder)).status, 403)
+  })
+  test('een body zonder content-length wordt gestreamd gelezen en stopt bij 4 KB: 413', async () => {
+    let gelezen = 0
+    const stroom = new ReadableStream({
+      pull(controller) {
+        gelezen++
+        controller.enqueue(new TextEncoder().encode('x'.repeat(1024)))
+      },
+    })
+    const request = new Request(SITE + '/api/bladmuziek', {
+      method: 'POST',
+      headers: { origin: SITE, 'content-type': 'application/json' },
+      body: stroom,
+      duplex: 'half',
+    })
+    assert.equal(request.headers.get('content-length'), null)
+    const res = await run(request)
+    assert.equal(res.status, 413)
+    assert.ok(gelezen <= 8, `er is ${gelezen} keer gelezen uit een oneindige stroom`)
+    assert.equal(gesprekken.length, 0)
   })
   test('geen JSON: 415', async () => {
     assert.equal((await run(verzoek('naam=x', { type: 'text/plain' }))).status, 415)
@@ -176,6 +203,49 @@ describe('misbruik', () => {
     assert.equal(resendAanroepen().length, 0)
     assert.deepEqual(env.BLADMUZIEK.sleutels, [])
   })
+  test('token van een andere hostname (andere site): 400, geen mail, geen bucket', async () => {
+    const env = maakOmgeving()
+    const res = await run(
+      verzoek(GOED),
+      env,
+      maakFetch({ turnstile: { success: true, hostname: 'aanvaller.example', action: ACTIE } }),
+    )
+    assert.equal(res.status, 400)
+    assert.equal((await json(res)).fout, 'controle_mislukt')
+    assert.equal(resendAanroepen().length, 0)
+    assert.deepEqual(env.BLADMUZIEK.sleutels, [])
+    assert.deepEqual(env.LIMIET_IP.keys, [])
+  })
+  test('hostname of actie ontbreekt of klopt niet in het antwoord van Turnstile: 400, geen mail', async () => {
+    for (const turnstile of [
+      { success: true },
+      { success: true, action: ACTIE },
+      { success: true, hostname: HOSTNAME },
+      { success: true, hostname: HOSTNAME, action: 'iets-anders' },
+      { success: true, hostname: 'www.' + HOSTNAME, action: ACTIE },
+      { success: true, hostname: HOSTNAME.toUpperCase(), action: '' },
+    ]) {
+      const res = await run(verzoek(GOED), maakOmgeving(), maakFetch({ turnstile }))
+      assert.equal(res.status, 400, JSON.stringify(turnstile))
+    }
+    assert.equal(resendAanroepen().length, 0)
+  })
+  test('hostname is die van het verzoek: ook een preview-adres werkt voor zichzelf', async () => {
+    const preview = 'https://preview-pr-1-voorbeeld.example'
+    const request = new Request(preview + '/api/bladmuziek', {
+      method: 'POST',
+      headers: { origin: preview, 'content-type': 'application/json' },
+      body: JSON.stringify(GOED),
+    })
+    const goed = await run(
+      request,
+      maakOmgeving(),
+      maakFetch({
+        turnstile: { success: true, hostname: 'preview-pr-1-voorbeeld.example', action: ACTIE },
+      }),
+    )
+    assert.equal(goed.status, 200)
+  })
   test('Turnstile onbereikbaar: 503', async () => {
     const res = await run(verzoek(GOED), maakOmgeving(), async () => {
       throw new Error('netwerk')
@@ -188,6 +258,31 @@ describe('misbruik', () => {
     assert.equal(res.status, 429)
     assert.equal(res.headers.get('retry-after'), '60')
     assert.equal(resendAanroepen().length, 0)
+  })
+  test('limiet per IP-adres bereikt: 429 en de andere limieten tellen niet mee', async () => {
+    const env = maakOmgeving({ ipLimiet: false })
+    const res = await run(verzoek(GOED), env)
+    assert.equal(res.status, 429)
+    assert.deepEqual(env.LIMIET_ADRES.keys, [])
+    assert.deepEqual(env.LIMIET_ALGEMEEN.keys, [])
+    assert.equal(resendAanroepen().length, 0)
+  })
+  test('de IP-sleutel is een hash, hangt van het IP af en bevat het IP niet', async () => {
+    const env = maakOmgeving()
+    const metIp = (ip) =>
+      new Request(SITE + '/api/bladmuziek', {
+        method: 'POST',
+        headers: { origin: SITE, 'content-type': 'application/json', 'cf-connecting-ip': ip },
+        body: JSON.stringify(GOED),
+      })
+    await run(metIp('192.0.2.7'), env)
+    await run(metIp('192.0.2.7'), env)
+    await run(metIp('192.0.2.8'), env)
+    const [a, b, c] = env.LIMIET_IP.keys
+    assert.match(a, /^[0-9a-f]{64}$/)
+    assert.equal(a, b)
+    assert.notEqual(a, c)
+    assert.ok(!a.includes('192') && !a.includes('.'))
   })
   test('de sleutel van de limiet is een hash, niet het adres', async () => {
     const env = maakOmgeving()
@@ -275,6 +370,7 @@ describe('privacy', () => {
   test('geen naam of adres in antwoorden of in wat de Worker logt', async () => {
     const naam = 'Proefpersoon Verzonnen'
     const email = 'test@example.org'
+    const ip = '192.0.2.7'
     const antwoorden = []
     for (const body of [
       GOED,
@@ -289,7 +385,7 @@ describe('privacy', () => {
     )
     antwoorden.push(await (await run(verzoek(GOED), maakOmgeving({ limiet: false }))).text())
     for (const tekst of [...antwoorden, ...logregels]) {
-      assert.ok(!tekst.includes(naam) && !tekst.includes(email), tekst)
+      assert.ok(!tekst.includes(naam) && !tekst.includes(email) && !tekst.includes(ip), tekst)
     }
     assert.deepEqual(logregels, [])
   })
@@ -297,5 +393,6 @@ describe('privacy', () => {
     const res = await run(verzoek(GOED))
     assert.equal(res.headers.get('cache-control'), 'no-store')
     assert.equal(res.headers.get('x-robots-tag'), 'noindex')
+    assert.equal(res.headers.get('x-content-type-options'), 'nosniff')
   })
 })

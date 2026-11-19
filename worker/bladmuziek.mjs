@@ -3,12 +3,18 @@
 // Alles wat van buiten komt (fetch, de lijst met nummers) wordt meegegeven, zodat de tests het kunnen nabootsen.
 //
 // Benodigd (Cloudflare, door de eigenaar ingesteld): secrets RESEND_API_KEY en TURNSTILE_SECRET, de R2-bucket
-// met binding BLADMUZIEK (bestanden bladmuziek/<nummer>.pdf) en de twee limiet-bindingen uit wrangler.jsonc.
+// met binding BLADMUZIEK (bestanden bladmuziek/<nummer>.pdf) en de drie limiet-bindingen uit wrangler.jsonc.
 // Ontbreekt er één, dan geeft de Worker 503 en doet de feature niets.
+//
+// Wat echt beschermt: Turnstile, met controle van de hostname en de actie in het antwoord, en de limieten.
+// De Origin-controle is alleen een eenvoudig filter tegen verkeerd gebruik door een browser: elk script kan
+// die kop zelf zetten, het is geen verificatie.
 import { ADRES_MARIELLE, AFZENDER, mailBezoeker, mailMarielle } from './teksten.mjs'
 
 export const PAD = '/api/bladmuziek'
 const MAX_VERZOEK = 4096
+// De actie die het Turnstile-widget in het formulier moet meegeven (data-action); Turnstile geeft hem terug
+const TURNSTILE_ACTIE = 'bladmuziek'
 const MAX_PDF = 15 * 1024 * 1024
 const RESEND = 'https://api.resend.com/emails'
 const TURNSTILE = 'https://challenges.cloudflare.com/turnstile/v0/siteverify'
@@ -21,6 +27,7 @@ const antwoord = (status, body = {}, extra = {}) =>
       'content-type': 'application/json; charset=utf-8',
       'cache-control': 'no-store',
       'x-robots-tag': 'noindex',
+      'x-content-type-options': 'nosniff',
       ...extra,
     },
   })
@@ -30,13 +37,43 @@ export const geconfigureerd = (env) =>
     env.RESEND_API_KEY &&
     env.TURNSTILE_SECRET &&
     env.BLADMUZIEK &&
+    env.LIMIET_IP &&
     env.LIMIET_ADRES &&
     env.LIMIET_ALGEMEEN,
   )
 
-async function sha256(tekst) {
-  const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(tekst))
+// Sleutel voor een limiet: een HMAC (met het Turnstile-geheim als sleutel) van het adres of het IP-adres, in hex.
+// Zo staat het adres zelf nergens en is de sleutel niet terug te rekenen door iemand zonder het geheim.
+// De limiet-binding houdt alleen een teller in het geheugen bij; er wordt niets bewaard of gelogd.
+async function limietSleutel(env, tekst) {
+  const sleutel = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(env.TURNSTILE_SECRET),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  )
+  const hash = await crypto.subtle.sign('HMAC', sleutel, new TextEncoder().encode(tekst))
   return [...new Uint8Array(hash)].map((b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+// Leest de body gestreamd en stopt zodra hij groter is dan het maximum (geeft dan null)
+async function leesBeperkt(request, max) {
+  if (!request.body) return ''
+  const lezer = request.body.getReader()
+  const stukken = []
+  let totaal = 0
+  for (;;) {
+    const { done, value } = await lezer.read()
+    if (done) break
+    totaal += value.byteLength
+    if (totaal > max) {
+      await lezer.cancel()
+      return null
+    }
+    stukken.push(value)
+  }
+  return new TextDecoder().decode(await new Blob(stukken).arrayBuffer())
 }
 
 function naarBase64(buffer) {
@@ -83,7 +120,7 @@ export async function behandel(request, env, deps) {
   if (request.method !== 'POST') return antwoord(405, { fout: 'methode' }, { allow: 'POST' })
   if (!geconfigureerd(env)) return antwoord(503, { fout: 'uitgeschakeld' })
 
-  // Alleen vanaf onze eigen pagina's
+  // Eenvoudig filter tegen gebruik vanaf andere pagina's in een browser (geen verificatie, zie boven)
   if (request.headers.get('origin') !== url.origin) return antwoord(403, { fout: 'verboden' })
   if (!(request.headers.get('content-type') ?? '').startsWith('application/json'))
     return antwoord(415, { fout: 'inhoudstype' })
@@ -92,8 +129,9 @@ export async function behandel(request, env, deps) {
 
   let invoer
   try {
-    const tekst = await request.text()
-    if (tekst.length > MAX_VERZOEK) return antwoord(413, { fout: 'te_groot' })
+    // Gestreamd en met een maximum, ook als er geen content-length is
+    const tekst = await leesBeperkt(request, MAX_VERZOEK)
+    if (tekst === null) return antwoord(413, { fout: 'te_groot' })
     invoer = JSON.parse(tekst)
   } catch {
     return antwoord(400, { fout: 'ongeldig' })
@@ -122,12 +160,27 @@ export async function behandel(request, env, deps) {
   } catch {
     return antwoord(503, { fout: 'tijdelijk_niet_beschikbaar' })
   }
-  if (!controle?.success) return antwoord(400, { fout: 'controle_mislukt' })
+  // Het token moet voor onze eigen hostname en voor deze actie zijn uitgegeven (anders kan een token van een
+  // andere site, met een eigen widget, hier worden gebruikt). Ontbreekt een van de twee in het antwoord: weigeren.
+  if (
+    !controle?.success ||
+    controle.hostname !== url.hostname ||
+    controle.action !== TURNSTILE_ACTIE
+  )
+    return antwoord(400, { fout: 'controle_mislukt' })
 
-  // Limieten per minuut: per adres (de sleutel is een hash, het adres zelf wordt niet bewaard) en voor de hele site
-  const algemeen = await env.LIMIET_ALGEMEEN.limit({ key: 'algemeen' })
-  const adres = await env.LIMIET_ADRES.limit({ key: await sha256(v.email.toLowerCase()) })
-  if (!algemeen.success || !adres.success)
+  // Limieten per minuut, in deze volgorde en met een vroege stop (een geblokkeerd verzoek telt niet mee voor de
+  // volgende limiet): per IP-adres van de bezoeker (alleen voor de beveiliging, als HMAC-sleutel, nooit
+  // bewaard of gelogd), per e-mailadres, en voor de hele site.
+  const ip = request.headers.get('cf-connecting-ip') ?? 'geen-ip'
+  const teVaak = async (limiet, tekst) =>
+    !(await limiet.limit({ key: tekst === null ? 'algemeen' : await limietSleutel(env, tekst) }))
+      .success
+  if (
+    (await teVaak(env.LIMIET_IP, `ip:${ip}`)) ||
+    (await teVaak(env.LIMIET_ADRES, `adres:${v.email.toLowerCase()}`)) ||
+    (await teVaak(env.LIMIET_ALGEMEEN, null))
+  )
     return antwoord(429, { fout: 'te_vaak' }, { 'retry-after': '60' })
 
   // Het bestand komt uit de privé-bucket; de sleutel volgt uit de naam van het nummer, nooit uit de invoer zelf
