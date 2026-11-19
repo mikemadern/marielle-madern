@@ -278,6 +278,54 @@ describe('misbruik', () => {
     )
     assert.equal(goed.status, 200)
   })
+  test('TOEGESTANE_HOSTS is een exacte vergelijking: geen wildcard en geen suffixmatch (preview blijft geweigerd)', async () => {
+    const env = { TOEGESTANE_HOSTS: 'mariellemadern.mmadern.workers.dev' }
+    // Het hoofdadres van de Worker staat er bewust in (besluit eigenaar), de preview-adressen niet
+    assert.equal(hostToegestaan(env, 'mariellemadern.mmadern.workers.dev'), true)
+    assert.equal(hostToegestaan(env, 'preview-pr-35-mariellemadern.mmadern.workers.dev'), false)
+    assert.equal(hostToegestaan(env, 'x.mariellemadern.mmadern.workers.dev'), false)
+    assert.equal(hostToegestaan(env, 'mmadern.workers.dev'), false)
+    assert.equal(
+      hostToegestaan(
+        { TOEGESTANE_HOSTS: '*.mmadern.workers.dev' },
+        'preview-pr-35-mariellemadern.mmadern.workers.dev',
+      ),
+      false,
+    )
+    const preview = 'https://preview-pr-35-mariellemadern.mmadern.workers.dev'
+    const request = new Request(preview + '/api/bladmuziek', {
+      method: 'POST',
+      headers: { origin: preview, 'content-type': 'application/json' },
+      body: JSON.stringify(GOED),
+    })
+    const gesperd = await run(
+      request,
+      { ...maakOmgeving(), ...env },
+      maakFetch({
+        turnstile: {
+          success: true,
+          hostname: 'preview-pr-35-mariellemadern.mmadern.workers.dev',
+          action: ACTIE,
+        },
+      }),
+    )
+    assert.equal(gesperd.status, 403)
+    assert.equal(gesprekken.length, 0)
+    // En het hoofdadres zelf werkt wel
+    const hoofd = 'https://mariellemadern.mmadern.workers.dev'
+    const goed = await run(
+      new Request(hoofd + '/api/bladmuziek', {
+        method: 'POST',
+        headers: { origin: hoofd, 'content-type': 'application/json' },
+        body: JSON.stringify(GOED),
+      }),
+      { ...maakOmgeving(), ...env },
+      maakFetch({
+        turnstile: { success: true, hostname: 'mariellemadern.mmadern.workers.dev', action: ACTIE },
+      }),
+    )
+    assert.equal(goed.status, 200)
+  })
   test('niet-toegestaan adres zonder secrets: 403 (de hostcontrole komt vóór de 503)', async () => {
     const adres = 'https://mariellemadern.mmadern.workers.dev'
     const request = new Request(adres + '/api/bladmuziek', {
