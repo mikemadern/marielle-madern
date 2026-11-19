@@ -100,6 +100,8 @@ for (const pad of bestandenIn('nummers', '.md')) {
   if (!/^\d{1,2}:\d{2}$/.test(String(d.duur ?? '')))
     fout(pad, 'duur moet m:ss zijn, bijvoorbeeld "3:47" (tussen aanhalingstekens)')
   tekst(pad, d, 'kaartregel', { min: 10, max: 90 })
+  if (d.bladmuziek !== undefined && d.bladmuziek !== true)
+    fout(pad, 'bladmuziek moet true zijn, of het veld moet ontbreken')
   if (d.appleMusic !== undefined && !String(d.appleMusic).startsWith('https://music.apple.com/'))
     fout(pad, 'appleMusic moet een volledige link zijn die met https://music.apple.com/ begint')
   if (!d.cover?.src || !d.cover?.alt) fout(pad, 'cover heeft src en alt nodig')

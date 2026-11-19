@@ -25,5 +25,7 @@ logs
 
 # Eigen toevoegingen
 public/afbeeldingen/
+# Gemaakt bij elke bouw door scripts/bladmuziek-lijst.mjs
+worker/bladmuziek.json
 .wrangler
 .dev.vars

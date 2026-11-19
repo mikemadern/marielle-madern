@@ -40,6 +40,8 @@ public/               bestanden die ongewijzigd worden uitgerold
   _headers            beveiligings- en cacheheaders voor Cloudflare
   _redirects          redirects van de oude WordPress-site
   afbeeldingen/       wordt gemaakt door pnpm afbeeldingen (niet in git)
+worker/                     de kleine Worker voor /api/* (bladmuziek per e-mail), met tests (pnpm test:worker)
+scripts/bladmuziek-lijst.mjs  maakt worker/bladmuziek.json: de nummers met `bladmuziek: true`
 scripts/afbeeldingen.mjs   maakt de WebP-formaten van app/bronafbeeldingen
 scripts/deelafbeeldingen.mjs  maakt de deelafbeeldingen (og:image, 1200 x 630) in public/afbeeldingen/og; welke hoezen erop mogen staat in scripts/deelafbeeldingen-toegestaan.json
 scripts/controle-uitvoer.mjs  controleert de gebouwde pagina's (canonical, og- en twitter-tags, deelafbeeldingen, hero-poster), draait aan het eind van pnpm generate
@@ -73,6 +75,18 @@ Instellingen in Cloudflare: branch `main`, bouwcommando `pnpm run build`, deploy
 3. Zet titel en description **altijd tussen dubbele aanhalingstekens**. Een dubbele punt zonder aanhalingstekens breekt het kopblok.
 4. Draai `pnpm controle` en controleer met `pnpm dev`. Voeg het nummer toe aan `videolijst` in `content/home.yml` als het op de homepage moet staan.
 5. Geef elk nummer een `kaartregel`: één korte regel voor de kaart op de homepage. Is er een Apple Music-link naar het nummer zelf, zet die dan in `appleMusic` (volledige link). Zonder dat veld gaat de knop naar de artiestpagina. Het nummer in de grote speler bij het laden staat in `uitgelicht` in `content/home.yml` (moet in `videolijst` staan).
+
+## Bladmuziek per e-mail (staat uit)
+
+Een nummer met `bladmuziek: true` in zijn bestand in `content/nummers/` krijgt (vanaf deel 2) een formulier om de bladmuziek per e-mail te vragen; `POST /api/bladmuziek` (`worker/`) stuurt de pdf via Resend. De pdf's staan **niet in deze repo** maar privé in Cloudflare R2, als `bladmuziek/<bestandsnaam van het nummer>.pdf` (bijvoorbeeld `bladmuziek/hart-van-glas.pdf`). De Worker bewaart en logt naam en adres niet.
+
+De feature werkt pas als de eigenaar dit in Cloudflare heeft ingesteld (het team doet dat niet en zet nooit een sleutel in de repo, een PR of een chat); zolang een van deze ontbreekt, geeft `/api/bladmuziek` `503` en doet niets:
+
+- **Secrets** (Cloudflare, Worker `mariellemadern`, Instellingen, Variabelen en secrets): `RESEND_API_KEY` (een Resend-sleutel met alleen verzendrechten, voor het domein mariellemadern.nl met SPF en DKIM in orde) en `TURNSTILE_SECRET` (de geheime sleutel van de Turnstile-widget).
+- **R2-bucket** met de binding `BLADMUZIEK` (komt in `wrangler.jsonc` in deel 3, pas als de bucket bestaat; een binding naar een bucket die niet bestaat laat de uitrol falen).
+- **Limieten:** de bindingen `LIMIET_ADRES` (1 per minuut per e-mailadres) en `LIMIET_ALGEMEEN` (10 per minuut voor de hele site) staan al in `wrangler.jsonc`; er is niets voor in te stellen.
+
+Testen zonder sleutels en zonder echte mail: `pnpm test:worker` (alles nagebootst, met verzonnen gegevens; draait ook in `pnpm build`).
 
 ## Let op
 
