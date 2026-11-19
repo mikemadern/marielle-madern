@@ -3,10 +3,10 @@
 // Draaien: pnpm test:worker
 import assert from 'node:assert/strict'
 import { afterEach, beforeEach, describe, test } from 'node:test'
-import { behandel, geconfigureerd } from './bladmuziek.mjs'
+import { behandel, geconfigureerd, hostToegestaan, TOEGESTANE_HOSTS } from './bladmuziek.mjs'
 
-const SITE = 'https://voorbeeld.example'
-const HOSTNAME = 'voorbeeld.example'
+const SITE = 'https://mariellemadern.nl'
+const HOSTNAME = 'mariellemadern.nl'
 const ACTIE = 'bladmuziek'
 const LIJST = { 'hart-van-glas': { titel: 'Hart van glas' } }
 const PDF = new Uint8Array([37, 80, 68, 70, 45, 49, 46, 52, 10]) // "%PDF-1.4"
@@ -230,21 +230,62 @@ describe('misbruik', () => {
     }
     assert.equal(resendAanroepen().length, 0)
   })
-  test('hostname is die van het verzoek: ook een preview-adres werkt voor zichzelf', async () => {
-    const preview = 'https://preview-pr-1-voorbeeld.example'
-    const request = new Request(preview + '/api/bladmuziek', {
+  test('andere hostnamen (preview, workers.dev, onbekend): 403, ook als Turnstile ze zou toestaan', async () => {
+    for (const host of [
+      'preview-pr-1-mariellemadern.mmadern.workers.dev',
+      'mariellemadern.mmadern.workers.dev',
+      'mariellemadern.nl.aanvaller.example',
+      'xmariellemadern.nl',
+    ]) {
+      const adres = `https://${host}`
+      const request = new Request(adres + '/api/bladmuziek', {
+        method: 'POST',
+        headers: { origin: adres, 'content-type': 'application/json' },
+        body: JSON.stringify(GOED),
+      })
+      const env = maakOmgeving()
+      const res = await run(
+        request,
+        env,
+        maakFetch({ turnstile: { success: true, hostname: host, action: ACTIE } }),
+      )
+      assert.equal(res.status, 403, host)
+      assert.deepEqual(await json(res), { fout: 'adres_niet_toegestaan' })
+      assert.equal(env.BLADMUZIEK.sleutels.length, 0)
+    }
+    assert.equal(gesprekken.length, 0, 'geen Turnstile, geen Resend')
+  })
+  test('toegestane hosts: standaard het echte domein en www; TOEGESTANE_HOSTS breidt bewust uit', async () => {
+    assert.deepEqual(TOEGESTANE_HOSTS, ['mariellemadern.nl', 'www.mariellemadern.nl'])
+    assert.equal(hostToegestaan({}, 'www.mariellemadern.nl'), true)
+    assert.equal(hostToegestaan({}, 'mariellemadern.mmadern.workers.dev'), false)
+    const env = { TOEGESTANE_HOSTS: ' Test.example , ,andere.example' }
+    assert.equal(hostToegestaan(env, 'test.example'), true)
+    assert.equal(hostToegestaan(env, 'andere.example'), true)
+    assert.equal(hostToegestaan(env, 'mariellemadern.nl'), true)
+    assert.equal(hostToegestaan(env, 'derde.example'), false)
+    // Met de variabele gezet werkt een bewust toegevoegd adres wel (voor zichzelf: Origin en Turnstile-hostname)
+    const adres = 'https://test.example'
+    const request = new Request(adres + '/api/bladmuziek', {
       method: 'POST',
-      headers: { origin: preview, 'content-type': 'application/json' },
+      headers: { origin: adres, 'content-type': 'application/json' },
       body: JSON.stringify(GOED),
     })
     const goed = await run(
       request,
-      maakOmgeving(),
-      maakFetch({
-        turnstile: { success: true, hostname: 'preview-pr-1-voorbeeld.example', action: ACTIE },
-      }),
+      { ...maakOmgeving(), TOEGESTANE_HOSTS: 'test.example' },
+      maakFetch({ turnstile: { success: true, hostname: 'test.example', action: ACTIE } }),
     )
     assert.equal(goed.status, 200)
+  })
+  test('niet-toegestaan adres zonder secrets: 403 (de hostcontrole komt vóór de 503)', async () => {
+    const adres = 'https://mariellemadern.mmadern.workers.dev'
+    const request = new Request(adres + '/api/bladmuziek', {
+      method: 'POST',
+      headers: { origin: adres, 'content-type': 'application/json' },
+      body: JSON.stringify(GOED),
+    })
+    assert.equal((await run(request, {})).status, 403)
   })
   test('Turnstile onbereikbaar: 503', async () => {
     const res = await run(verzoek(GOED), maakOmgeving(), async () => {
