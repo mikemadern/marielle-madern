@@ -10,7 +10,7 @@ export const TEKSTEN = {
   naam: 'Naam',
   email: 'E-mailadres',
   nieuwsbrief: 'Ik wil de nieuwsbrief ontvangen.',
-  nieuwsbriefOptioneel: ' (optioneel)',
+  nieuwsbriefAria: 'Ik wil de nieuwsbrief ontvangen (optioneel)',
   // TE BEVESTIGEN door Mariëlle (hoe vaak de nieuwsbrief verschijnt en wat erin staat): alleen de eerste zin van
   // de Tekstschrijver staat hier, de rest van de uitleg ontbreekt tot het besluit er is.
   nieuwsbriefUitleg: 'Met de nieuwsbrief hou ik je op de hoogte van nieuwe muziek en activiteiten.',

@@ -31,6 +31,9 @@ const naamVeld = ref<HTMLInputElement | null>(null)
 const emailVeld = ref<HTMLInputElement | null>(null)
 const bevestiging = ref<HTMLElement | null>(null)
 const widgetPlek = ref<HTMLElement | null>(null)
+const valVeld = ref<HTMLInputElement | null>(null)
+// True zolang Cloudflare een zichtbaar controlevak toont (dan telt de ruimte ervan mee)
+const controleOpen = ref(false)
 
 const uitlegId = 'bladmuziek-uitleg'
 
@@ -91,8 +94,16 @@ async function laad() {
       sitekey,
       action: 'bladmuziek',
       appearance: 'interaction-only',
+      // Het zichtbare controlevak is 300 px breed; past dat niet in de kaart (smalle telefoon), dan het compacte
+      // formaat (150 px) in plaats van het te vervormen of te laten uitsteken
+      size: widgetPlek.value.clientWidth < 300 ? 'compact' : 'normal',
       language: 'nl',
-      callback: tokenOntvangen,
+      'before-interactive-callback': () => (controleOpen.value = true),
+      'after-interactive-callback': () => (controleOpen.value = false),
+      callback: (t: string) => {
+        controleOpen.value = false
+        tokenOntvangen(t)
+      },
       'expired-callback': () => (token = ''),
       'error-callback': tokenMislukt,
       'timeout-callback': () => (token = ''),
@@ -152,6 +163,10 @@ async function naarEersteFout() {
 async function verstuur() {
   if (bezig.value) return
   melding.value = null
+  // Verborgen veld tegen spam: de waarde komt van het DOM-veld zelf (ook als Vue een invoer niet zag, bijvoorbeeld
+  // bij een script dat het veld vult). Is het gevuld, dan versturen we niets en tonen we niets.
+  const val = valVeld.value?.value ?? website.value
+  if (val !== '') return
   if (!controleer()) return naarEersteFout()
   bezig.value = true
   try {
@@ -171,7 +186,7 @@ async function verstuur() {
         nieuwsbrief: nieuwsbrief.value,
         nummer: props.nummer,
         token: t,
-        website: website.value,
+        website: val,
       }),
     })
     nieuwToken()
@@ -216,21 +231,23 @@ async function verstuur() {
   <section id="bladmuziek" class="bladmuziek" aria-labelledby="bladmuziek-kop">
     <KopBlok :kop="T.kop" kop-id="bladmuziek-kop" />
 
-    <div v-if="klaar" ref="bevestiging" class="melding melding--goed" role="status" tabindex="-1">
-      <svg class="melding__icoon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <circle cx="12" cy="12" r="12" fill="currentColor" />
-        <path
-          d="M6.8 12.4l3.6 3.6 6.8-7.2"
-          fill="none"
-          stroke="#fff"
-          stroke-width="2.4"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-      </svg>
-      <div>
-        <p class="melding__kop">{{ T.bevestigingKop }}</p>
-        <p>{{ T.bevestiging }}</p>
+    <div v-if="klaar" class="kaart">
+      <div ref="bevestiging" class="melding melding--goed" role="status" tabindex="-1">
+        <svg class="melding__icoon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="12" r="10.8" fill="none" stroke="currentColor" stroke-width="2.4" />
+          <path
+            d="M7 12.4l3.6 3.6 6.4-7"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        <div>
+          <p class="melding__kop">{{ T.bevestigingKop }}</p>
+          <p>{{ T.bevestiging }}</p>
+        </div>
       </div>
     </div>
 
@@ -299,6 +316,7 @@ async function verstuur() {
           >Website
           <input
             id="bladmuziek-website"
+            ref="valVeld"
             v-model="website"
             type="text"
             name="website"
@@ -316,18 +334,17 @@ async function verstuur() {
             class="vakje__invoer"
             type="checkbox"
             name="nieuwsbrief"
+            :aria-label="T.nieuwsbriefAria"
           />
-          <span
-            >{{ T.nieuwsbrief }}<span class="verborgen">{{ T.nieuwsbriefOptioneel }}</span></span
-          >
+          <span>{{ T.nieuwsbrief }}</span>
         </label>
         <p class="vakje__uitleg">{{ T.nieuwsbriefUitleg }}</p>
       </div>
 
       <!-- Hier zet Cloudflare het controlevak neer, alleen als het een controle vraagt -->
-      <div ref="widgetPlek" class="widget" />
+      <div ref="widgetPlek" :class="['widget', controleOpen && 'widget--open']" />
 
-      <div role="alert">
+      <div role="alert" class="houder">
         <div v-if="melding" class="melding melding--fout">
           <svg class="melding__icoon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <circle cx="12" cy="12" r="12" fill="currentColor" />
@@ -488,9 +505,14 @@ async function verstuur() {
   line-height: 1.5;
 }
 
+/* De melding-houder is er altijd (voor schermlezers) maar neemt geen ruimte als hij leeg is */
+.houder:not(:has(.melding)) {
+  margin-block-end: -1.25rem;
+}
+
 /* Alleen ruimte als Cloudflare een controlevak neerzet: zonder controlevak neemt het geen plaats in
    (de 20 px tussen de onderdelen valt dan weg) */
-.widget:not(:has(iframe)) {
+.widget:not(.widget--open) {
   margin-block-end: -1.25rem;
 }
 
@@ -505,6 +527,7 @@ async function verstuur() {
 
 .melding p {
   margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .melding--fout {
@@ -518,14 +541,13 @@ async function verstuur() {
 }
 
 .melding--goed {
-  border: 2px solid var(--kleur-groen);
-  padding: 1.5rem;
+  border: 1px solid var(--kleur-groen);
+  border-inline-start-width: 6px;
+  color: var(--tekst);
 }
 
 .melding--goed .melding__icoon {
   color: var(--kleur-groen);
-  inline-size: 1.5rem;
-  block-size: 1.5rem;
 }
 
 .melding--goed:focus {

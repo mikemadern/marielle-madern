@@ -65,7 +65,8 @@ const formulier = ref<{ laad: () => void } | null>(null)
           </a>
         </div>
         <a v-if="metBladmuziek" class="bladlink" href="#bladmuziek" @click="formulier?.laad()">
-          Bladmuziek van dit nummer
+          <span class="bladlink__tekst">Bladmuziek van dit nummer</span
+          ><span class="bladlink__pijl" aria-hidden="true">↓</span>
         </a>
       </div>
     </div>
@@ -107,7 +108,7 @@ const formulier = ref<{ laad: () => void } | null>(null)
     <!-- Na de liedtekst, boven de voet (design/bladmuziek-formulier.md) -->
     <div v-if="metBladmuziek" class="sectie sectie--eind">
       <div class="kolom">
-        <BladmuziekFormulier ref="formulier" :nummer="slug" :titel="nummer.title" />
+        <LazyBladmuziekFormulier ref="formulier" :nummer="slug" :titel="nummer.title" />
       </div>
     </div>
   </article>
@@ -159,9 +160,19 @@ const formulier = ref<{ laad: () => void } | null>(null)
   align-items: center;
   min-block-size: var(--doel-min);
   margin-block-start: 0.5rem;
-  padding-inline: 1.5rem;
   color: var(--link);
+  text-decoration: none;
+}
+
+.bladlink__tekst {
+  text-decoration: underline;
   text-underline-offset: 0.15em;
+}
+
+/* De pijl omlaag staat buiten de onderstreping, in de tekstkleur */
+.bladlink__pijl {
+  margin-inline-start: 0.4rem;
+  color: var(--tekst);
 }
 
 .bijzonder {

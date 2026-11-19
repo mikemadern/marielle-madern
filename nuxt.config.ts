@@ -49,6 +49,20 @@ export default defineNuxtConfig({
     },
   },
 
+  hooks: {
+    // Het bladmuziekformulier is een apart stukje code (Lazy-component) dat alleen op een nummerpagina mét formulier
+    // wordt geladen. Zonder dit zet Nuxt er op elke nummerpagina een prefetch voor, en dan downloadt de browser het
+    // (ruim 12 KB) toch op pagina's zonder formulier.
+    'build:manifest': (manifest) => {
+      for (const [sleutel, bestand] of Object.entries(manifest)) {
+        if (sleutel.includes('BladmuziekFormulier')) {
+          bestand.prefetch = false
+          bestand.preload = false
+        }
+      }
+    },
+  },
+
   runtimeConfig: {
     public: {
       // Sitesleutel van de Turnstile-widget van de eigenaar (publiek, geen geheim; de geheime sleutel staat alleen
