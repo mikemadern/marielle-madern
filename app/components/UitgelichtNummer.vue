@@ -47,6 +47,7 @@ const luisterlinks = computed(() => {
   <div class="uitgelicht">
     <VideoSpeler
       :id="nummer.youtube"
+      class="uitgelicht__speler"
       :titel="nummer.titel"
       :beeld="nummer.beeld"
       :noot="spelerNoot"
@@ -63,7 +64,7 @@ const luisterlinks = computed(() => {
       <li v-for="link in luisterlinks" :key="link.icoon">
         <a class="knop knop--licht" :href="link.href" :aria-label="link.naam">
           <Icoon :naam="link.icoon" />
-          {{ link.tekst }}
+          <span class="uitgelicht__linktekst">{{ link.tekst }}</span>
         </a>
       </li>
     </ul>
@@ -108,16 +109,56 @@ const luisterlinks = computed(() => {
   list-style: none;
 }
 
-@media (max-width: 47.9375rem) {
+/* Telefoon en tablet (tot 850 px): de knop naar het verhaal en de drie luisterlinks staan in één rij die mag
+   afbreken. De drie links zijn ronde icoonknoppen van 44 px; de tekst blijft in de code (visueel verborgen),
+   dus de toegankelijke naam (aria-label) blijft de volle tekst. Passen ze niet naast de knop (onder ongeveer
+   380 px), dan staan ze eronder, links uitgelijnd. */
+@media (max-width: 53.125rem) {
+  .uitgelicht {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem 0.75rem;
+  }
+
+  .uitgelicht__speler {
+    flex: 0 0 100%;
+  }
+
+  /* De rij zelf valt weg: de tekst, de knop en de links worden de onderdelen van .uitgelicht */
   .uitgelicht__rij {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1.5rem;
+    display: contents;
+  }
+
+  .uitgelicht__tekst {
+    flex: 0 0 100%;
+    margin-block-start: 0.5rem;
+    text-align: start;
   }
 
   .uitgelicht__links {
-    flex-direction: column;
-    align-items: center;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    margin: 0;
+  }
+
+  .uitgelicht__links .knop--licht {
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    min-block-size: 0;
+    padding: 0;
+    gap: 0;
+  }
+
+  .uitgelicht__linktekst {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 }
 </style>
