@@ -241,19 +241,52 @@ img {
   transform: rotate(-9deg) scaleX(-1);
 }
 
+/* Tablet (768 tot 1200 px): de takken schalen mee met de breedte van het scherm (72,5 procent, de plek in
+   dezelfde verhouding). Op 1200 px is dat precies de maat van een groot scherm; op 768 px lopen ze zo niet
+   meer dwars door de titel. */
+@media (min-width: 48rem) and (max-width: 74.9375rem) {
+  .banner__blad {
+    inline-size: 72.5vw;
+  }
+
+  .banner__blad--links {
+    inset-inline-start: -53.3vw;
+    inset-block-start: auto;
+    inset-block-end: -14.8vw;
+  }
+
+  .banner__blad--rechts {
+    inset-inline-end: -45vw;
+  }
+}
+
+/* Telefoon: beide takken, kleiner (224 px breed). De linker hangt aan de onderrand van de kop (ongeveer 125 px
+   zichtbaar), de rechter zit rechtsboven en wat verder naar buiten (ongeveer 80 px zichtbaar), zodat de titel
+   vrij blijft. Een titel van twee regels staat dichter op elkaar: de kop is dan 125 px in plaats van 176 px. */
 @media (max-width: 47.9375rem) {
   .banner {
     min-block-size: 7.5rem;
   }
 
+  .banner__titel {
+    padding-block: 0.875rem;
+    line-height: 1.25;
+  }
+
+  .banner__blad {
+    inline-size: 14rem;
+  }
+
   .banner__blad--links {
-    inline-size: 10.5rem;
-    inset-inline-start: -5.875rem;
-    inset-block-start: 5.5rem;
+    inset-inline-start: -6.25rem;
+    inset-block-start: auto;
+    inset-block-end: -2rem;
   }
 
   .banner__blad--rechts {
-    display: none;
+    display: block;
+    inset-inline-end: -9rem;
+    inset-block-start: -1.5rem;
   }
 }
 
