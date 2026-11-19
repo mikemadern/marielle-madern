@@ -51,6 +51,9 @@ export default defineContentConfig({
         duur: z.string().regex(/^\d{1,2}:\d{2}$/, 'Gebruik m:ss, bijvoorbeeld 3:47'),
         // Eén korte regel voor de kaart op de homepage
         kaartregel: z.string(),
+        // Staat er `bladmuziek: true`, dan krijgt het nummer een formulier voor bladmuziek per e-mail. Het bestand
+        // staat privé in R2 (bladmuziek/<bestandsnaam van het nummer>.pdf), nooit in deze repo.
+        bladmuziek: z.literal(true).optional(),
         uitgebracht: z.date().optional(),
         cover: afbeelding,
         videoBeeld: z.string(),

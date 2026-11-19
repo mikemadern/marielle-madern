@@ -5,9 +5,9 @@
   "packageManager": "pnpm@12.16.1",
   "scripts": {
     "afbeeldingen": "node scripts/afbeeldingen.mjs",
-    "dev": "pnpm afbeeldingen && pnpm deelafbeeldingen && nuxt dev",
+    "dev": "pnpm afbeeldingen && pnpm deelafbeeldingen && pnpm bladmuziek && nuxt dev",
     "build": "pnpm generate",
-    "generate": "pnpm controle && pnpm afbeeldingen && pnpm deelafbeeldingen && nuxt generate && pnpm controle:uitvoer",
+    "generate": "pnpm controle && pnpm afbeeldingen && pnpm deelafbeeldingen && pnpm bladmuziek && pnpm test:worker && nuxt generate && pnpm controle:uitvoer",
     "preview": "wrangler dev",
     "deploy": "pnpm generate && wrangler deploy",
     "lint": "eslint .",
@@ -17,6 +17,8 @@
     "controle": "node scripts/controle.mjs",
     "controle:uitvoer": "node scripts/controle-uitvoer.mjs",
     "deelafbeeldingen": "node scripts/deelafbeeldingen.mjs",
+    "bladmuziek": "node scripts/bladmuziek-lijst.mjs",
+    "test:worker": "node --test worker/*.test.mjs",
     "lettertype": "node scripts/lettertype.mjs"
   },
   "dependencies": {
