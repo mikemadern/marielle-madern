@@ -21,6 +21,11 @@ const alineas = (tekst: string | undefined) => (tekst ?? '').trim().split(/\n\s*
 const verhaal = computed(() => alineas(nummer.value?.verhaal))
 const bijzonder = computed(() => alineas(nummer.value?.bijzonder))
 const strofen = computed(() => alineas(nummer.value?.liedtekst))
+
+// Het formulier voor de bladmuziek: alleen bij een nummer met `bladmuziek: true` (en met een Turnstile-sitesleutel)
+const sitekey = useRuntimeConfig().public.turnstileSitekey
+const metBladmuziek = computed(() => Boolean(nummer.value?.bladmuziek && sitekey))
+const formulier = ref<{ laad: () => void } | null>(null)
 </script>
 
 <template>
@@ -59,6 +64,9 @@ const strofen = computed(() => alineas(nummer.value?.liedtekst))
             <Icoon naam="youtube" />
           </a>
         </div>
+        <a v-if="metBladmuziek" class="bladlink" href="#bladmuziek" @click="formulier?.laad()">
+          Bladmuziek van dit nummer
+        </a>
       </div>
     </div>
 
@@ -87,12 +95,19 @@ const strofen = computed(() => alineas(nummer.value?.liedtekst))
       </div>
     </div>
 
-    <div class="sectie sectie--eind">
+    <div :class="['sectie', !metBladmuziek && 'sectie--eind']">
       <div class="kolom">
         <KopBlok accent="Liedtekst" :kop="nummer.title" />
         <div class="tekst">
           <p v-for="(strofe, i) in strofen" :key="i" class="strofen">{{ strofe }}</p>
         </div>
+      </div>
+    </div>
+
+    <!-- Na de liedtekst, boven de voet (design/bladmuziek-formulier.md) -->
+    <div v-if="metBladmuziek" class="sectie sectie--eind">
+      <div class="kolom">
+        <BladmuziekFormulier ref="formulier" :nummer="slug" :titel="nummer.title" />
       </div>
     </div>
   </article>
@@ -136,6 +151,17 @@ const strofen = computed(() => alineas(nummer.value?.liedtekst))
   inline-size: var(--doel-min);
   block-size: var(--doel-min);
   color: var(--kleur-terracotta-diep);
+}
+
+/* De koppeling naar het formulier onder de luisterbalk: een tikdoel van minstens 44 px */
+.bladlink {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--doel-min);
+  margin-block-start: 0.5rem;
+  padding-inline: 1.5rem;
+  color: var(--link);
+  text-underline-offset: 0.15em;
 }
 
 .bijzonder {

@@ -49,6 +49,14 @@ export default defineNuxtConfig({
     },
   },
 
+  runtimeConfig: {
+    public: {
+      // Sitesleutel van de Turnstile-widget van de eigenaar (publiek, geen geheim; de geheime sleutel staat alleen
+      // als secret TURNSTILE_SECRET in Cloudflare). Voor een proefbouw: NUXT_PUBLIC_TURNSTILE_SITEKEY.
+      turnstileSitekey: '0x4AAAAAAGJIAhDl4maVZzwv',
+    },
+  },
+
   // Niet gevraagd: llms.txt en Markdown-kopieën van elke pagina. Staat uit, kan later aan.
   aiReady: false,
 
