@@ -82,8 +82,14 @@ Een nummer met `bladmuziek: true` in zijn bestand in `content/nummers/` krijgt (
 
 De feature werkt pas als de eigenaar dit in Cloudflare heeft ingesteld (het team doet dat niet en zet nooit een sleutel in de repo, een PR of een chat); zolang een van deze ontbreekt, geeft `/api/bladmuziek` `503` en doet niets:
 
-- **Secrets** (Cloudflare, Worker `mariellemadern`, Instellingen, Variabelen en secrets): `RESEND_API_KEY` (een Resend-sleutel met alleen verzendrechten, voor het domein mariellemadern.nl met SPF en DKIM in orde) en `TURNSTILE_SECRET` (de geheime sleutel van de Turnstile-widget).
-- **R2-bucket** met de binding `BLADMUZIEK` (komt in `wrangler.jsonc` in deel 3, pas als de bucket bestaat; een binding naar een bucket die niet bestaat laat de uitrol falen).
+- **Klaar:**
+  - **R2-bucket `marielle-madern`** met een map `bladmuziek` (door de eigenaar aangemaakt) en de binding `BLADMUZIEK` in `wrangler.jsonc`. De pdf's staan als `bladmuziek/<bestandsnaam van het nummer>.pdf` (bijvoorbeeld `bladmuziek/hart-van-glas.pdf`); de Worker leest alleen en schrijft nooit. Preview-bouwen binden dezelfde bucket (alleen lezen).
+  - De limieten (zie hieronder).
+- **Nog open (de eigenaar, in Cloudflare en Resend; het team doet dat niet en zet nooit een sleutel in de repo, een PR of een chat):**
+  - **Resend:** een account, het domein mariellemadern.nl toevoegen met SPF en DKIM in orde, en een API-sleutel met alleen verzendrechten.
+  - **Turnstile-widget** (Cloudflare, Turnstile): actie `bladmuziek` (`data-action`), toegestane adressen: `mariellemadern.nl`, `www.mariellemadern.nl` en de preview-adressen (`*.mmadern.workers.dev`, indien de eigenaar die wil kunnen testen). De sitesleutel is publiek en komt in de repo (deel 2); de geheime sleutel nooit.
+  - **Twee secrets** (Cloudflare, Worker `mariellemadern`, Instellingen, Variabelen en secrets): `RESEND_API_KEY` en `TURNSTILE_SECRET`. Zolang een van beide ontbreekt, geeft `/api/bladmuziek` `503` en doet niets.
+  - **Een pdf per nummer** in de map `bladmuziek` en `bladmuziek: true` bij dat nummer in `content/nummers/` (pas daarna verschijnt het formulier).
 - **Limieten:** de bindingen `LIMIET_IP` (3 per minuut per IP-adres), `LIMIET_ADRES` (1 per minuut per e-mailadres) en `LIMIET_ALGEMEEN` (10 per minuut voor de hele site) staan al in `wrangler.jsonc`; er is niets voor in te stellen. De sleutel van de limiet is een HMAC van het IP-adres of e-mailadres; de binding houdt alleen een teller in het geheugen bij, er wordt niets bewaard of gelogd.
 - **Turnstile-widget:** moet de actie `bladmuziek` meegeven (`data-action`); de Worker weigert een token dat niet voor de eigen hostname en die actie is uitgegeven. Zet in de widget de adressen die nodig zijn (het echte domein en de preview-adressen).
 - **Wat beschermt:** Turnstile (met controle van hostname en actie) en de limieten. De controle van de `Origin`-kop is alleen een eenvoudig filter tegen gebruik vanaf andere pagina's in een browser, geen verificatie: elk script kan die kop zelf zetten.
