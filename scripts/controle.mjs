@@ -224,6 +224,29 @@ function zoekEmDash(map) {
 }
 for (const map of ['app', 'content', 'public']) if (existsSync(join(wortel, map))) zoekEmDash(map)
 
+// Open punten in de content: een tekst die nog 'TE BEVESTIGEN' bevat is nog niet goedgekeurd en mag niet
+// live. Een samenvoeging in main rolt automatisch uit, dus laat de bouw hier falen (hoofdletterongevoelig,
+// alle bestanden in content/).
+const OPEN_PUNT = /te bevestigen/i
+function zoekOpenPunten(map) {
+  for (const naam of readdirSync(join(wortel, map))) {
+    const pad = `${map}/${naam}`
+    if (statSync(join(wortel, pad)).isDirectory()) zoekOpenPunten(pad)
+    else if (TEKST_BESTAND.test(pad)) {
+      readFileSync(join(wortel, pad), 'utf-8')
+        .split('\n')
+        .forEach((regel, i) => {
+          if (OPEN_PUNT.test(regel))
+            fout(
+              `${pad}:${i + 1}`,
+              "bevat 'TE BEVESTIGEN': los de open punten op of haal de tekst weg voordat dit live gaat",
+            )
+        })
+    }
+  }
+}
+zoekOpenPunten('content')
+
 if (fouten.length) {
   console.error(`Content: ${fouten.length} fout(en)\n` + fouten.map((f) => `  - ${f}`).join('\n'))
   process.exit(1)
