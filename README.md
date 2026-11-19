@@ -18,7 +18,7 @@ pnpm install
 | `pnpm generate`   | Bouwt de hele site naar `.output/public`                                                          |
 | `pnpm preview`    | Draait het resultaat van `pnpm generate` lokaal in de Cloudflare-omgeving (http://localhost:8787) |
 | `pnpm run deploy` | Bouwt en rolt uit naar Cloudflare (eerst `pnpm exec wrangler login`)                              |
-| `pnpm controle`   | Controleert alle inhoud in `content/` (draait ook bij `pnpm generate`)                            |
+| `pnpm controle`   | Controleert `content/`, ook op een open TE BEVESTIGEN (draait ook bij `pnpm generate`)            |
 | `pnpm lettertype` | Maakt de WOFF2-subset van Atlantis opnieuw (vraagt het bron-TTF als argument)                     |
 | `pnpm lint`       | Controleert de code, inclusief toegankelijkheidsregels voor templates                             |
 | `pnpm format`     | Zet de code in de afgesproken opmaak                                                              |
