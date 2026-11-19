@@ -25,6 +25,9 @@
     // /over-mij wordt doorgestuurd naar /over-mij/ (de slash blijft de canonieke vorm)
     "html_handling": "auto-trailing-slash"
   },
+  // De privé-bucket met de bladmuziek (pdf's als bladmuziek/<bestandsnaam van het nummer>.pdf). De Worker leest
+  // alleen (get) en schrijft nooit. Een preview-bouw bindt dezelfde bucket (previews erft deze instellingen).
+  "r2_buckets": [{ "binding": "BLADMUZIEK", "bucket_name": "marielle-madern" }],
   // Limieten per minuut (de binding kent alleen perioden van 10 of 60 seconden): 3 per IP-adres, 1 per e-mailadres en
   // 10 voor de hele site. De Worker gebruikt als sleutel een HMAC van het IP-adres of e-mailadres; niets wordt bewaard.
   "ratelimits": [
