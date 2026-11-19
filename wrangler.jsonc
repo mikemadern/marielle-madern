@@ -25,9 +25,10 @@
     // /over-mij wordt doorgestuurd naar /over-mij/ (de slash blijft de canonieke vorm)
     "html_handling": "auto-trailing-slash"
   },
-  // Limieten per minuut (de binding kent alleen perioden van 10 of 60 seconden): 1 per e-mailadres en 10 voor de
-  // hele site. De Worker gebruikt als sleutel een hash van het adres, het adres zelf wordt niet bewaard.
+  // Limieten per minuut (de binding kent alleen perioden van 10 of 60 seconden): 3 per IP-adres, 1 per e-mailadres en
+  // 10 voor de hele site. De Worker gebruikt als sleutel een HMAC van het IP-adres of e-mailadres; niets wordt bewaard.
   "ratelimits": [
+    { "name": "LIMIET_IP", "namespace_id": "1003", "simple": { "limit": 3, "period": 60 } },
     { "name": "LIMIET_ADRES", "namespace_id": "1001", "simple": { "limit": 1, "period": 60 } },
     { "name": "LIMIET_ALGEMEEN", "namespace_id": "1002", "simple": { "limit": 10, "period": 60 } }
   ]
