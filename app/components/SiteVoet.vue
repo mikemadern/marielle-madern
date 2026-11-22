@@ -14,7 +14,15 @@ const lijst = computed(() =>
   }),
 )
 
-const jaar = new Date().getFullYear()
+// Het jaartal in de voet. De pagina's worden bij het bouwen gemaakt, dus 'nu' is dan de dag van de bouw: zonder
+// nieuwe uitrol in januari bleef het oude jaar staan. Server en browser beginnen allebei met het bouwjaar (het
+// tijdstip van de bouw staat in de gegevens van de pagina, dus geen verschil bij het laden); na het laden springt
+// het naar het huidige jaar.
+const bouwjaar = new Date(useNuxtApp().payload.prerenderedAt ?? Date.now()).getFullYear()
+const jaar = ref(bouwjaar)
+onMounted(() => {
+  jaar.value = new Date().getFullYear()
+})
 
 const kanalen = [
   { naam: 'Facebook', link: 'https://www.facebook.com/marielle.overeem', icoon: 'facebook' },
