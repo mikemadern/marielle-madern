@@ -167,6 +167,15 @@ img {
   margin-block-end: 1.25rem;
 }
 
+/* Korte koppen (de kop in het kopblok, de titel in de paginakop en de tussenkoppen in een tekst): de regels even
+   lang verdelen, zodat er geen los woord op de laatste regel staat. Alleen op koppen, niet op lopende tekst:
+   het verdelen kost rekentijd en werkt tot ongeveer zes regels. Browsers zonder steun breken zoals voorheen. */
+.kop,
+.banner__titel,
+.tekst h2 {
+  text-wrap: balance;
+}
+
 /* ---------- Kopbalk met bladtekeningen ---------- */
 
 .banner {
