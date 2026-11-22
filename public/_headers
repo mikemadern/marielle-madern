@@ -15,6 +15,20 @@
 /afbeeldingen/*
   Cache-Control: public, max-age=604800
 
+# De video, de logo's, het icoon en de illustraties hebben ook geen hash in de naam: een week, zoals de afbeeldingen.
+# Cloudflare geeft ze anders 'max-age=0, must-revalidate', waardoor de browser ze bij elk bezoek opnieuw controleert.
+# Een vervangen bestand met dezelfde naam is dan hoogstens een week oud bij wie het al had: geef het liever een nieuwe naam.
+/video/*
+  Cache-Control: public, max-age=604800
+/logo/*
+  Cache-Control: public, max-age=604800
+/illustraties/*
+  Cache-Control: public, max-age=604800
+/favicon.ico
+  Cache-Control: public, max-age=604800
+/favicon.webp
+  Cache-Control: public, max-age=604800
+
 # Het testadres en de preview-adressen op workers.dev blijven uit zoekmachines. De regel raakt alleen hostnamen
 # die eindigen op workers.dev met twee labels ervoor (bijvoorbeeld mariellemadern.account.workers.dev of
 # <versie>-mariellemadern.account.workers.dev). Het eigen domein mariellemadern.nl valt er niet onder.
