@@ -23,6 +23,9 @@ const nieuwsbrief = ref(false)
 const website = ref('') // verborgen veld tegen spam: een mens vult het niet in
 const bezig = ref(false)
 const klaar = ref(false)
+// Pas na het laden van de pagina (hydratatie) kan het formulier worden gebruikt; tot dan staan de velden uit.
+// Zonder JavaScript of voor het laden kan er dus niets worden verstuurd, ook niet als GET met naam en adres in het adres.
+const gereed = ref(false)
 const naamFout = ref<Fout | null>(null)
 const emailFout = ref<Fout | null>(null)
 const melding = ref<Melding | null>(null)
@@ -42,6 +45,7 @@ const uitlegId = 'bladmuziek-uitleg'
 interface TurnstileApi {
   render: (el: HTMLElement, opties: Record<string, unknown>) => string
   reset: (id?: string) => void
+  remove: (id?: string) => void
 }
 declare global {
   interface Window {
@@ -139,12 +143,21 @@ function nieuwToken() {
 defineExpose({ laad })
 
 onMounted(() => {
+  gereed.value = true
   if (location.hash === '#bladmuziek') void laad()
 })
 
-// ---------- Versturen ----------
-
 const EMAIL_REGEL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+// Een melding bij een veld verdwijnt zodra het veld klopt (niet bij elke toetsaanslag een nieuwe fout tonen)
+watch(naam, (v) => {
+  if (naamFout.value && v.trim()) naamFout.value = null
+})
+watch(email, (v) => {
+  if (emailFout.value && EMAIL_REGEL.test(v.trim())) emailFout.value = null
+})
+
+// ---------- Versturen ----------
 
 function controleer(): boolean {
   const n = naam.value.replace(/\s+/g, ' ').trim()
@@ -191,6 +204,9 @@ async function verstuur() {
     })
     nieuwToken()
     if (res.ok) {
+      // Het formulier verdwijnt: ook het controlevak van Cloudflare opruimen
+      if (widgetId && window.turnstile) window.turnstile.remove(widgetId)
+      widgetId = undefined
       klaar.value = true
       await nextTick()
       bevestiging.value?.focus()
@@ -251,8 +267,18 @@ async function verstuur() {
       </div>
     </div>
 
-    <form v-else class="kaart" novalidate @submit.prevent="verstuur" @focusin="laad">
+    <form
+      v-else
+      class="kaart"
+      method="post"
+      action="/api/bladmuziek"
+      novalidate
+      @submit.prevent="verstuur"
+      @focusin="laad"
+    >
       <p class="kaart__regel">{{ T.regel }}</p>
+      <!-- Alleen tekst in noscript (geen elementen): anders klopt de hydratatie niet met wat de browser ziet -->
+      <noscript class="kaart__regel">{{ T.zonderScript }}{{ MAIL }}{{ T.zonderScriptNa }}</noscript>
 
       <div class="veld">
         <label for="bladmuziek-naam" class="veld__etiket">
@@ -265,8 +291,11 @@ async function verstuur() {
             type="text"
             name="naam"
             autocomplete="name"
+            enterkeyhint="next"
             maxlength="100"
-            :aria-invalid="naamFout ? 'true' : undefined"
+            required
+            :disabled="!gereed"
+            :aria-invalid="naamFout ? 'true' : 'false'"
             :aria-describedby="naamFout ? 'bladmuziek-naam-fout' : undefined"
           />
         </label>
@@ -293,8 +322,14 @@ async function verstuur() {
             type="email"
             name="email"
             autocomplete="email"
+            autocapitalize="none"
+            autocorrect="off"
+            spellcheck="false"
+            enterkeyhint="send"
             maxlength="254"
-            :aria-invalid="emailFout ? 'true' : undefined"
+            required
+            :disabled="!gereed"
+            :aria-invalid="emailFout ? 'true' : 'false'"
             :aria-describedby="emailFout ? `bladmuziek-email-fout ${uitlegId}` : uitlegId"
           />
         </label>
@@ -322,6 +357,7 @@ async function verstuur() {
             name="website"
             tabindex="-1"
             autocomplete="off"
+            :disabled="!gereed"
           />
         </label>
       </div>
@@ -334,6 +370,7 @@ async function verstuur() {
             class="vakje__invoer"
             type="checkbox"
             name="nieuwsbrief"
+            :disabled="!gereed"
             :aria-label="T.nieuwsbriefAria"
           />
           <span>{{ T.nieuwsbrief }}</span>
@@ -366,6 +403,7 @@ async function verstuur() {
       <button
         type="submit"
         class="knop kaart__knop"
+        :disabled="!gereed"
         :aria-disabled="bezig ? 'true' : undefined"
         :aria-label="bezig ? undefined : `${T.knop} van ${titel}`"
       >
