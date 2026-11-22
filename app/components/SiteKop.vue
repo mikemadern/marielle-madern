@@ -198,8 +198,12 @@ function huidig(to: string): 'page' | 'true' | undefined {
     display: inline-flex;
   }
 
+  /* Het menu is altijd aanwezig en wordt zichtbaar met visibility en opacity (in plaats van display), zodat het kan
+     overgaan. visibility: hidden houdt de links onbereikbaar met Tab en schermlezer zolang het menu dicht is. */
   .sitekop__menu {
-    display: none;
+    display: block;
+    visibility: hidden;
+    opacity: 0;
     position: absolute;
     inset-block-start: 100%;
     inset-inline: -1.25rem;
@@ -209,7 +213,28 @@ function huidig(to: string): 'page' | 'true' | undefined {
   }
 
   .sitekop__menu--open {
-    display: block;
+    visibility: visible;
+    opacity: 1;
+  }
+
+  /* Openen 150 ms (ease-out): doorzichtigheid 0 naar 1, 8 px omlaag naar zijn plek. Sluiten 100 ms (ease-in): omgekeerd.
+     Wie 'minder beweging' heeft ingesteld, krijgt geen overgang: het menu verschijnt en verdwijnt direct, zoals voorheen. */
+  @media (prefers-reduced-motion: no-preference) {
+    .sitekop__menu {
+      translate: 0 -0.5rem;
+      transition:
+        opacity 100ms ease-in,
+        translate 100ms ease-in,
+        visibility 0s linear 100ms;
+    }
+
+    .sitekop__menu--open {
+      translate: 0 0;
+      transition:
+        opacity 150ms ease-out,
+        translate 150ms ease-out,
+        visibility 0s;
+    }
   }
 
   .sitekop__menu ul {
