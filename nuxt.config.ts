@@ -63,6 +63,20 @@ export default defineNuxtConfig({
     // daar zelf het preset `cloudflare-module`, met een servermap, een D1-database, een doorverwijzing
     // naar een andere wrangler-config (`.wrangler/deploy/config.json`) en een aangepast `_headers`.
     preset: 'static',
+    // 404.html is de pagina die Cloudflare toont bij een onbekend adres. Nuxt maakt die als leeg schil (de foutpagina
+    // verschijnt pas na het laden van de scripts), zonder titel en zonder kop in de HTML. Hier komen een titel en een
+    // korte tekst met kop in het schil; Nuxt vervangt ze bij het laden door de echte foutpagina (app/error.vue).
+    hooks: {
+      'prerender:generate'(route) {
+        if (route.route !== '/404.html' || typeof route.contents !== 'string') return
+        route.contents = route.contents
+          .replace('<head>', '<head><title>Pagina niet gevonden - Mariëlle Madern</title>')
+          .replace(
+            '<div id="__nuxt"></div>',
+            '<div id="__nuxt"><main id="inhoud"><h1>Pagina niet gevonden</h1><p>Deze pagina bestaat niet (meer). Misschien is het adres veranderd of is er een typfout gemaakt.</p><p><a href="/">Naar de homepage</a></p></main></div>',
+          )
+      },
+    },
     prerender: {
       crawlLinks: true,
       // /bestel-de-ep/ staat nergens in het menu en wordt dus niet vanzelf gevonden

@@ -120,6 +120,11 @@ for (const f of readdirSync(join(uitvoer, 'afbeeldingen', 'og')).filter((f) =>
     fouten.push(`afbeeldingen/og/${f} is ${m.width}x${m.height} ${m.format}`)
 }
 
+// 404.html (de pagina die Cloudflare toont bij een onbekend adres): een titel en een kop in de HTML zelf
+const nietGevonden = readFileSync(join(uitvoer, '404.html'), 'utf-8')
+if (!/<title>[^<]+<\/title>/.test(nietGevonden)) fouten.push('404.html heeft geen <title>')
+if (!/<h1[^>]*>[^<]+<\/h1>/.test(nietGevonden)) fouten.push('404.html heeft geen <h1>')
+
 if (fouten.length) {
   console.error(`Uitvoer: ${fouten.length} fout(en)\n` + fouten.map((f) => `  - ${f}`).join('\n'))
   process.exit(1)
