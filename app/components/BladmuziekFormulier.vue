@@ -279,6 +279,12 @@ async function verstuur() {
       <p class="kaart__regel">{{ T.regel }}</p>
       <!-- Alleen tekst in noscript (geen elementen): anders klopt de hydratatie niet met wat de browser ziet -->
       <noscript class="kaart__regel">{{ T.zonderScript }}{{ MAIL }}{{ T.zonderScriptNa }}</noscript>
+      <!-- Laadt het script niet (storing, geblokkeerd bestand), dan staat er een formulier dat niets doet: na een
+           paar seconden verschijnt dan dezelfde uitleg (alleen CSS, zonder script, dus geen hydratatieverschil).
+           Is de pagina geladen, dan verdwijnt deze regel. -->
+      <p v-if="!gereed" class="kaart__regel zonder-script">
+        {{ T.zonderScript }}{{ MAIL }}{{ T.zonderScriptNa }}
+      </p>
 
       <div class="veld">
         <label for="bladmuziek-naam" class="veld__etiket">
@@ -541,6 +547,31 @@ async function verstuur() {
   padding-inline-start: 2.25rem;
   font-size: var(--tekst-klein);
   line-height: 1.5;
+}
+
+/* De uitleg bij een formulier dat niet laadt: onzichtbaar en zonder ruimte, en na 6 seconden zichtbaar (alleen als de
+   pagina dan nog niet is geladen). Zonder JavaScript staat de noscript-regel er al; dan blijft deze regel weg. */
+.zonder-script {
+  margin-block-end: -1.25rem;
+  block-size: 0;
+  overflow: hidden;
+  visibility: hidden;
+  animation: toon-uitleg 0.01s 6s forwards;
+}
+
+@keyframes toon-uitleg {
+  to {
+    margin-block-end: 0;
+    block-size: auto;
+    overflow: visible;
+    visibility: visible;
+  }
+}
+
+@media (scripting: none) {
+  .zonder-script {
+    display: none;
+  }
 }
 
 /* De melding-houder is er altijd (voor schermlezers) maar neemt geen ruimte als hij leeg is */
