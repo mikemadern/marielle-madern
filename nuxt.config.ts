@@ -11,11 +11,15 @@ export default defineNuxtConfig({
     head: {
       htmlAttrs: { lang: 'nl' },
       // Adobe Fonts-kit (besluit 2026-11-05). Preconnect scheelt tijd bij het laden van het lettertype.
+      // Het stylesheet van Adobe zelf staat in app/app.vue: het laadt niet-blokkerend en moet door Nuxt bijgehouden
+      // worden (zie daar). Zonder JavaScript laadt het gewoon via <noscript>.
       link: [
         { rel: 'preconnect', href: 'https://use.typekit.net', crossorigin: 'anonymous' },
         { rel: 'preconnect', href: 'https://p.typekit.net', crossorigin: 'anonymous' },
-        { rel: 'stylesheet', href: 'https://use.typekit.net/bxn6xtn.css' },
         { rel: 'icon', type: 'image/webp', href: '/favicon.webp' },
+      ],
+      noscript: [
+        { innerHTML: '<link rel="stylesheet" href="https://use.typekit.net/bxn6xtn.css">' },
       ],
     },
   },
