@@ -14,10 +14,9 @@ export const TEKSTEN = {
   // TE BEVESTIGEN door Mariëlle (hoe vaak de nieuwsbrief verschijnt en wat erin staat): alleen de eerste zin van
   // de Tekstschrijver staat hier, de rest van de uitleg ontbreekt tot het besluit er is.
   nieuwsbriefUitleg: 'Met de nieuwsbrief hou ik je op de hoogte van nieuwe muziek en activiteiten.',
-  // Alleen zichtbaar zonder JavaScript. Voorstel van de Developer, niet van de Tekstschrijver: die moet de tekst nog
+  // Zichtbaar zonder JavaScript of als het script niet laadt. Voorstel van de Developer, niet van de Tekstschrijver: die moet de tekst nog
   // goedkeuren voordat de feature aan gaat.
-  zonderScript:
-    'Voor het aanvragen van de bladmuziek is JavaScript nodig. Zonder JavaScript kun je mailen naar ',
+  zonderScript: 'Het formulier heeft JavaScript nodig. Zonder JavaScript kun je mailen naar ',
   zonderScriptNa: ' en het nummer noemen waar je de bladmuziek voor wilt.',
   knop: 'Stuur mij de bladmuziek',
   knopBezig: 'Bezig met versturen',
@@ -34,7 +33,7 @@ export const TEKSTEN = {
     druk: 'Het versturen lukt nu even niet. Probeer het later nog eens, of mail me op ',
     drukNa: '.',
     mis: 'Er ging iets mis bij het versturen. Probeer het nog eens, of mail ',
-    misNa: ' en vermeld het nummer waar je de bladmuziek voor wilde.',
+    misNa: ' en vermeld het nummer waar je de bladmuziek voor wilt.',
   },
   bevestigingKop: 'Dank je wel.',
   bevestiging:
