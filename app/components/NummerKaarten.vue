@@ -149,6 +149,9 @@ defineEmits<{ kies: [slug: string] }>()
   font-size: var(--tekst-basis);
   font-weight: var(--gewicht-vet);
   line-height: 1.3;
+  /* Een korte titel in twee regels: de regels even lang, zodat er geen los woord blijft staan ('Voor nu en voor
+     altijd' op 320 px). Zelfde aanpak als de koppen (.kop in basis.css). */
+  text-wrap: balance;
 }
 
 .kaart__duur {
