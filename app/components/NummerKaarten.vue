@@ -167,8 +167,9 @@ defineEmits<{ kies: [slug: string] }>()
 }
 
 .kaart__link a {
-  display: inline-block;
-  padding-block: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--doel-min);
   color: var(--link);
   text-decoration: underline;
 }

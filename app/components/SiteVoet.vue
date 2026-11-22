@@ -143,7 +143,7 @@ const kanalen = [
 .voet__mail {
   display: inline-flex;
   align-items: center;
-  min-block-size: 2.375rem;
+  min-block-size: var(--doel-min);
   color: var(--tekst);
   font-weight: 400;
   text-decoration: none;
@@ -169,8 +169,8 @@ const kanalen = [
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  inline-size: 2.25rem;
-  block-size: 2.25rem;
+  inline-size: var(--doel-min);
+  block-size: var(--doel-min);
   color: var(--kleur-terracotta-diep);
 }
 
