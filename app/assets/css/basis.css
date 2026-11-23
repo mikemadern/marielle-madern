@@ -125,11 +125,15 @@ img {
 
 /* ---------- Handschrift boven een kop ---------- */
 
-/* Het handschrift valt deels over de kop, zoals op de huidige site: een tekstvak van 31 px
-   met daarin 70 px handschrift. De kop staat 20 px onder dat vak. */
+/* Het handschrift valt deels over de kop, zoals op de huidige site. Het heeft zijn eigen hoogte (50 px per regel)
+   en een vaste negatieve marge eronder (31 px min 50 px): de laatste regel handschrift valt zo altijd op dezelfde
+   manier over de kop als bij één regel, en extra regels komen erboven in plaats van dwars door de kop. Bij één
+   regel (vanaf 768 px) is alles pixelgelijk aan het vaste vak van 31 px met de kop 20 px eronder. */
 .accent {
   margin: 0;
-  block-size: 1.9375rem;
+  margin-block-end: -1.1875rem;
+  block-size: auto;
+  text-wrap: balance;
   font-family: var(--font-accent);
   font-size: var(--tekst-accent);
   font-weight: 400;
