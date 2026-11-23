@@ -37,7 +37,8 @@ content/              alle inhoud als Markdown
   nummers/            een bestand per nummer: /over-de-muziek/{bestandsnaam}/
   paginas/            vaste pagina's: over-mij, contact, bestel-de-ep, privacy
 public/               bestanden die ongewijzigd worden uitgerold
-  _headers            beveiligings- en cacheheaders voor Cloudflare
+  _headers            beveiligings- en cacheheaders voor Cloudflare. /video/ wordt een week gecachet: een nieuwe of bijgewerkte
+                      video krijgt daarom altijd een nieuwe bestandsnaam. Logo's, icoon, favicon en illustraties: een dag.
   _redirects          redirects van de oude WordPress-site
   afbeeldingen/       wordt gemaakt door pnpm afbeeldingen (niet in git)
 worker/                     de kleine Worker voor /api/* (bladmuziek per e-mail), met tests (pnpm test:worker)
@@ -97,6 +98,10 @@ De feature werkt pas als de eigenaar dit in Cloudflare heeft ingesteld (het team
 - **Wat beschermt:** Turnstile (met controle van hostname en actie) en de limieten. De controle van de `Origin`-kop is alleen een eenvoudig filter tegen gebruik vanaf andere pagina's in een browser, geen verificatie: elk script kan die kop zelf zetten.
 
 Testen zonder sleutels en zonder echte mail: `pnpm test:worker` (alles nagebootst, met verzonnen gegevens; draait ook in `pnpm build`).
+
+### Het formulier op de nummerpagina
+
+`app/components/BladmuziekFormulier.vue` (teksten in `app/bladmuziek-teksten.ts`) staat onderaan de nummerpagina, na de liedtekst, met een koppeling 'Bladmuziek van dit nummer' bij de luisterbalk. Het verschijnt **alleen** bij een nummer met `bladmuziek: true` (nu geen enkel nummer). Het Turnstile-script van Cloudflare laadt pas als iemand het formulier gebruikt (focus in een veld of een klik op de koppeling). De **Site key** van de Turnstile-widget staat als vaste waarde `runtimeConfig.public.turnstileSitekey` in `nuxt.config.ts`: hij is publiek en hoort bij de widget van de eigenaar (maakt de eigenaar een andere widget, dan moet die waarde mee veranderen); de geheime sleutel staat alleen als secret `TURNSTILE_SECRET` in Cloudflare. Een proefbouw met de testsleutel van Cloudflare, waarmee Turnstile altijd slaagt: `NUXT_PUBLIC_TURNSTILE_SITEKEY=1x00000000000000000000AA pnpm generate`.
 
 ## Let op
 

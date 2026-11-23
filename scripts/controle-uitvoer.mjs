@@ -87,6 +87,23 @@ for (const pad of lijst) {
       fout(`de deelafbeelding van de homepage moet home.jpg zijn, niet ${ogImage}`)
     controleerHero(html, fout)
   }
+  controleerLettertype(html, fout)
+}
+
+// Snelheid: het stylesheet van Adobe Fonts blokkeert de eerste weergave niet
+function controleerLettertype(html, fout) {
+  // Eerst de <noscript>-blokken weghalen: daar staat de gewone (blokkerende) link bewust, voor wie geen JavaScript heeft
+  const zonderNoscript = html.replace(/<noscript>[\s\S]*?<\/noscript>/g, '')
+  const kit = [...zonderNoscript.matchAll(/<link[^>]*bxn6xtn\.css[^>]*>/g)].map((m) => m[0])
+  if (!kit.length) return fout('het stylesheet van Adobe Fonts ontbreekt')
+  if (kit.some((t) => !/\smedia="print"/.test(t)))
+    fout('het stylesheet van Adobe Fonts blokkeert nog (media="print" ontbreekt)')
+  if (
+    !html.includes(
+      '<noscript><link rel="stylesheet" href="https://use.typekit.net/bxn6xtn.css"></noscript>',
+    )
+  )
+    fout('de <noscript>-terugval voor het lettertype ontbreekt')
 }
 
 // [hero-poster] De hero heeft een poster die direct in de pagina staat (stilstaand beeld uit de video)

@@ -26,10 +26,23 @@ useSeoMeta({ robots: 'noindex, nofollow' })
           </p>
           <p v-else>Probeer het later nog eens.</p>
           <p><NuxtLink class="knop" to="/">Naar de homepage</NuxtLink></p>
-          <p><NuxtLink to="/over-de-muziek/">Of lees het verhaal achter de muziek</NuxtLink></p>
+          <p>
+            <NuxtLink class="error__link" to="/over-de-muziek/"
+              >Of lees het verhaal achter de muziek</NuxtLink
+            >
+          </p>
         </div>
       </section>
     </main>
     <SiteVoet />
   </div>
 </template>
+
+<style scoped>
+/* De losse link is 44 px hoog om aan te raken (was 19 px) */
+.error__link {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--doel-min);
+}
+</style>

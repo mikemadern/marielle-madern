@@ -11,11 +11,15 @@ export default defineNuxtConfig({
     head: {
       htmlAttrs: { lang: 'nl' },
       // Adobe Fonts-kit (besluit 2026-11-05). Preconnect scheelt tijd bij het laden van het lettertype.
+      // Het stylesheet van Adobe zelf staat in app/app.vue: het laadt niet-blokkerend en moet door Nuxt bijgehouden
+      // worden (zie daar). Zonder JavaScript laadt het gewoon via <noscript>.
       link: [
         { rel: 'preconnect', href: 'https://use.typekit.net', crossorigin: 'anonymous' },
         { rel: 'preconnect', href: 'https://p.typekit.net', crossorigin: 'anonymous' },
-        { rel: 'stylesheet', href: 'https://use.typekit.net/bxn6xtn.css' },
         { rel: 'icon', type: 'image/webp', href: '/favicon.webp' },
+      ],
+      noscript: [
+        { innerHTML: '<link rel="stylesheet" href="https://use.typekit.net/bxn6xtn.css">' },
       ],
     },
   },
@@ -46,6 +50,28 @@ export default defineNuxtConfig({
     provider: 'statisch',
     providers: {
       statisch: { provider: '~/providers/statisch' },
+    },
+  },
+
+  hooks: {
+    // Het bladmuziekformulier is een apart stukje code (Lazy-component) dat alleen op een nummerpagina mét formulier
+    // wordt geladen. Zonder dit zet Nuxt er op elke nummerpagina een prefetch voor, en dan downloadt de browser het
+    // (ruim 12 KB) toch op pagina's zonder formulier.
+    'build:manifest': (manifest) => {
+      for (const [sleutel, bestand] of Object.entries(manifest)) {
+        if (sleutel.includes('BladmuziekFormulier')) {
+          bestand.prefetch = false
+          bestand.preload = false
+        }
+      }
+    },
+  },
+
+  runtimeConfig: {
+    public: {
+      // Sitesleutel van de Turnstile-widget van de eigenaar (publiek, geen geheim; de geheime sleutel staat alleen
+      // als secret TURNSTILE_SECRET in Cloudflare). Voor een proefbouw: NUXT_PUBLIC_TURNSTILE_SITEKEY.
+      turnstileSitekey: '0x4AAAAAAGJIAhDl4maVZzwv',
     },
   },
 

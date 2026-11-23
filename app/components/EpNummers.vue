@@ -70,6 +70,13 @@ const tracks = computed(() =>
   text-decoration: none;
 }
 
+a.ep__titel {
+  /* De link is 44 px hoog om aan te raken (de rij eromheen is hoger, dus de indeling blijft gelijk) */
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--doel-min);
+}
+
 a.ep__titel:hover {
   text-decoration: underline;
 }
