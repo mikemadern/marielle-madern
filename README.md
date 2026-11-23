@@ -37,7 +37,8 @@ content/              alle inhoud als Markdown
   nummers/            een bestand per nummer: /over-de-muziek/{bestandsnaam}/
   paginas/            vaste pagina's: over-mij, contact, bestel-de-ep, privacy
 public/               bestanden die ongewijzigd worden uitgerold
-  _headers            beveiligings- en cacheheaders voor Cloudflare
+  _headers            beveiligings- en cacheheaders voor Cloudflare. /video/ wordt een week gecachet: een nieuwe of bijgewerkte
+                      video krijgt daarom altijd een nieuwe bestandsnaam. Logo's, icoon, favicon en illustraties: een dag.
   _redirects          redirects van de oude WordPress-site
   afbeeldingen/       wordt gemaakt door pnpm afbeeldingen (niet in git)
 worker/                     de kleine Worker voor /api/* (bladmuziek per e-mail), met tests (pnpm test:worker)
