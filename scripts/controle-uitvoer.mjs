@@ -5,11 +5,41 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import sharp from 'sharp'
+import { parse } from 'yaml'
 
 const SITE = 'https://mariellemadern.nl'
 const wortel = fileURLToPath(new URL('..', import.meta.url))
 const uitvoer = join(wortel, '.output', 'public')
 const fouten = []
+
+// Wat de bouw moet kloppen met: de kanalen, de EP en de volgorde op Over de muziek komen uit de bron
+const aantalKanalen = [
+  ...readFileSync(join(wortel, 'app', 'data', 'kanalen.ts'), 'utf-8').matchAll(/link:/g),
+].length
+const kopblok = (pad) =>
+  parse(readFileSync(join(wortel, pad), 'utf-8').match(/^---\n([\s\S]*?)\n---/)?.[1] ?? '') ?? {}
+const home = parse(readFileSync(join(wortel, 'content', 'home.yml'), 'utf-8')) ?? {}
+const ep = parse(readFileSync(join(wortel, 'content', 'uitgaven', 'u-ziet-mij.yml'), 'utf-8'))
+// Over de muziek toont de nummers van de EP en alle singles
+const aantalSingles = readdirSync(join(wortel, 'content', 'nummers'))
+  .filter((f) => f.endsWith('.md'))
+  .filter((f) => kopblok(`content/nummers/${f}`).uitgave === 'single').length
+const verwachtAantalNummers = ep.nummers.length + aantalSingles
+// Persoonsgegevens horen niet in de schema.org-gegevens (besluit van de eigenaar, 2026-11-16)
+const VERBODEN = [
+  'birthDate',
+  'deathDate',
+  'spouse',
+  'children',
+  'parent',
+  'sibling',
+  'relatedTo',
+  'telephone',
+  'address',
+  'homeLocation',
+  'gender',
+  'email',
+]
 
 function* paginas(map) {
   for (const item of readdirSync(map, { withFileTypes: true })) {
@@ -88,6 +118,91 @@ for (const pad of lijst) {
     controleerHero(html, fout)
   }
   controleerLettertype(html, fout)
+  controleerJsonLd(route, html, fout)
+}
+
+function controleerJsonLd(route, html, fout) {
+  const blokken = [
+    ...html.matchAll(/<script type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g),
+  ].map((m) => m[1])
+  if (!blokken.length) return fout('geen JSON-LD')
+  const nodes = []
+  for (const tekst of blokken) {
+    try {
+      const d = JSON.parse(tekst)
+      nodes.push(...(d['@graph'] ?? [d]))
+    } catch (e) {
+      return fout(`JSON-LD is geen geldige JSON (${e.message})`)
+    }
+  }
+  const typen = (n) => [].concat(n['@type'])
+  const van = (t) => nodes.filter((n) => typen(n).includes(t))
+  const ids = nodes.map((n) => n['@id']).filter(Boolean)
+  if (new Set(ids).size !== ids.length) fout("JSON-LD heeft dubbele @id's")
+  if (van('WebSite').length !== 1) fout('JSON-LD moet precies één WebSite hebben')
+  if (van('WebPage').length !== 1) fout('JSON-LD moet precies één WebPage hebben')
+  if (van('VideoObject').length)
+    fout('VideoObject hoort er niet in (uploadDate is nog niet bevestigd)')
+  const personen = van('Person')
+  if (personen.length !== 1 || personen[0].name !== 'Mariëlle Madern')
+    fout('JSON-LD moet één Person "Mariëlle Madern" hebben')
+  else if ((personen[0].sameAs ?? []).length !== aantalKanalen)
+    fout(
+      `Person.sameAs heeft ${(personen[0].sameAs ?? []).length} kanalen, verwacht ${aantalKanalen}`,
+    )
+  const sleutels = (o) =>
+    o && typeof o === 'object' ? Object.entries(o).flatMap(([k, v]) => [k, ...sleutels(v)]) : []
+  for (const k of sleutels(nodes))
+    if (VERBODEN.includes(k)) fout(`JSON-LD bevat ${k}, dat hoort er niet in`)
+
+  const nummer = route.match(/^\/over-de-muziek\/([^/]+)\/$/)?.[1]
+  if (nummer) {
+    const [n] = van('MusicRecording')
+    if (!n) return fout('nummerpagina heeft geen MusicRecording')
+    if (n.url !== `${SITE}${route}`) fout(`MusicRecording.url is ${n.url}`)
+    if (!/^PT\d+M\d{1,2}S$/.test(n.duration ?? '')) fout(`MusicRecording.duration is ${n.duration}`)
+    if (n.byArtist?.['@id'] !== `${SITE}/#identity`)
+      fout('MusicRecording.byArtist verwijst niet naar de Person')
+    if (!!n.inAlbum !== ep.nummers.includes(nummer))
+      fout('MusicRecording.inAlbum klopt niet met de EP in content/uitgaven')
+    const [b] = van('BreadcrumbList')
+    if (b?.itemListElement?.length !== 3) fout('nummerpagina heeft geen kruimelpad van 3 stappen')
+    if ('lyrics' in n || 'datePublished' in n || 'recordingOf' in n)
+      fout('lyrics, datePublished en recordingOf horen er niet in (nog niet bevestigd)')
+  }
+  if (route === '/bestel-de-ep/') {
+    const [a] = van('MusicAlbum')
+    if (!a) fout('geen MusicAlbum')
+    else if (a.numTracks !== ep.nummers.length || a.track?.length !== ep.nummers.length)
+      fout(
+        `MusicAlbum: numTracks ${a.numTracks}, ${a.track?.length} tracks, maar de EP in content/uitgaven heeft er ${ep.nummers.length}`,
+      )
+    if (van('Product').length || van('Offer').length)
+      fout('Product en Offer horen er niet in (geen webshop)')
+  }
+  if (route === '/over-de-muziek/') {
+    const [l] = van('ItemList')
+    if (l?.itemListElement?.length !== verwachtAantalNummers)
+      fout(
+        `ItemList heeft ${l?.itemListElement?.length} nummers, EP en singles samen hebben er ${verwachtAantalNummers}`,
+      )
+  }
+  if (route === '/contact/' && !van('ContactPage').length) fout('geen ContactPage')
+  if (route === '/over-mij/' && !van('AboutPage').length) fout('geen AboutPage')
+  // [home-json-ld] De homepage toont het uitgelichte nummer en de lijst met nummers; de JSON-LD volgt dat
+  if (route === '/') {
+    const lijst = van('ItemList')[0]
+    const verwacht = (home.videolijst ?? []).length
+    if (lijst?.itemListElement?.length !== verwacht)
+      fout(
+        `ItemList heeft ${lijst?.itemListElement?.length} nummers, de videolijst in content/home.yml heeft er ${verwacht}`,
+      )
+    if (
+      home.uitgelicht &&
+      !van('MusicRecording').some((n) => n.url === `${SITE}/over-de-muziek/${home.uitgelicht}/`)
+    )
+      fout(`het uitgelichte nummer ${home.uitgelicht} ontbreekt als MusicRecording`)
+  }
 }
 
 // Snelheid: het stylesheet van Adobe Fonts blokkeert de eerste weergave niet

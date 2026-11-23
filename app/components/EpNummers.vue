@@ -13,6 +13,29 @@ const tracks = computed(() =>
     return n ? [n] : []
   }),
 )
+
+// Schema.org: de EP met de nummers die op deze pagina staan. Geen Product of Offer: het is geen webshop.
+const site = useSiteConfig().url
+if (uitgave.value) {
+  useSchemaOrg([
+    defineMusicAlbum({
+      '@id': `${site}/bestel-de-ep/#ep`,
+      name: uitgave.value.title,
+      url: `${site}/bestel-de-ep/`,
+      inLanguage: 'nl',
+      albumProductionType: 'https://schema.org/EPRelease',
+      image: `${site}/afbeeldingen/${uitgave.value.cover.replace(/^\//, '').replace(/\.[^./]+$/, '')}-600.webp`,
+      byArtist: { '@id': `${site}/#identity` },
+      numTracks: tracks.value.length,
+      track: tracks.value.map((t, i) => ({
+        '@type': 'MusicRecording',
+        position: i + 1,
+        name: t.title,
+        url: `${site}${t.path}/`,
+      })),
+    }),
+  ])
+}
 </script>
 
 <template>

@@ -34,6 +34,26 @@ useSeoMeta({
   description: pagina.value.description,
 })
 useDeelafbeelding('over-de-muziek', 'Over de muziek van Mariëlle Madern')
+
+// Schema.org: de pagina is een overzicht en de lijst met nummers staat erin, in dezelfde volgorde als de covers
+// (eerst de EP in de volgorde van de cd, daarna de singles, de nieuwste eerst)
+const site = useSiteConfig().url
+useSchemaOrg([
+  defineWebPage({
+    '@type': 'CollectionPage',
+    mainEntity: { '@id': `${site}/over-de-muziek/#nummers` },
+  }),
+  defineItemList({
+    '@id': `${site}/over-de-muziek/#nummers`,
+    name: 'Nummers van Mariëlle Madern',
+    itemListElement: [...epNummers.value, ...singles.value].map((n, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: n.title,
+      url: `${site}${n.path}/`,
+    })),
+  }),
+])
 </script>
 
 <template>

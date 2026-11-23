@@ -16,6 +16,13 @@ useSeoMeta({
   description: pagina.value.description,
 })
 // Elke pagina heeft zijn eigen deelafbeelding (scripts/og), met de titel van de pagina
+// Schema.org: Over mij is een AboutPage over Mariëlle, Contact een ContactPage
+if (pad === '/over-mij')
+  useSchemaOrg([
+    defineWebPage({ '@type': 'AboutPage', about: { '@id': `${useSiteConfig().url}/#identity` } }),
+  ])
+if (pad === '/contact') useSchemaOrg([defineWebPage({ '@type': 'ContactPage' })])
+
 usePaginaDeelafbeelding(pad, pagina.value.title)
 </script>
 
