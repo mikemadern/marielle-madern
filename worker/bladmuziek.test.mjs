@@ -2,6 +2,7 @@
 // Er gaat geen echte mail weg en er is geen sleutel nodig. Alle namen en adressen zijn verzonnen.
 // Draaien: pnpm test:worker
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import { afterEach, beforeEach, describe, test } from 'node:test'
 import { behandel, geconfigureerd, hostToegestaan, TOEGESTANE_HOSTS } from './bladmuziek.mjs'
 
@@ -325,6 +326,25 @@ describe('misbruik', () => {
       }),
     )
     assert.equal(goed.status, 200)
+  })
+  test('wrangler.jsonc: de variabele TOEGESTANE_HOSTS staat daar (niet in het dashboard) en is precies het hoofdadres', () => {
+    // wrangler.jsonc heeft commentaarregels; haal ze weg en lees de rest als JSON
+    const tekst = readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf-8')
+    const config = JSON.parse(
+      tekst
+        .split('\n')
+        .filter((regel) => !/^\s*\/\//.test(regel))
+        .join('\n'),
+    )
+    assert.equal(config.vars?.TOEGESTANE_HOSTS, 'mariellemadern.mmadern.workers.dev')
+    const env = { TOEGESTANE_HOSTS: config.vars.TOEGESTANE_HOSTS }
+    assert.equal(hostToegestaan(env, 'mariellemadern.mmadern.workers.dev'), true)
+    assert.equal(hostToegestaan(env, 'www.mariellemadern.nl'), true)
+    assert.equal(hostToegestaan(env, 'mariellemadern.nl'), true)
+    assert.equal(hostToegestaan(env, 'preview-pr-35-mariellemadern.mmadern.workers.dev'), false)
+    // Geen wildcard en geen geheimen in het bestand
+    assert.ok(!String(config.vars.TOEGESTANE_HOSTS).includes('*'))
+    assert.deepEqual(Object.keys(config.vars), ['TOEGESTANE_HOSTS'])
   })
   test('niet-toegestaan adres zonder secrets: 403 (de hostcontrole komt vóór de 503)', async () => {
     const adres = 'https://mariellemadern.mmadern.workers.dev'

@@ -16,9 +16,10 @@ export const PAD = '/api/bladmuziek'
 const MAX_VERZOEK = 4096
 // Alleen op deze adressen doet de Worker iets. Een preview-adres en het gewone workers.dev-adres krijgen 403,
 // ook als de Turnstile-widget ze toestaat (dat hangt dus niet af van een instelling van de eigenaar). Een
-// code-constante, geen variabele in wrangler.jsonc: een variabele daar overschrijft een waarde uit het dashboard.
-// Bewust uitbreiden (bijvoorbeeld om op het workers.dev-adres te testen) kan met de optionele, niet-geheime
-// variabele TOEGESTANE_HOSTS in het dashboard (komma-gescheiden hostnamen); zie de README.
+// code-constante: het echte domein en www kunnen niet per ongeluk uit een instelling verdwijnen. Bewust uitbreiden
+// kan met de optionele, niet-geheime variabele TOEGESTANE_HOSTS (komma-gescheiden hostnamen, exact, geen wildcard):
+// die staat in wrangler.jsonc ("vars"), want de Worker wordt vanuit dat bestand beheerd en Cloudflare staat
+// variabelen in het dashboard dan niet toe; zie de README.
 export const TOEGESTANE_HOSTS = ['mariellemadern.nl', 'www.mariellemadern.nl']
 // De actie die het Turnstile-widget in het formulier moet meegeven (data-action); Turnstile geeft hem terug
 const TURNSTILE_ACTIE = 'bladmuziek'
