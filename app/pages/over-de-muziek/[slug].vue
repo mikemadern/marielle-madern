@@ -39,6 +39,18 @@ const verhaal = computed(() => alineas(nummer.value?.verhaal))
 const bijzonder = computed(() => alineas(nummer.value?.bijzonder))
 const strofen = computed(() => alineas(nummer.value?.liedtekst))
 
+// Vorig en volgend nummer, in dezelfde volgorde als op Over de muziek (zie app/utils/nummer-volgorde.ts); de EP-volgorde
+// komt uit dezelfde `uitgave` als het schema hierboven
+const { data: alleNummers } = await useAsyncData('nummer-volgorde', () =>
+  queryCollection('nummers').select('path', 'title', 'uitgave', 'volgorde').all(),
+)
+const volgorde = computed(() =>
+  nummerVolgorde(alleNummers.value ?? [], uitgave.value?.nummers ?? []),
+)
+const plek = computed(() => volgorde.value.findIndex((n) => n.path.endsWith(`/${slug}`)))
+const vorige = computed(() => (plek.value > 0 ? volgorde.value[plek.value - 1] : undefined))
+const volgende = computed(() => (plek.value >= 0 ? volgorde.value[plek.value + 1] : undefined))
+
 // Het formulier voor de bladmuziek: alleen bij een nummer met `bladmuziek: true` (en met een Turnstile-sitesleutel)
 const sitekey = useRuntimeConfig().public.turnstileSitekey
 const metBladmuziek = computed(() => Boolean(nummer.value?.bladmuziek && sitekey))
@@ -115,7 +127,16 @@ const formulier = ref<{ laad: () => void } | null>(null)
 
     <div :class="['sectie', !metBladmuziek && 'sectie--eind']">
       <div class="kolom">
-        <KopBlok accent="Liedtekst" :kop="nummer.title" />
+        <KopBlok :accent="nummer.title" kop="Liedtekst" />
+        <nav class="nummernav" aria-label="Meer nummers">
+          <NuxtLink to="/over-de-muziek/">Alle nummers</NuxtLink>
+          <NuxtLink v-if="vorige" :to="`${vorige.path}/`" rel="prev">
+            Vorig nummer: {{ vorige.title }}
+          </NuxtLink>
+          <NuxtLink v-if="volgende" :to="`${volgende.path}/`" rel="next">
+            Volgend nummer: {{ volgende.title }}
+          </NuxtLink>
+        </nav>
         <div class="tekst">
           <p v-for="(strofe, i) in strofen" :key="i" class="strofen">{{ strofe }}</p>
         </div>
@@ -132,6 +153,21 @@ const formulier = ref<{ laad: () => void } | null>(null)
 </template>
 
 <style scoped>
+/* Links onder de liedtekst: terug naar het overzicht en naar het vorige en volgende nummer */
+.nummernav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  margin-block-start: 2.5rem;
+}
+
+/* Aan te raken vlak van minstens 44 px hoog, zoals de rest van de site */
+.nummernav a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--doel-min);
+}
+
 /* De crème balk met het nummer en de links naar Spotify en YouTube, 50 px onder het verhaal */
 .sectie--pil {
   padding-block-start: 4.375rem;

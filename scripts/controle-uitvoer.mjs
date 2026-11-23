@@ -69,6 +69,7 @@ const toegestaan = JSON.parse(
 const manifest = JSON.parse(
   readFileSync(join(uitvoer, 'afbeeldingen', 'og', 'manifest.json'), 'utf-8'),
 )
+const paginaHtml = {}
 const lijst = [...paginas(uitvoer)]
 if (lijst.length < 15)
   fouten.push(`Er zijn maar ${lijst.length} pagina's gebouwd, verwacht minstens 15`)
@@ -110,6 +111,10 @@ for (const pad of lijst) {
     fout(`twitter:card is ${meta(tags, 'twitter:card')}, verwacht summary_large_image`)
   if (meta(tags, 'og:locale') !== 'nl_NL')
     fout(`og:locale is ${meta(tags, 'og:locale')}, verwacht nl_NL`)
+
+  // Koppen en links, en de pagina bewaren voor de controle van vorig en volgend nummer
+  controleerKoppenEnLinks(route, html, fout)
+  paginaHtml[route] = html
 
   // De homepage heeft zijn eigen afbeelding (home.jpg: logo en de regel van de home)
   if (route === '/') {
@@ -234,6 +239,58 @@ function controleerHero(html, fout) {
     fout(`het poster-bestand bestaat niet in de bouw: ${src}`)
 }
 
+// Koppen en links: één h1, geen kopniveau overslaan, en de nummerpagina's hebben links in de inhoud
+function controleerKoppenEnLinks(route, html, fout) {
+  const hoofd = html.match(/<main[\s\S]*<\/main>/)?.[0] ?? ''
+  const koppen = [...html.matchAll(/<h([1-6])[\s>]/g)].map((m) => Number(m[1]))
+  const aantalH1 = koppen.filter((k) => k === 1).length
+  if (aantalH1 !== 1) fout(`${aantalH1} h1's, verwacht precies 1`)
+  koppen.forEach((k, i) => {
+    if (i > 0 && k > koppen[i - 1] + 1) fout(`kopniveau springt van h${koppen[i - 1]} naar h${k}`)
+  })
+  if (/^\/over-de-muziek\/[^/]+\/$/.test(route)) {
+    if (!/<h2[^>]*>Liedtekst<\/h2>/.test(hoofd))
+      fout('de kop boven de liedtekst moet "Liedtekst" zijn')
+    if (!hoofd.includes('href="/over-de-muziek/"'))
+      fout('geen link naar Over de muziek in de inhoud')
+    if (!/rel="(prev|next)"/.test(hoofd))
+      fout('geen link naar een vorig of volgend nummer in de inhoud')
+  }
+  if (route === '/over-de-muziek/') {
+    // Elke link naar een nummer heeft een naam: linktekst, alt-tekst van de afbeelding of aria-label
+    for (const [, tag, binnen] of hoofd.matchAll(
+      /<a ([^>]*href="\/over-de-muziek\/[^"/]+\/"[^>]*)>([\s\S]*?)<\/a>/g,
+    )) {
+      const tekst = binnen.replace(/<[^>]+>/g, '').trim()
+      const alt = binnen.match(/\salt="([^"]+)"/)?.[1]
+      const label = tag.match(/aria-label="([^"]+)"/)?.[1]
+      if (!tekst && !alt && !label)
+        fout(`een link naar een nummer heeft geen naam (${tag.slice(0, 60)})`)
+    }
+  }
+}
+
+// De vorige- en volgende-links op elke nummerpagina volgen de volgorde van de covers op Over de muziek
+function controleerNummerVolgorde(pagina, fout) {
+  const overzicht = pagina['/over-de-muziek/']?.match(/<main[\s\S]*<\/main>/)?.[0] ?? ''
+  const volgorde = [...overzicht.matchAll(/<a [^>]*href="(\/over-de-muziek\/[^"/]+\/)"/g)].map(
+    (m) => m[1],
+  )
+  if (!volgorde.length) return fout('/over-de-muziek/: geen covers gevonden')
+  volgorde.forEach((pad, i) => {
+    const hoofd = pagina[pad]?.match(/<main[\s\S]*<\/main>/)?.[0] ?? ''
+    const rel = (soort) =>
+      [...hoofd.matchAll(/<a ([^>]*)>/g)]
+        .map((m) => m[1])
+        .find((a) => new RegExp(`rel="${soort}"`).test(a))
+        ?.match(/href="([^"]+)"/)?.[1]
+    if (rel('prev') !== volgorde[i - 1])
+      fout(`${pad}: vorige is ${rel('prev')}, verwacht ${volgorde[i - 1]}`)
+    if (rel('next') !== volgorde[i + 1])
+      fout(`${pad}: volgende is ${rel('next')}, verwacht ${volgorde[i + 1]}`)
+  })
+}
+
 // Privacy: een hoes mag alleen als deelafbeelding als het nummer op de toegestane lijst staat
 for (const [naam, m] of Object.entries(manifest)) {
   const mag = naam === 'bestel-de-ep' ? toegestaan.ep === true : toegestaan.nummers.includes(naam)
@@ -242,6 +299,8 @@ for (const [naam, m] of Object.entries(manifest)) {
       `${naam}.jpg gebruikt een hoes die niet op de toegestane lijst staat (scripts/deelafbeeldingen-toegestaan.json)`,
     )
 }
+
+controleerNummerVolgorde(paginaHtml, (t) => fouten.push(t))
 
 // De afbeeldingen zelf: 1200 x 630, JPEG
 for (const f of readdirSync(join(uitvoer, 'afbeeldingen', 'og')).filter((f) =>
