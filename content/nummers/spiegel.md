@@ -5,6 +5,7 @@ uitgave: ep
 volgorde: 2
 duur: "4:09"
 kaartregel: "Over identiteit en zelfbeeld."
+bladmuziek: true
 cover:
   src: /covers/spiegel.webp
   alt: "Spiegel"

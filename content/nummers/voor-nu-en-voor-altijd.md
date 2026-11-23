@@ -5,6 +5,7 @@ uitgave: single
 volgorde: 1
 duur: "4:00"
 kaartregel: "Over blijven geloven in Gods liefde."
+bladmuziek: true
 cover:
   src: /covers/voor-nu-en-voor-altijd.webp
   alt: "Voor nu en voor altijd"

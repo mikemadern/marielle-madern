@@ -5,6 +5,7 @@ uitgave: ep
 volgorde: 4
 duur: "4:31"
 kaartregel: "Over het leven achter een masker."
+bladmuziek: true
 cover:
   src: /covers/u-ziet-mij.webp
   alt: "U ziet mij"

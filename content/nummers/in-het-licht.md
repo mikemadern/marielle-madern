@@ -5,6 +5,7 @@ uitgave: ep
 volgorde: 1
 duur: "4:21"
 kaartregel: "Een uitnodiging van de Vader om in Zijn licht te stappen."
+bladmuziek: true
 cover:
   src: /covers/in-het-licht.webp
   alt: "In het licht"
