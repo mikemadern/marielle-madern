@@ -91,6 +91,7 @@ if (uitgave.value) {
   font-weight: 700;
   color: var(--tekst);
   text-decoration: none;
+  transition: color 100ms;
 }
 
 a.ep__titel {
@@ -101,6 +102,12 @@ a.ep__titel {
 }
 
 a.ep__titel:hover {
+  text-decoration: underline;
+}
+
+/* Ingedrukt: terracotta diep (4,89:1 op wit) en onderstreept */
+a.ep__titel:active {
+  color: var(--kleur-terracotta-diep);
   text-decoration: underline;
 }
 </style>

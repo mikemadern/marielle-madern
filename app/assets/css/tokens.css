@@ -8,6 +8,7 @@
 :root {
   /* Merkkleuren, ongewijzigd uit de huidige site */
   --kleur-groen: #52623b;
+  --kleur-groen-diep: #465332; /* ingedrukt (:active), 8,26:1 met wit */
   --kleur-terracotta: #b5744e;
   --kleur-goud: #ce9f5b;
   --kleur-lichtgoud: #e3d49b;

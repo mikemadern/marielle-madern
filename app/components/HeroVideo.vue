@@ -172,10 +172,24 @@ function wissel() {
   background: var(--kleur-terracotta-diep);
   color: var(--kleur-wit);
   cursor: pointer;
+  transition:
+    background-color 100ms,
+    scale 100ms;
 }
 
 .hero__pauze:hover {
   background: var(--kleur-groen);
+}
+
+/* Ingedrukt: groen diep, en zonder 'minder beweging' 6% kleiner */
+.hero__pauze:active {
+  background: var(--kleur-groen-diep);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero__pauze:active {
+    scale: 0.94;
+  }
 }
 
 .hero__pauze:focus-visible {

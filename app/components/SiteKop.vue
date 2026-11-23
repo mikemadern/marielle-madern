@@ -141,6 +141,15 @@ function huidig(to: string): 'page' | 'true' | undefined {
   cursor: pointer;
 }
 
+/* Ingedrukt: een crème vlak over het hele tikvlak */
+.sitekop__knop {
+  transition: background-color 100ms;
+}
+
+.sitekop__knop:active {
+  background: var(--kleur-creme);
+}
+
 .sitekop__icoon {
   inline-size: 1.75rem;
   block-size: 1.75rem;
@@ -161,6 +170,7 @@ function huidig(to: string): 'page' | 'true' | undefined {
   color: var(--tekst);
   font-weight: 400;
   text-decoration: none;
+  transition: color 100ms;
 }
 
 .sitekop__menu a:hover {
@@ -206,5 +216,12 @@ function huidig(to: string): 'page' | 'true' | undefined {
     flex-direction: column;
     gap: 0;
   }
+}
+
+/* Ingedrukt: terracotta diep (4,89:1 op wit) en onderstreept */
+.sitekop__menu a:active {
+  color: var(--kleur-terracotta-diep);
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
 }
 </style>

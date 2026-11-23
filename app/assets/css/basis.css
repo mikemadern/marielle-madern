@@ -333,6 +333,11 @@ img {
   color: var(--knop-tekst);
   font-weight: 400;
   text-decoration: none;
+  transition:
+    background-color 100ms,
+    border-color 100ms,
+    color 100ms,
+    translate 100ms;
 }
 
 .knop:hover {
@@ -345,10 +350,6 @@ img {
   border: 2px solid var(--kleur-terracotta-diep);
   background: var(--kleur-wit);
   color: var(--tekst);
-  transition:
-    background-color 150ms,
-    border-color 150ms,
-    color 150ms;
 }
 
 .knop.knop--licht .icoon {
@@ -365,6 +366,24 @@ img {
 
 .knop.knop--licht:hover .icoon {
   color: var(--kleur-wit);
+}
+
+/* Ingedrukt: groen diep (8,26:1 met wit); de beweging van 1 px alleen zonder 'minder beweging' */
+.knop:active,
+.knop--licht:active {
+  border-color: var(--kleur-groen-diep);
+  background: var(--kleur-groen-diep);
+  color: var(--kleur-wit);
+}
+
+.knop.knop--licht:active .icoon {
+  color: var(--kleur-wit);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .knop:active {
+    translate: 0 1px;
+  }
 }
 
 /* ---------- Lopende tekst ---------- */
