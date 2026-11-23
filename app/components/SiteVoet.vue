@@ -127,6 +127,7 @@ onMounted(() => {
   color: var(--tekst);
   font-weight: 400;
   text-decoration: none;
+  transition: color 100ms;
 }
 
 .voet__lijst a:hover,
@@ -134,10 +135,21 @@ onMounted(() => {
   text-decoration: underline;
 }
 
+/* Ingedrukt: de links terracotta diep (4,51:1 op crème), het e-mailadres groen (6,11:1) */
+.voet__lijst a:active {
+  color: var(--kleur-terracotta-diep);
+  text-decoration: underline;
+}
+
 /* E-mailadres in terracotta diep: het oorspronkelijke terracotta haalt 3,48:1 op crème */
 .voet__mail {
   color: var(--kleur-terracotta-diep);
   text-decoration: underline;
+  transition: color 100ms;
+}
+
+.voet__mail:active {
+  color: var(--kleur-groen);
 }
 
 .voet__iconen {
@@ -152,6 +164,19 @@ onMounted(() => {
   inline-size: var(--doel-min);
   block-size: var(--doel-min);
   color: var(--kleur-terracotta-diep);
+  transition:
+    color 100ms,
+    scale 100ms;
+}
+
+.voet__iconen a:active {
+  color: var(--kleur-groen);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .voet__iconen a:active {
+    scale: 0.94;
+  }
 }
 
 .voet__onder {

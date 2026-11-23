@@ -113,6 +113,7 @@ defineEmits<{ kies: [slug: string] }>()
   aspect-ratio: 16 / 9;
   border-radius: 1rem;
   object-fit: cover;
+  transition: filter 100ms;
 }
 
 .kaart__rondje {
@@ -125,11 +126,28 @@ defineEmits<{ kies: [slug: string] }>()
   border: 2px solid var(--kleur-wit);
   border-radius: 50%;
   background: var(--kleur-terracotta-diep);
-  transition: background-color 150ms;
+  transition:
+    background-color 100ms,
+    scale 100ms;
 }
 
 .kaart__beeldknop:hover .kaart__rondje {
   background: var(--kleur-groen);
+}
+
+/* Ingedrukt: het rondje groen diep (en zonder 'minder beweging' 6% kleiner), de hoes 6% donkerder */
+.kaart__beeldknop:active .kaart__rondje {
+  background: var(--kleur-groen-diep);
+}
+
+.kaart__beeldknop:active .kaart__beeld {
+  filter: brightness(0.94);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .kaart__beeldknop:active .kaart__rondje {
+    scale: 0.94;
+  }
 }
 
 .kaart__tekst {
@@ -175,6 +193,11 @@ defineEmits<{ kies: [slug: string] }>()
   min-block-size: var(--doel-min);
   color: var(--link);
   text-decoration: underline;
+  transition: color 100ms;
+}
+
+.kaart__link a:active {
+  color: var(--kleur-terracotta-diep);
 }
 
 @media (max-width: 47.9375rem) {
