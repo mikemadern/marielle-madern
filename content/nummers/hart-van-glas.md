@@ -5,7 +5,6 @@ uitgave: single
 volgorde: 2
 duur: "2:44"
 kaartregel: "Over echtscheiding: geen verwijt, maar hoop."
-bladmuziek: true
 cover:
   src: /covers/hart-van-glas.webp
   alt: "Hart van glas"
