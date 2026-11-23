@@ -1,3 +1,5 @@
+import { kanalen } from './app/data/kanalen'
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -34,6 +36,16 @@ export default defineNuxtConfig({
     defaultLocale: 'nl-NL',
     // De huidige URL's eindigen op een slash en dat blijft zo (besluit 2026-11-05)
     trailingSlash: true,
+  },
+
+  // Schema.org: wie er achter de site zit. Alleen naam, adres van de site en de kanalen; geen persoonlijke
+  // gegevens (leeftijd, gezin) en geen foto zolang de eigenaar die niet heeft gekozen.
+  schemaOrg: {
+    identity: {
+      type: 'Person',
+      name: 'Mariëlle Madern',
+      sameAs: kanalen.map((k) => k.link),
+    },
   },
 
   content: {

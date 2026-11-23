@@ -16,6 +16,23 @@ useSeoMeta({
 })
 useNummerDeelafbeelding(slug, nummer.value.title)
 
+// Schema.org: het nummer, met de EP als het daarop staat, en het kruimelpad. Alleen gegevens uit de content:
+// geen uitgavedatum en geen origineel nummer, want die zijn nog niet bevestigd.
+const { data: uitgave } = await useAsyncData('uitgave-ep-schema', () =>
+  queryCollection('uitgaven').select('title', 'nummers').first(),
+)
+const site = useSiteConfig().url
+useSchemaOrg([
+  defineMusicRecording(nummerSchema(site, nummer.value, uitgave.value)),
+  defineBreadcrumb({
+    itemListElement: [
+      { name: 'Home', item: `${site}/` },
+      { name: 'Over de muziek', item: `${site}/over-de-muziek/` },
+      { name: nummer.value.title, item: `${site}${nummer.value.path}/` },
+    ],
+  }),
+])
+
 // Alinea's zijn gescheiden door een lege regel. Een alinea die met “ begint is een citaat.
 const alineas = (tekst: string | undefined) => (tekst ?? '').trim().split(/\n\s*\n/)
 const verhaal = computed(() => alineas(nummer.value?.verhaal))
