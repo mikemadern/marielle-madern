@@ -91,7 +91,8 @@ export default defineNuxtConfig({
     preset: 'static',
     // 404.html is de pagina die Cloudflare toont bij een onbekend adres. Nuxt maakt die als leeg schil (de foutpagina
     // verschijnt pas na het laden van de scripts), zonder titel en zonder kop in de HTML. Hier komen een titel en een
-    // korte tekst met kop in het schil; Nuxt vervangt ze bij het laden door de echte foutpagina (app/error.vue).
+    // korte tekst met kop in het schil; Nuxt vervangt ze bij het laden door de echte foutpagina (app/error.vue). De kale
+    // versie krijgt wat ruimte (2rem boven, 1,25rem opzij, hoogstens 37,5rem breed) voor wie de scripts niet laadt.
     hooks: {
       'prerender:generate'(route) {
         if (route.route !== '/404.html' || typeof route.contents !== 'string') return
@@ -99,7 +100,7 @@ export default defineNuxtConfig({
           .replace('<head>', '<head><title>Pagina niet gevonden - Mariëlle Madern</title>')
           .replace(
             '<div id="__nuxt"></div>',
-            '<div id="__nuxt"><main id="inhoud"><h1>Pagina niet gevonden</h1><p>Deze pagina bestaat niet (meer). Misschien is het adres veranderd of is er een typfout gemaakt.</p><p><a href="/">Naar de homepage</a></p></main></div>',
+            '<div id="__nuxt"><main id="inhoud" style="max-inline-size:37.5rem;margin-inline:auto;padding:2rem 1.25rem 0"><h1>Pagina niet gevonden</h1><p>Deze pagina bestaat niet (meer). Misschien is het adres veranderd of is er een typfout gemaakt.</p><p><a href="/">Naar de homepage</a></p></main></div>',
           )
       },
     },
