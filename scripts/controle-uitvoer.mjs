@@ -87,6 +87,23 @@ for (const pad of lijst) {
       fout(`de deelafbeelding van de homepage moet home.jpg zijn, niet ${ogImage}`)
     controleerHero(html, fout)
   }
+  controleerLettertype(html, fout)
+}
+
+// Snelheid: het stylesheet van Adobe Fonts blokkeert de eerste weergave niet
+function controleerLettertype(html, fout) {
+  // Eerst de <noscript>-blokken weghalen: daar staat de gewone (blokkerende) link bewust, voor wie geen JavaScript heeft
+  const zonderNoscript = html.replace(/<noscript>[\s\S]*?<\/noscript>/g, '')
+  const kit = [...zonderNoscript.matchAll(/<link[^>]*bxn6xtn\.css[^>]*>/g)].map((m) => m[0])
+  if (!kit.length) return fout('het stylesheet van Adobe Fonts ontbreekt')
+  if (kit.some((t) => !/\smedia="print"/.test(t)))
+    fout('het stylesheet van Adobe Fonts blokkeert nog (media="print" ontbreekt)')
+  if (
+    !html.includes(
+      '<noscript><link rel="stylesheet" href="https://use.typekit.net/bxn6xtn.css"></noscript>',
+    )
+  )
+    fout('de <noscript>-terugval voor het lettertype ontbreekt')
 }
 
 // [hero-poster] De hero heeft een poster die direct in de pagina staat (stilstaand beeld uit de video)
@@ -119,6 +136,11 @@ for (const f of readdirSync(join(uitvoer, 'afbeeldingen', 'og')).filter((f) =>
   if (m.width !== 1200 || m.height !== 630 || m.format !== 'jpeg')
     fouten.push(`afbeeldingen/og/${f} is ${m.width}x${m.height} ${m.format}`)
 }
+
+// 404.html (de pagina die Cloudflare toont bij een onbekend adres): een titel en een kop in de HTML zelf
+const nietGevonden = readFileSync(join(uitvoer, '404.html'), 'utf-8')
+if (!/<title>[^<]+<\/title>/.test(nietGevonden)) fouten.push('404.html heeft geen <title>')
+if (!/<h1[^>]*>[^<]+<\/h1>/.test(nietGevonden)) fouten.push('404.html heeft geen <h1>')
 
 if (fouten.length) {
   console.error(`Uitvoer: ${fouten.length} fout(en)\n` + fouten.map((f) => `  - ${f}`).join('\n'))

@@ -11,11 +11,15 @@ export default defineNuxtConfig({
     head: {
       htmlAttrs: { lang: 'nl' },
       // Adobe Fonts-kit (besluit 2026-11-05). Preconnect scheelt tijd bij het laden van het lettertype.
+      // Het stylesheet van Adobe zelf staat in app/app.vue: het laadt niet-blokkerend en moet door Nuxt bijgehouden
+      // worden (zie daar). Zonder JavaScript laadt het gewoon via <noscript>.
       link: [
         { rel: 'preconnect', href: 'https://use.typekit.net', crossorigin: 'anonymous' },
         { rel: 'preconnect', href: 'https://p.typekit.net', crossorigin: 'anonymous' },
-        { rel: 'stylesheet', href: 'https://use.typekit.net/bxn6xtn.css' },
         { rel: 'icon', type: 'image/webp', href: '/favicon.webp' },
+      ],
+      noscript: [
+        { innerHTML: '<link rel="stylesheet" href="https://use.typekit.net/bxn6xtn.css">' },
       ],
     },
   },
@@ -49,6 +53,28 @@ export default defineNuxtConfig({
     },
   },
 
+  hooks: {
+    // Het bladmuziekformulier is een apart stukje code (Lazy-component) dat alleen op een nummerpagina mét formulier
+    // wordt geladen. Zonder dit zet Nuxt er op elke nummerpagina een prefetch voor, en dan downloadt de browser het
+    // (ruim 12 KB) toch op pagina's zonder formulier.
+    'build:manifest': (manifest) => {
+      for (const [sleutel, bestand] of Object.entries(manifest)) {
+        if (sleutel.includes('BladmuziekFormulier')) {
+          bestand.prefetch = false
+          bestand.preload = false
+        }
+      }
+    },
+  },
+
+  runtimeConfig: {
+    public: {
+      // Sitesleutel van de Turnstile-widget van de eigenaar (publiek, geen geheim; de geheime sleutel staat alleen
+      // als secret TURNSTILE_SECRET in Cloudflare). Voor een proefbouw: NUXT_PUBLIC_TURNSTILE_SITEKEY.
+      turnstileSitekey: '0x4AAAAAAGJIAhDl4maVZzwv',
+    },
+  },
+
   // Niet gevraagd: llms.txt en Markdown-kopieën van elke pagina. Staat uit, kan later aan.
   aiReady: false,
 
@@ -63,6 +89,20 @@ export default defineNuxtConfig({
     // daar zelf het preset `cloudflare-module`, met een servermap, een D1-database, een doorverwijzing
     // naar een andere wrangler-config (`.wrangler/deploy/config.json`) en een aangepast `_headers`.
     preset: 'static',
+    // 404.html is de pagina die Cloudflare toont bij een onbekend adres. Nuxt maakt die als leeg schil (de foutpagina
+    // verschijnt pas na het laden van de scripts), zonder titel en zonder kop in de HTML. Hier komen een titel en een
+    // korte tekst met kop in het schil; Nuxt vervangt ze bij het laden door de echte foutpagina (app/error.vue).
+    hooks: {
+      'prerender:generate'(route) {
+        if (route.route !== '/404.html' || typeof route.contents !== 'string') return
+        route.contents = route.contents
+          .replace('<head>', '<head><title>Pagina niet gevonden - Mariëlle Madern</title>')
+          .replace(
+            '<div id="__nuxt"></div>',
+            '<div id="__nuxt"><main id="inhoud"><h1>Pagina niet gevonden</h1><p>Deze pagina bestaat niet (meer). Misschien is het adres veranderd of is er een typfout gemaakt.</p><p><a href="/">Naar de homepage</a></p></main></div>',
+          )
+      },
+    },
     prerender: {
       crawlLinks: true,
       // /bestel-de-ep/ staat nergens in het menu en wordt dus niet vanzelf gevonden

@@ -81,8 +81,20 @@ function wissel() {
         <br v-if="i < regels.length - 1" />
       </template>
     </p>
-    <button v-if="metVideo && minderBeweging" type="button" class="hero__pauze" @click="wissel">
-      {{ speelt ? 'Pauzeer achtergrondvideo' : 'Speel achtergrondvideo af' }}
+    <!-- Een ronde knop rechtsonder om de achtergrondvideo stil te zetten en weer te laten spelen (WCAG 2.2.2: beweging
+         die langer dan vijf seconden duurt moet te pauzeren zijn). Voor iedereen die de video krijgt; wie 'minder
+         beweging' heeft ingesteld krijgt hem stilstaand en kan hem hier starten. -->
+    <button
+      v-if="metVideo"
+      type="button"
+      class="hero__pauze"
+      :aria-label="speelt ? 'Pauzeer achtergrondvideo' : 'Speel achtergrondvideo af'"
+      @click="wissel"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" class="hero__pauze-icoon">
+        <path v-if="speelt" d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor" />
+        <path v-else d="M8 5v14l11-7z" fill="currentColor" />
+      </svg>
     </button>
   </section>
 </template>
@@ -105,7 +117,8 @@ function wissel() {
 @media (max-width: 47.9375rem) {
   .hero {
     min-block-size: 18.75rem;
-    padding-block: 3rem;
+    /* Onder meer ruimte (4,5 rem), zodat de ronde pauzeknop rechtsonder de tekst niet raakt */
+    padding-block: 3rem 4.5rem;
   }
 }
 
@@ -143,20 +156,21 @@ function wissel() {
 }
 
 .hero__pauze {
-  /* Onder de tekst, in de tweede rij van het raster: de hero groeit mee en de knop raakt de tekst niet */
-  position: relative;
-  margin-block: var(--ruimte-element) var(--ruimte-5);
-  /* Bij een grote tekstgrootte of een smal scherm mag de tekst op de knop afbreken, in plaats van uit beeld te lopen */
-  max-inline-size: calc(100% - 2 * var(--ruimte-5));
-  text-align: center;
-  min-block-size: var(--doel-min);
-  padding: var(--ruimte-2) var(--ruimte-5);
+  /* Rechtsonder in de hero, 44 px rond, in de stijl van de afspeelknop bij het uitgelichte nummer (terracotta diep,
+     witte rand), zoals in het voorstel van de Designer */
+  position: absolute;
+  inset-block-end: 1rem;
+  inset-inline-end: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--doel-min);
+  block-size: var(--doel-min);
+  padding: 0;
   border: 2px solid var(--kleur-wit);
-  border-radius: var(--radius-knop);
-  background: var(--kleur-tekst);
+  border-radius: 50%;
+  background: var(--kleur-terracotta-diep);
   color: var(--kleur-wit);
-  font: inherit;
-  font-size: var(--tekst-klein);
   cursor: pointer;
 }
 
@@ -166,5 +180,10 @@ function wissel() {
 
 .hero__pauze:focus-visible {
   outline-color: var(--kleur-wit);
+}
+
+.hero__pauze-icoon {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
 }
 </style>

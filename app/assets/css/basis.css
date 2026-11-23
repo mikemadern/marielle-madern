@@ -65,6 +65,23 @@ img {
   font-display: swap;
 }
 
+/* Terugletter voor mae-variable (Adobe Fonts, niet zelf te hosten). Het stylesheet van Adobe laadt niet-blokkerend,
+   dus de pagina staat eerst in een systeemletter en wisselt daarna. Arial (en de letters met dezelfde breedtes:
+   Helvetica, Liberation Sans, Nimbus Sans) krijgt hier de maten van mae-variable, zodat de wissel de regelbreedtes
+   en regelhoogtes nauwelijks verandert. Gemeten met een Nederlandse tekst bij 100 px: mae-variable 11670 px
+   breed, Arial 12450 px (dus 93,74 procent); mae-variable heeft 75 boven en 25 onder de lijn (gedeeld door
+   0,9374: 80,0 en 26,7 procent). Op apparaten zonder een van deze letters (bijvoorbeeld Android) geldt gewoon
+   de systeemletter. */
+@font-face {
+  font-family: 'mae-variable Fallback';
+  src: local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Nimbus Sans');
+  font-weight: 100 900;
+  size-adjust: 93.74%;
+  ascent-override: 80%;
+  descent-override: 26.7%;
+  line-gap-override: 0%;
+}
+
 /* ---------- Indeling ---------- */
 
 .container {
@@ -169,6 +186,15 @@ img {
 
 .kopblok {
   margin-block-end: 1.25rem;
+}
+
+/* Korte koppen (de kop in het kopblok, de titel in de paginakop en de tussenkoppen in een tekst): de regels even
+   lang verdelen, zodat er geen los woord op de laatste regel staat. Alleen op koppen, niet op lopende tekst:
+   het verdelen kost rekentijd en werkt tot ongeveer zes regels. Browsers zonder steun breken zoals voorheen. */
+.kop,
+.banner__titel,
+.tekst h2 {
+  text-wrap: balance;
 }
 
 /* ---------- Kopbalk met bladtekeningen ---------- */
