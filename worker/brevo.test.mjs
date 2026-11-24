@@ -242,3 +242,94 @@ describe('privacy', () => {
     assert.deepEqual(Object.keys(aanroepen[0].body.attributes).sort(), ['AANGEMELD_OP', 'BRON'])
   })
 })
+
+describe('voornaam en achternaam (optioneel)', () => {
+  const metNamen = (uitkomsten, extra = {}, env = ENV) =>
+    meldAan(
+      env,
+      { fetch: maakFetch(uitkomsten) },
+      { email: ADRES, bron: 'formulier', dag: DAG, ...extra },
+    )
+
+  test('FIRSTNAME en LASTNAME gaan mee naast BRON en AANGEMELD_OP', async () => {
+    assert.equal(await metNamen([], { voornaam: 'Marie-Louise', achternaam: "D'Hondt" }), 'ok')
+    assert.deepEqual(aanroepen[0].body.attributes, {
+      FIRSTNAME: 'Marie-Louise',
+      LASTNAME: "D'Hondt",
+      BRON: 'formulier',
+      AANGEMELD_OP: DAG,
+    })
+  })
+  test('alleen wat door veiligeNaam komt: de rest wordt weggelaten, nooit afgewezen', async () => {
+    assert.equal(
+      await metNamen([], { voornaam: 'http://kwaad.example', achternaam: 'Jansen' }),
+      'ok',
+    )
+    assert.deepEqual(aanroepen[0].body.attributes, {
+      LASTNAME: 'Jansen',
+      BRON: 'formulier',
+      AANGEMELD_OP: DAG,
+    })
+    aanroepen = []
+    assert.equal(await metNamen([], { voornaam: 42, achternaam: null }), 'ok')
+    assert.deepEqual(aanroepen[0].body.attributes, { BRON: 'formulier', AANGEMELD_OP: DAG })
+  })
+  test('grenzen: 60 tekens voor een voor- of achternaam, 80 voor een volledige naam in FIRSTNAME (voornaamMax)', async () => {
+    await metNamen([], { voornaam: 'a'.repeat(61), achternaam: 'b'.repeat(61) })
+    assert.deepEqual(Object.keys(aanroepen[0].body.attributes).sort(), ['AANGEMELD_OP', 'BRON'])
+    aanroepen = []
+    await metNamen([], { voornaam: 'a'.repeat(80), voornaamMax: 80 })
+    assert.equal(aanroepen[0].body.attributes.FIRSTNAME.length, 80)
+    aanroepen = []
+    await metNamen([], { voornaam: 'a'.repeat(81), voornaamMax: 80 })
+    assert.equal(aanroepen[0].body.attributes.FIRSTNAME, undefined)
+  })
+  test('een volledige naam gaat in FIRSTNAME en LASTNAME blijft leeg (er wordt nooit gesplitst)', async () => {
+    await metNamen([], { voornaam: 'Anna van der Berg-Jansen', voornaamMax: 80 })
+    const a = aanroepen[0].body.attributes
+    assert.equal(a.FIRSTNAME, 'Anna van der Berg-Jansen')
+    assert.ok(!('LASTNAME' in a))
+  })
+  test('een ontbrekend eigen attribuut kost de naam niet: eerst zonder BRON en AANGEMELD_OP, dan zonder attributen', async () => {
+    const uit = await metNamen(
+      [[400, { code: 'invalid_parameter' }], [400, { code: 'invalid_parameter' }], [201]],
+      { voornaam: 'Anna', achternaam: 'Jansen' },
+    )
+    assert.equal(uit, 'ok')
+    assert.equal(aanroepen.length, 3)
+    assert.deepEqual(aanroepen[1].body.attributes, { FIRSTNAME: 'Anna', LASTNAME: 'Jansen' })
+    assert.equal(aanroepen[2].body.attributes, undefined)
+  })
+  test('de tweede stap lukt: de namen staan erin, de aanmelding is ok na twee aanroepen', async () => {
+    const uit = await metNamen([[400, { code: 'invalid_parameter' }], [201]], { voornaam: 'Anna' })
+    assert.equal(uit, 'ok')
+    assert.equal(aanroepen.length, 2)
+    assert.deepEqual(aanroepen[1].body.attributes, { FIRSTNAME: 'Anna' })
+  })
+  test('een ongeldig adres met namen: drie aanroepen en dan permanent', async () => {
+    const uit = await metNamen(
+      [
+        [400, { code: 'invalid_parameter' }],
+        [400, { code: 'invalid_parameter' }],
+        [400, { code: 'invalid_parameter' }],
+      ],
+      { voornaam: 'Anna' },
+    )
+    assert.equal(uit, 'permanent')
+    assert.equal(aanroepen.length, 3)
+  })
+  test('een bestaand adres: de PUT heeft alleen de lijst, ook met namen (de naam van de eerste keer blijft)', async () => {
+    await metNamen([[400, { code: 'duplicate_parameter' }], [204]], {
+      voornaam: 'Anna',
+      achternaam: 'Jansen',
+    })
+    assert.deepEqual(aanroepen[1].body, { listIds: [4] })
+  })
+  test('de namen komen niet in een url, een log of de uitslag', async () => {
+    const uit = await metNamen([[500]], { voornaam: 'Proefnaam', achternaam: 'Verzonnen' })
+    assert.equal(uit, 'later')
+    for (const a of aanroepen)
+      assert.ok(!a.url.includes('Proefnaam') && !a.url.includes('Verzonnen'))
+    assert.deepEqual(logregels, [])
+  })
+})

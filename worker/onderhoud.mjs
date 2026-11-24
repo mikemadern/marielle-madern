@@ -1,11 +1,11 @@
-// Het onderhoud van de opgeslagen berichten (Cron Trigger, elke 5 minuten): berichten waarvan een mail niet is gelukt
-// opnieuw proberen, en berichten van 30 dagen of ouder anonimiseren. Eén taak met drie stappen; elke stap en elke rij
+// Het onderhoud van de opgeslagen berichten (Cron Trigger, elke 5 minuten): berichten waarvan een mail of een aanmelding
+// niet is gelukt opnieuw proberen, en berichten van 30 dagen of ouder anonimiseren. Eén taak met vier stappen; elke stap en elke rij
 // heeft zijn eigen try/catch, zodat een fout in één bericht de rest niet tegenhoudt. Niets wordt gelogd en er komen
 // geen gegevens in een foutmelding: een fout laat de rij gewoon op `wacht` staan voor de volgende keer.
 // Zonder binding BERICHTEN doet dit niets.
 import { bladmuziekMail, leesPdf } from './bladmuziek.mjs'
 import { meldAanEnMarkeer } from './brevo.mjs'
-import { dagAmsterdam, verstuurEnMarkeer } from './opslag.mjs'
+import { dagAmsterdam, verstuurEnMarkeer, wis } from './opslag.mjs'
 import {
   ADRES_MARIELLE,
   AFZENDER,
@@ -48,6 +48,27 @@ async function markeerMislukt(env, id, kolommen) {
 // Eén bericht opnieuw proberen: eerst de hoofdmail (als die nog op `wacht` staat), dan de tweede mail
 async function herhaalRij(env, deps, r, nu) {
   const extra = r.extra ? JSON.parse(r.extra) : {}
+  // Een aanmelding voor de nieuwsbrief via het losse formulier: alleen de aanmelding bij Brevo, met de voornaam (naam) en de
+  // achternaam (extra). Is die klaar (gelukt of afgekeurd), dan gaan het adres en de namen meteen uit de rij.
+  if (r.soort === 'nieuwsbrief') {
+    if (!r.email) return markeerMislukt(env, r.id, ['status_hoofd'])
+    const uitslag = await meldAanEnMarkeer(
+      env,
+      deps,
+      {
+        id: r.id,
+        welke: 'hoofd',
+        email: r.email,
+        bron: r.onderwerp,
+        dag: r.dag,
+        voornaam: r.naam ?? undefined,
+        achternaam: extra.achternaam,
+      },
+      nu,
+    )
+    if (uitslag === 'ok' || uitslag === 'permanent') await wis(env, r.id)
+    return
+  }
   const titel = deps.lijst?.[r.onderwerp]?.titel
   if (r.status_hoofd === 'wacht') {
     let mail
@@ -135,7 +156,20 @@ async function herhaal(env, deps, nu) {
   return gedaan
 }
 
-// Stap 3: berichten van 30 dagen of ouder anonimiseren, als geen mail meer op `wacht` staat. Naam, e-mailadres,
+// Stap 3: de aanmeldingen voor de nieuwsbrief via het losse formulier die klaar zijn (gelukt, afgekeurd of na 24 uur
+// verlopen) hebben geen adres of naam meer nodig: die gaan meteen weg (vangnet voor het wissen bij het aanmelden zelf).
+async function wisAfgehandeld(env) {
+  const uitslag = await env.BERICHTEN.prepare(
+    `UPDATE berichten SET naam = NULL, email = NULL, bericht = NULL, extra = NULL
+     WHERE soort = 'nieuwsbrief' AND status_hoofd <> 'wacht'
+       AND (naam IS NOT NULL OR email IS NOT NULL OR bericht IS NOT NULL OR extra IS NOT NULL)`,
+  )
+    .bind()
+    .run()
+  return aantal(uitslag)
+}
+
+// Stap 4: berichten van 30 dagen of ouder anonimiseren, als geen mail meer op `wacht` staat. Naam, e-mailadres,
 // bericht en extra gegevens verdwijnen; dag, soort, onderwerp (of nummer) en de statussen blijven (de statistieken).
 async function anonimiseer(env, nu) {
   const grens = dagAmsterdam(new Date(nu.getTime() - BEWAAR_DAGEN * DAG))
@@ -151,11 +185,12 @@ async function anonimiseer(env, nu) {
 
 // Het hele onderhoud. Geeft alleen aantallen terug (nooit gegevens).
 export async function onderhoud(env, deps, nu = new Date()) {
-  const uitkomst = { verlopen: 0, herhaald: 0, geanonimiseerd: 0 }
+  const uitkomst = { verlopen: 0, herhaald: 0, gewist: 0, geanonimiseerd: 0 }
   if (!env.BERICHTEN) return uitkomst
   for (const [naam, stap] of [
     ['verlopen', () => laatVerlopen(env, nu)],
     ['herhaald', () => herhaal(env, deps, nu)],
+    ['gewist', () => wisAfgehandeld(env)],
     ['geanonimiseerd', () => anonimiseer(env, nu)],
   ]) {
     try {

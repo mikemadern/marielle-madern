@@ -66,6 +66,11 @@
     // het andere niet (een bezoeker met beide, of een stroom aanvragen voor de bladmuziek). 3 per IP-adres,
     // 1 per e-mailadres en 5 voor de hele site per minuut; een bericht kost twee mails (het Resend-plafond is
     // 100 per dag, gedeeld met de bladmuziek). Het eindpunt staat aan zolang CONTACT_AAN op 'aan' staat (zie "vars").
+    // Het losse aanmeldformulier voor de nieuwsbrief (/api/nieuwsbrief) heeft ook eigen limieten: 3 per IP-adres, 1 per
+    // e-mailadres en 10 voor de hele site per minuut. Het eindpunt blijft uit (503) tot NIEUWSBRIEF_AAN op 'aan' staat.
+    { "name": "LIMIET_NIEUWSBRIEF_IP", "namespace_id": "1014", "simple": { "limit": 3, "period": 60 } },
+    { "name": "LIMIET_NIEUWSBRIEF_ADRES", "namespace_id": "1015", "simple": { "limit": 1, "period": 60 } },
+    { "name": "LIMIET_NIEUWSBRIEF_ALGEMEEN", "namespace_id": "1016", "simple": { "limit": 10, "period": 60 } },
     { "name": "LIMIET_CONTACT_IP", "namespace_id": "1011", "simple": { "limit": 3, "period": 60 } },
     {
       "name": "LIMIET_CONTACT_ADRES",
