@@ -2,7 +2,7 @@
 title: "Neem contact op"
 bannerTitel: "Neem **contact** op"
 seoTitel: "Contact en boekingen - Mariëlle Madern"
-description: "Wil je Mariëlle Madern boeken, samenwerken of heb je een vraag? Stuur een e-mail naar hallo@mariellemadern.nl."
+description: "Wil je Mariëlle Madern boeken, samenwerken of heb je een vraag? Vul het formulier in of stuur een e-mail naar hallo@mariellemadern.nl."
 kleur: sage
 accent: "Stuur een bericht"
 accentKleur: terracotta
