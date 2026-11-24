@@ -23,9 +23,9 @@ Contact: [hallo@mariellemadern.nl](mailto:hallo@mariellemadern.nl)
 
 **Als je bladmuziek van een nummer aanvraagt**, vul je je naam en je e-mailadres in op de nummerpagina. Ik gebruik die gegevens om de bladmuziek van dat nummer naar je te mailen. Vink je het vakje voor de nieuwsbrief aan, dan meld ik je ook aan voor de nieuwsbrief (zie hieronder). Het vakje staat standaard uit.
 
-De bladmuziek gaat per e-mail. Een aanvraag komt niet in mijn postvak: jij krijgt alleen de e-mail met de pdf.
+De bladmuziek gaat per e-mail. Een bladmuziekaanvraag komt niet in mijn postvak: jij krijgt alleen de e-mail met de pdf.
 
-**Als je je aanmeldt voor de nieuwsbrief**, vul je je e-mailadres in, via het aanmeldformulier of via het vakje bij de bladmuziek. Je gegevens gaan direct naar Brevo, de dienst waarmee ik de nieuwsbrief verstuur. Brevo bewaart je e-mailadres zolang je ingeschreven bent. Lukt het aanmelden niet doordat Brevo even niet werkt, dan staat je adres hooguit 24 uur in mijn eigen database. Daarna wordt het gewist.
+**Als je het vakje voor de nieuwsbrief aanvinkt bij een bladmuziekaanvraag**, meld ik je aan voor de nieuwsbrief. Je e-mailadres gaat direct naar Brevo, de dienst waarmee ik de nieuwsbrief verstuur. Brevo bewaart je e-mailadres zolang je ingeschreven bent. Bij een storing probeer ik de aanmelding tot 24 uur later opnieuw. Je adres staat in die tijd in mijn database, zoals bij elke bladmuziekaanvraag.
 
 In elke nieuwsbrief staat een link om je af te melden. Daarmee zet Brevo je adres op een lijst van afgemelde adressen, zodat je geen nieuwsbrief meer krijgt. Je adres blijft daar als afgemeld staan. Wil je dat je adres helemaal wordt verwijderd, mail dan naar hallo@mariellemadern.nl. Dan verwijder ik het binnen vier weken.
 
