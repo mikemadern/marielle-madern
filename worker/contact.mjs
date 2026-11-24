@@ -132,7 +132,7 @@ export async function behandel(request, env, deps) {
   // Dan de bevestiging, als bijzaak: mislukt die, dan is het bericht toch aangekomen
   const bevestigingVerstuurd = await stuurMail(env, deps, {
     to: [v.email],
-    ...mailContactBevestiging(v),
+    ...mailContactBevestiging(),
   }).then(
     (uitslag) => uitslag === 'ok',
     () => false,

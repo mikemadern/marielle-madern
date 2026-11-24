@@ -6,11 +6,7 @@ import { afterEach, beforeEach, describe, test } from 'node:test'
 import { behandel as behandelApi } from './api.mjs'
 import { behandel as behandelBladmuziek } from './bladmuziek.mjs'
 import { controleer, MAX_BERICHT } from './contact.mjs'
-import {
-  BEVESTIGING_MET_GEGEVENS,
-  mailContactBevestiging,
-  mailContactMarielle,
-} from './teksten.mjs'
+import { mailContactMarielle } from './teksten.mjs'
 
 const SITE = 'https://mariellemadern.nl'
 const HOSTNAME = 'mariellemadern.nl'
@@ -386,7 +382,7 @@ describe('versturen', () => {
     assert.equal(een.from, 'Mariëlle Madern <hallo@mariellemadern.nl>')
     assert.deepEqual(een.to, ['hallo@mariellemadern.nl'])
     assert.equal(een.reply_to, 'test@example.org')
-    assert.equal(een.subject, 'Vraag van Proefpersoon Verzonnen')
+    assert.equal(een.subject, 'Contactformulier: Algemene vraag (Proefpersoon Verzonnen)')
     assert.equal(
       een.text,
       [
@@ -401,10 +397,10 @@ describe('versturen', () => {
     const twee = mailBody(1)
     assert.deepEqual(twee.to, ['test@example.org'])
     assert.equal(twee.reply_to, undefined)
-    assert.equal(twee.subject, 'Ik heb je bericht ontvangen')
+    assert.equal(twee.subject, 'Je bericht aan Mariëlle Madern is binnengekomen')
   })
 
-  test('een boeking: de zes velden staan in de mail aan Mariëlle, het onderwerp noemt plaats of datum', async () => {
+  test('een boeking: de zes velden staan in de mail aan Mariëlle, het onderwerp heeft een vast voorvoegsel', async () => {
     const velden = {
       datumtijd: 'een zondag in maart',
       plaats: 'Verzonnen-stad',
@@ -415,7 +411,7 @@ describe('versturen', () => {
     }
     assert.equal((await run(verzoek({ ...GOED, onderwerp: 'boeking', ...velden }))).status, 200)
     const mail = mailBody(0)
-    assert.equal(mail.subject, 'Boeking: Verzonnen-stad van Proefpersoon Verzonnen')
+    assert.equal(mail.subject, 'Contactformulier: Boeking (Proefpersoon Verzonnen)')
     assert.equal(
       mail.text,
       [
@@ -434,28 +430,28 @@ describe('versturen', () => {
         GOED.bericht,
       ].join('\n'),
     )
-    // Zonder plaats: de datum; zonder allebei een vaste zin; lege velden blijven als regel staan
-    const zonderPlaats = mailContactMarielle({
+    // Lege velden blijven als regel staan (het veld, een dubbele punt en niets)
+    const zonder = mailContactMarielle({
       naam: 'Jan',
       email: 'a@b.nl',
       onderwerp: 'boeking',
       bericht: 'x',
       boeking: { datumtijd: 'maart' },
     })
-    assert.equal(zonderPlaats.subject, 'Boeking: maart van Jan')
-    assert.match(zonderPlaats.text, /Plaats:\n/)
-    const leeg = mailContactMarielle({
+    assert.equal(zonder.subject, 'Contactformulier: Boeking (Jan)')
+    assert.match(zonder.text, /Datum en tijd: maart\nPlaats:\nSoort gelegenheid:\n/)
+    // Bij een algemene vraag staan geen boekingsvelden in de mail
+    const vraag = mailContactMarielle({
       naam: 'Jan',
       email: 'a@b.nl',
-      onderwerp: 'boeking',
+      onderwerp: 'vraag',
       bericht: 'x',
-      boeking: {},
+      boeking: { plaats: 'x' },
     })
-    assert.equal(leeg.subject, 'Boeking: zonder plaats of datum van Jan')
+    assert.doesNotMatch(vraag.text, /Plaats|Budget/)
   })
 
-  test('de bevestiging is standaard ALLEEN vaste tekst: niets van wat de bezoeker intikte', async () => {
-    assert.equal(BEVESTIGING_MET_GEGEVENS, false)
+  test('de bevestiging is ALLEEN vaste tekst: niets van wat de bezoeker intikte, ook geen samenvatting', async () => {
     const naam = 'Verzonnen Naam <b>x</b>'
     const bericht = 'Klik op https://kwaad.example/inloggen en bel 0612345678'
     await run(
@@ -482,41 +478,14 @@ describe('versturen', () => {
       assert.ok(!alles.includes(verboden), verboden)
     }
     assert.doesNotMatch(bevestiging.text, /https?:\/\//)
-    // Wel de vaste tekst van de Tekstschrijver, het onderwerp uit de vaste lijst en een vaste afzender
-    assert.match(
+    // Precies de vaste tekst van de Tekstschrijver, zonder samenvatting en zonder naam
+    assert.equal(
       bevestiging.text,
-      /^Dag,\n\nDank je voor je bericht\. Het is bij mij aangekomen, en ik reageer zo snel ik kan\./,
+      'Dag,\n\nDank je voor je bericht. Het is bij mij aangekomen, en ik reageer zo snel ik kan.\n\nHartelijke groet,\n\nMariëlle Madern',
     )
-    assert.match(bevestiging.text, /Onderwerp: Boeking/)
-    assert.match(bevestiging.text, /Hartelijke groet,\n\nMariëlle Madern$/)
+    assert.doesNotMatch(bevestiging.text, /Onderwerp|Boeking|termijn|binnen \d/)
     assert.equal(bevestiging.from, 'Mariëlle Madern <hallo@mariellemadern.nl>')
     assert.deepEqual(Object.keys(bevestiging).sort(), ['from', 'html', 'subject', 'text', 'to'])
-  })
-
-  test('de bevestiging met gegevens (de tekst van de Tekstschrijver, als de eigenaar dat kiest): naam, boeking en bericht, veilig gemaakt', () => {
-    const v = {
-      naam: 'Jan <b>Jansen</b>',
-      onderwerp: 'boeking',
-      bericht: 'Regel een <i>twee</i>\nregel drie',
-      boeking: { plaats: 'Verzonnen-stad', budget: 'nog niet bekend' },
-    }
-    const m = mailContactBevestiging(v, true)
-    assert.equal(m.subject, 'Ik heb je bericht ontvangen')
-    assert.match(m.text, /^Dag Jan <b>Jansen<\/b>,\n\nDank je voor je bericht\./)
-    assert.match(
-      m.text,
-      /Dit heb je gestuurd:\n\nOnderwerp: Boeking\nPlaats: Verzonnen-stad\nBudget: nog niet bekend\nJe bericht: Regel een <i>twee<\/i>\nregel drie/,
-    )
-    // lege boekingsvelden worden weggelaten
-    assert.doesNotMatch(m.text, /Datum en tijd|Soort gelegenheid|Speeltijden/)
-    // in de HTML is alles veilig gemaakt
-    assert.ok(!m.html.includes('<b>') && !m.html.includes('<i>'))
-    assert.match(m.html, /Dag Jan &lt;b&gt;Jansen&lt;\/b&gt;,/)
-    assert.match(m.html, /Je bericht: Regel een &lt;i&gt;twee&lt;\/i&gt;<br>regel drie/)
-    // een algemene vraag toont geen boekingsvelden, ook niet als ze zijn meegestuurd
-    const vraag = mailContactBevestiging({ ...v, onderwerp: 'vraag' }, true)
-    assert.doesNotMatch(vraag.text, /Plaats|Budget/)
-    assert.match(vraag.text, /Onderwerp: Algemene vraag/)
   })
 
   test('HTML in naam en bericht wordt veilig gemaakt; het onderwerp bevat geen regeleinden en maximaal 60 tekens naam', async () => {
@@ -533,7 +502,7 @@ describe('versturen', () => {
     assert.match(mail.html, /&lt;img src=x onerror=alert\(1\)&gt;/)
     assert.match(mail.html, /&quot;aanhalingstekens&quot; &amp; &#39;apostrof&#39;<br>regel twee/)
     assert.ok(!/[\r\n]/.test(mail.subject))
-    const naamInOnderwerp = mail.subject.replace(/^Vraag van /, '')
+    const naamInOnderwerp = mail.subject.match(/^Contactformulier: Algemene vraag \((.*)\)$/)[1]
     assert.ok([...naamInOnderwerp].length <= 60, naamInOnderwerp.length)
   })
 
