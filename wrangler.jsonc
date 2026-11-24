@@ -41,5 +41,14 @@
     { "name": "LIMIET_IP", "namespace_id": "1003", "simple": { "limit": 3, "period": 60 } },
     { "name": "LIMIET_ADRES", "namespace_id": "1001", "simple": { "limit": 1, "period": 60 } },
     { "name": "LIMIET_ALGEMEEN", "namespace_id": "1002", "simple": { "limit": 10, "period": 60 } }
-  ]
+  ],
+  // Workers Logs uit: Cloudflare zet observability voor nieuwe Workers standaard aan en bewaart dan gegevens van
+  // aanvragen (adres, tijdstip, status, 3 tot 7 dagen). Besluit van de eigenaar, 2026-11-24: niets bewaren. De Worker
+  // schrijft zelf niets naar de console (geen console-aanroepen) en bewaart en logt geen naam of adres van bezoekers;
+  // secrets staan niet in dit bestand. De sleutels staan er alle drie, zodat ook een standaardwaarde niets aanzet.
+  "observability": {
+    "enabled": false,
+    "logs": { "enabled": false, "invocation_logs": false, "persist": false },
+    "traces": { "enabled": false, "persist": false }
+  }
 }
