@@ -37,7 +37,7 @@ Bij het versturen van het formulier gebruikt de site je IP-adres kortstondig voo
 
 Ik bewaar deze gegevens om je vraag of aanvraag te kunnen beantwoorden of te versturen. Lukt het versturen van de mail niet, dan blijft de aanvraag in de database staan, zodat ik die alsnog kan versturen. Verder gebruik ik de gegevens nergens voor.
 
-**Hoe lang, en wat daarna.** Je gegevens staan 30 dagen volledig in de database. Daarna worden je naam, je e-mailadres, je bericht en de boekingsgegevens verwijderd. Wat overblijft is alleen de datum, het onderwerp (bij het contactformulier) of het nummer (bij de bladmuziek). Dat gebruik ik om te zien hoe vaak er naar een onderwerp of een nummer wordt gevraagd. Daarin staan geen persoonsgegevens. Het aantal keer dat een nummer wordt aangevraagd, en het aantal berichten per onderwerp, tel ik anoniem: alleen de datum en het nummer of onderwerp, zonder naam, e-mailadres of IP-adres.
+**Hoe lang, en wat daarna.** Je gegevens staan 30 dagen volledig in de database. Daarna worden je naam, je e-mailadres, je bericht en de boekingsgegevens verwijderd. Wat overblijft is alleen de datum, het onderwerp (bij het contactformulier) of het nummer (bij de bladmuziek). Dat gebruik ik om te zien hoe vaak er naar een onderwerp of een nummer wordt gevraagd. Daarin staan geen persoonsgegevens.
 
 **Waar de gegevens staan.** De gegevens worden opgeslagen in de EU, in een database van Cloudflare. Cloudflare is daarvoor verwerker. De website zelf draait wereldwijd, en de gegevens gaan daarbij kortstondig langs andere plaatsen buiten de EU; ze worden daar niet opgeslagen. Verwijderde of geanonimiseerde gegevens blijven nog 7 dagen staan in een herstelkopie van de database. Daarna zijn ze echt weg.
 
