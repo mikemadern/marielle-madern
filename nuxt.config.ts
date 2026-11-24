@@ -68,13 +68,39 @@ export default defineNuxtConfig({
   hooks: {
     // Het bladmuziekformulier en het contactformulier zijn aparte stukjes code (Lazy-componenten) die alleen op een
     // pagina mét formulier worden geladen. Zonder dit zet Nuxt er op elke nummerpagina (of vaste pagina) een prefetch
-    // voor, en dan downloadt de browser ze toch op pagina's zonder formulier.
+    // voor, en dan downloadt de browser ze toch op pagina's zonder formulier. Ook het gedeelde stukje dat alleen de
+    // twee formulieren gebruiken (melding en Turnstile-loader) hoort erbij: het heeft een eigen sleutel in het manifest.
     'build:manifest': (manifest) => {
-      for (const [sleutel, bestand] of Object.entries(manifest)) {
-        if (sleutel.includes('BladmuziekFormulier') || sleutel.includes('ContactFormulier')) {
-          bestand.prefetch = false
-          bestand.preload = false
+      // De formulieren en alles wat alleen zij gebruiken (de gedeelde stukjes, zoals de melding en het laden van
+      // Turnstile) krijgen geen prefetch of preload
+      const vorm = (k: string) =>
+        k.includes('BladmuziekFormulier') || k.includes('ContactFormulier')
+      const door: Record<string, Set<string>> = {}
+      for (const [k, v] of Object.entries(manifest))
+        for (const i of [...(v.imports ?? []), ...(v.dynamicImports ?? [])])
+          (door[i] ??= new Set()).add(k)
+      const alleen = new Set(Object.keys(manifest).filter(vorm))
+      let nieuw = true
+      while (nieuw) {
+        nieuw = false
+        for (const k of Object.keys(manifest)) {
+          if (alleen.has(k) || !door[k]) continue
+          if ([...door[k]].every((d) => alleen.has(d))) {
+            alleen.add(k)
+            nieuw = true
+          }
         }
+      }
+      // Hun opmaak (css) idem, tenzij een ander stukje diezelfde css ook gebruikt. Het manifest heeft elk css-bestand
+      // onder twee sleutels: de naam zelf en dezelfde naam met een liggend streepje ervoor.
+      const elders = new Set(
+        Object.entries(manifest).flatMap(([k, v]) => (alleen.has(k) ? [] : (v.css ?? []))),
+      )
+      const stijl = [...alleen].flatMap((k) => manifest[k]!.css ?? []).filter((c) => !elders.has(c))
+      for (const k of [...alleen, ...stijl, ...stijl.map((c) => `_${c}`)]) {
+        if (!manifest[k]) continue
+        manifest[k].prefetch = false
+        manifest[k].preload = false
       }
     },
   },
