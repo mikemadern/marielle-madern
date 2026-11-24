@@ -4,7 +4,17 @@ import type { NummerItem } from '~/components/NummerKaarten.vue'
 const { data: home } = await useAsyncData('home', () => queryCollection('home').first())
 const { data: nummers } = await useAsyncData('home-nummers', () =>
   queryCollection('nummers')
-    .select('path', 'title', 'duur', 'videoBeeld', 'youtube', 'spotify', 'appleMusic', 'kaartregel')
+    .select(
+      'path',
+      'title',
+      'duur',
+      'cover',
+      'videoBeeld',
+      'youtube',
+      'spotify',
+      'appleMusic',
+      'kaartregel',
+    )
     .all(),
 )
 
@@ -71,16 +81,33 @@ async function kies(slug: string) {
 useHead({ title: home.value.seoTitel })
 useSeoMeta({ description: home.value.description })
 
-// De deelafbeelding van de homepage is de hoes van het uitgelichte nummer (content/home.yml, veld uitgelicht)
-const uitgelicht = (nummers.value ?? []).find((n) => n.path.endsWith(`/${home.value?.uitgelicht}`))
-if (!uitgelicht) {
+// De deelafbeelding van de homepage: het logo en de regel uit content/home.yml (scripts/og)
+useDeelafbeelding('home', `Mariëlle Madern: ${home.value.deelafbeeldingRegel}`)
+
+// Schema.org: het uitgelichte nummer en de lijst met de negen nummers, zoals ze op de pagina staan
+const site = useSiteConfig().url
+const uitgelichtSlug = home.value.uitgelicht
+const uitgelichtNummer = (nummers.value ?? []).find((n) => n.path.endsWith(`/${uitgelichtSlug}`))
+if (!uitgelichtNummer) {
   throw createError({
     statusCode: 500,
-    statusMessage: 'Uitgelicht nummer bestaat niet',
+    statusMessage: `Het uitgelichte nummer ${uitgelichtSlug} bestaat niet`,
     fatal: true,
   })
 }
-useNummerDeelafbeelding(home.value.uitgelicht, uitgelicht.title)
+useSchemaOrg([
+  defineMusicRecording(nummerSchema(site, uitgelichtNummer, uitgave.value)),
+  defineItemList({
+    '@id': `${site}/#nummers`,
+    name: 'Nummers van Mariëlle Madern',
+    itemListElement: items.value.map((n, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: n.titel,
+      url: `${site}${n.pad}`,
+    })),
+  }),
+])
 </script>
 
 <template>

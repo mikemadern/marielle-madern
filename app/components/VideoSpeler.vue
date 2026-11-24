@@ -117,11 +117,24 @@ const adres = computed(() => `https://www.youtube-nocookie.com/embed/${props.id}
   border-radius: 50%;
   background: var(--kleur-terracotta-diep);
   border: 2px solid var(--kleur-wit);
-  transition: background-color 150ms;
+  transition:
+    background-color 100ms,
+    scale 100ms;
 }
 
 .speler__knop:hover .speler__icoon {
   background: var(--kleur-groen);
+}
+
+/* Ingedrukt: groen diep, en zonder 'minder beweging' 6% kleiner */
+.speler__knop:active .speler__icoon {
+  background: var(--kleur-groen-diep);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .speler__knop:active .speler__icoon {
+    scale: 0.94;
+  }
 }
 
 @media (max-width: 47.9375rem) {

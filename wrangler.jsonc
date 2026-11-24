@@ -25,6 +25,16 @@
     // /over-mij wordt doorgestuurd naar /over-mij/ (de slash blijft de canonieke vorm)
     "html_handling": "auto-trailing-slash"
   },
+  // De privé-bucket met de bladmuziek (pdf's als bladmuziek/<bestandsnaam van het nummer>.pdf). De Worker leest
+  // alleen (get) en schrijft nooit. Een preview-bouw bindt dezelfde bucket (previews erft deze instellingen).
+  "r2_buckets": [{ "binding": "BLADMUZIEK", "bucket_name": "marielle-madern" }],
+  // Hostnamen waarop de Worker bladmuziek mag versturen, naast mariellemadern.nl en www.mariellemadern.nl (die staan als
+  // code-constante in worker/bladmuziek.mjs). Besluit van de eigenaar, 2026-11-19: het formulier moet ook werken op het
+  // hoofdadres https://mariellemadern.mmadern.workers.dev. Eén exacte hostnaam: geen wildcard en geen achtervoegsel, dus
+  // de preview-adressen (die een andere hostnaam hebben, bijvoorbeeld preview-pr-35-mariellemadern.mmadern.workers.dev)
+  // blijven 403. Dit is een gewone, niet-geheime variabele. De secrets (RESEND_API_KEY, TURNSTILE_SECRET) staan niet in
+  // dit bestand maar alleen in het Cloudflare-dashboard. Zie README.md, "Het hoofdadres van de Worker".
+  "vars": { "TOEGESTANE_HOSTS": "mariellemadern.mmadern.workers.dev" },
   // Limieten per minuut (de binding kent alleen perioden van 10 of 60 seconden): 3 per IP-adres, 1 per e-mailadres en
   // 10 voor de hele site. De Worker gebruikt als sleutel een HMAC van het IP-adres of e-mailadres; niets wordt bewaard.
   "ratelimits": [

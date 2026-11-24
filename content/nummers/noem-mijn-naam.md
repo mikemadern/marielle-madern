@@ -5,6 +5,7 @@ uitgave: ep
 volgorde: 3
 duur: "4:19"
 kaartregel: "Over het verlangen naar een diepere relatie met God."
+bladmuziek: true
 cover:
   src: /covers/noem-mijn-naam.webp
   alt: "Noem mijn naam"

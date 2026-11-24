@@ -4,7 +4,8 @@
 //
 // Benodigd (Cloudflare, door de eigenaar ingesteld): secrets RESEND_API_KEY en TURNSTILE_SECRET, de R2-bucket
 // met binding BLADMUZIEK (bestanden bladmuziek/<nummer>.pdf) en de drie limiet-bindingen uit wrangler.jsonc.
-// Ontbreekt er één, dan geeft de Worker 503 en doet de feature niets.
+// Ontbreekt er één, dan geeft de Worker 503 en doet de feature niets. Een andere hostname dan de toegestane
+// (zie TOEGESTANE_HOSTS): 403.
 //
 // Wat echt beschermt: Turnstile, met controle van de hostname en de actie in het antwoord, en de limieten.
 // De Origin-controle is alleen een eenvoudig filter tegen verkeerd gebruik door een browser: elk script kan
@@ -13,6 +14,13 @@ import { ADRES_MARIELLE, AFZENDER, mailBezoeker, mailMarielle } from './teksten.
 
 export const PAD = '/api/bladmuziek'
 const MAX_VERZOEK = 4096
+// Alleen op deze adressen doet de Worker iets. Een preview-adres en het gewone workers.dev-adres krijgen 403,
+// ook als de Turnstile-widget ze toestaat (dat hangt dus niet af van een instelling van de eigenaar). Een
+// code-constante: het echte domein en www kunnen niet per ongeluk uit een instelling verdwijnen. Bewust uitbreiden
+// kan met de optionele, niet-geheime variabele TOEGESTANE_HOSTS (komma-gescheiden hostnamen, exact, geen wildcard):
+// die staat in wrangler.jsonc ("vars"), want de Worker wordt vanuit dat bestand beheerd en Cloudflare staat
+// variabelen in het dashboard dan niet toe; zie de README.
+export const TOEGESTANE_HOSTS = ['mariellemadern.nl', 'www.mariellemadern.nl']
 // De actie die het Turnstile-widget in het formulier moet meegeven (data-action); Turnstile geeft hem terug
 const TURNSTILE_ACTIE = 'bladmuziek'
 const MAX_PDF = 15 * 1024 * 1024
@@ -31,6 +39,15 @@ const antwoord = (status, body = {}, extra = {}) =>
       ...extra,
     },
   })
+
+export const hostToegestaan = (env, hostname) =>
+  [
+    ...TOEGESTANE_HOSTS,
+    ...String(env.TOEGESTANE_HOSTS ?? '')
+      .split(',')
+      .map((h) => h.trim().toLowerCase())
+      .filter(Boolean),
+  ].includes(hostname.toLowerCase())
 
 export const geconfigureerd = (env) =>
   Boolean(
@@ -118,6 +135,7 @@ export async function behandel(request, env, deps) {
   if (!url.pathname.startsWith('/api/')) return null
   if (url.pathname !== PAD) return antwoord(404, { fout: 'niet_gevonden' })
   if (request.method !== 'POST') return antwoord(405, { fout: 'methode' }, { allow: 'POST' })
+  if (!hostToegestaan(env, url.hostname)) return antwoord(403, { fout: 'adres_niet_toegestaan' })
   if (!geconfigureerd(env)) return antwoord(503, { fout: 'uitgeschakeld' })
 
   // Eenvoudig filter tegen gebruik vanaf andere pagina's in een browser (geen verificatie, zie boven)

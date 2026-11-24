@@ -15,9 +15,15 @@ useSeoMeta({
   title: pagina.value.seoTitel ?? pagina.value.title,
   description: pagina.value.description,
 })
-// De bestelpagina toont de hoes van de EP, de overige pagina's het logo
-if (pad === '/bestel-de-ep') useEpDeelafbeelding()
-else useDeelafbeelding('algemeen', 'Logo van Mariëlle Madern')
+// Elke pagina heeft zijn eigen deelafbeelding (scripts/og), met de titel van de pagina
+// Schema.org: Over mij is een AboutPage over Mariëlle, Contact een ContactPage
+if (pad === '/over-mij')
+  useSchemaOrg([
+    defineWebPage({ '@type': 'AboutPage', about: { '@id': `${useSiteConfig().url}/#identity` } }),
+  ])
+if (pad === '/contact') useSchemaOrg([defineWebPage({ '@type': 'ContactPage' })])
+
+usePaginaDeelafbeelding(pad, pagina.value.title)
 </script>
 
 <template>

@@ -95,6 +95,8 @@ export default defineContentConfig({
         heroRegels: z.array(z.object({ tekst: z.string(), vet: z.boolean() })),
         kicker: z.string(),
         slogan: z.string(),
+        // De regel op de deelafbeelding van de homepage (scripts/og)
+        deelafbeeldingRegel: z.string(),
         intro: z.array(z.string()),
         introKnop: knop,
         videoKicker: z.string(),

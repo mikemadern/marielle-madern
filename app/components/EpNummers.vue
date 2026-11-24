@@ -13,6 +13,29 @@ const tracks = computed(() =>
     return n ? [n] : []
   }),
 )
+
+// Schema.org: de EP met de nummers die op deze pagina staan. Geen Product of Offer: het is geen webshop.
+const site = useSiteConfig().url
+if (uitgave.value) {
+  useSchemaOrg([
+    defineMusicAlbum({
+      '@id': `${site}/bestel-de-ep/#ep`,
+      name: uitgave.value.title,
+      url: `${site}/bestel-de-ep/`,
+      inLanguage: 'nl',
+      albumProductionType: 'https://schema.org/EPRelease',
+      image: `${site}/afbeeldingen/${uitgave.value.cover.replace(/^\//, '').replace(/\.[^./]+$/, '')}-600.webp`,
+      byArtist: { '@id': `${site}/#identity` },
+      numTracks: tracks.value.length,
+      track: tracks.value.map((t, i) => ({
+        '@type': 'MusicRecording',
+        position: i + 1,
+        name: t.title,
+        url: `${site}${t.path}/`,
+      })),
+    }),
+  ])
+}
 </script>
 
 <template>
@@ -68,9 +91,23 @@ const tracks = computed(() =>
   font-weight: 700;
   color: var(--tekst);
   text-decoration: none;
+  transition: color 100ms;
+}
+
+a.ep__titel {
+  /* De link is 44 px hoog om aan te raken (de rij eromheen is hoger, dus de indeling blijft gelijk) */
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--doel-min);
 }
 
 a.ep__titel:hover {
+  text-decoration: underline;
+}
+
+/* Ingedrukt: terracotta diep (4,89:1 op wit) en onderstreept */
+a.ep__titel:active {
+  color: var(--kleur-terracotta-diep);
   text-decoration: underline;
 }
 </style>

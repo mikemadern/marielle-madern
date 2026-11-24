@@ -1,6 +1,6 @@
-// Deelafbeelding van een pagina (og:image en twitter:image). De bestanden maakt scripts/deelafbeeldingen.mjs:
-// 'algemeen' (logo), 'ep' (hoes van de EP) of de bestandsnaam van een nummer. Het adres wordt vanzelf
-// absoluut (https://mariellemadern.nl/...) door site.url.
+// Deelafbeelding van een pagina (og:image en twitter:image). De afbeeldingen staan in public/afbeeldingen/og en
+// worden gemaakt door pnpm og (scripts/og): 'home', de naam van een pagina in content/paginas (over-mij, contact, bestel-de-ep)
+// of de naam van een nummer. Het adres wordt vanzelf absoluut (https://mariellemadern.nl/...) door site.url.
 import toegestaan from '../../scripts/deelafbeeldingen-toegestaan.json'
 
 export function useDeelafbeelding(naam: string, alt: string) {
@@ -17,14 +17,27 @@ export function useDeelafbeelding(naam: string, alt: string) {
   })
 }
 
-// Een nummer: de hoes als het nummer op de toegestane lijst staat (scripts/deelafbeeldingen-toegestaan.json), anders het logo.
-// De bestandsnaam is in beide gevallen de naam van het nummer.
+// Een nummer: titel en hoes als het nummer op de toegestane lijst staat (scripts/deelafbeeldingen-toegestaan.json),
+// anders titel en logo. De bestandsnaam is de naam van het nummer. De alt bevat de tekst op de afbeelding.
 export function useNummerDeelafbeelding(slug: string, titel: string) {
   const metHoes = toegestaan.nummers.includes(slug)
-  useDeelafbeelding(slug, metHoes ? `Hoes van ${titel}` : 'Logo van Mariëlle Madern')
+  useDeelafbeelding(
+    slug,
+    metHoes
+      ? `Hoes van ${titel}, nummer van Mariëlle Madern`
+      : `${titel}, nummer van Mariëlle Madern`,
+  )
 }
 
-// Bestel de EP: de hoes van de EP als de eigenaar dat heeft toegestaan, anders het logo
-export function useEpDeelafbeelding() {
-  useDeelafbeelding('ep', toegestaan.ep ? 'Hoes van de EP U ziet mij' : 'Logo van Mariëlle Madern')
+// Een pagina uit content/paginas: de bestandsnaam is de naam van de pagina (over-mij, contact, bestel-de-ep).
+// Bestel de EP toont de hoes van de EP, als de eigenaar dat heeft toegestaan.
+export function usePaginaDeelafbeelding(pad: string, titel: string) {
+  const naam = pad.replace(/^\/|\/$/g, '')
+  const metEpHoes = naam === 'bestel-de-ep' && toegestaan.ep
+  useDeelafbeelding(
+    naam,
+    metEpHoes
+      ? `${titel}: U ziet mij van Mariëlle Madern, met de hoes van de EP`
+      : `Mariëlle Madern: ${titel}`,
+  )
 }

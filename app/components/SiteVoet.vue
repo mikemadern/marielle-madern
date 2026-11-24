@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { kanalen } from '~/data/kanalen'
 const { data: home } = await useAsyncData('voet-home', () =>
   queryCollection('home').select('voetlijst').first(),
 )
@@ -14,28 +15,15 @@ const lijst = computed(() =>
   }),
 )
 
-const jaar = new Date().getFullYear()
-
-const kanalen = [
-  { naam: 'Facebook', link: 'https://www.facebook.com/marielle.overeem', icoon: 'facebook' },
-  { naam: 'Instagram', link: 'https://www.instagram.com/mariellemadern/', icoon: 'instagram' },
-  { naam: 'YouTube', link: 'https://www.youtube.com/@MarielleMadern', icoon: 'youtube' },
-  {
-    naam: 'Spotify',
-    link: 'https://open.spotify.com/artist/0JhC8OIE2esDeiv4Citl3j',
-    icoon: 'spotify',
-  },
-  {
-    naam: 'LinkedIn',
-    link: 'https://www.linkedin.com/in/mari%C3%ABlle-madern/',
-    icoon: 'linkedin',
-  },
-  {
-    naam: 'Apple Music',
-    link: 'https://music.apple.com/nl/artist/mari%C3%ABlle-madern/1692097525',
-    icoon: 'apple',
-  },
-] as const
+// Het jaartal in de voet. De pagina's worden bij het bouwen gemaakt, dus 'nu' is dan de dag van de bouw: zonder
+// nieuwe uitrol in januari bleef het oude jaar staan. Server en browser beginnen allebei met het bouwjaar (het
+// tijdstip van de bouw staat in de gegevens van de pagina, dus geen verschil bij het laden); na het laden springt
+// het naar het huidige jaar.
+const bouwjaar = new Date(useNuxtApp().payload.prerenderedAt ?? Date.now()).getFullYear()
+const jaar = ref(bouwjaar)
+onMounted(() => {
+  jaar.value = new Date().getFullYear()
+})
 </script>
 
 <template>
@@ -135,10 +123,11 @@ const kanalen = [
 .voet__mail {
   display: inline-flex;
   align-items: center;
-  min-block-size: 2.375rem;
+  min-block-size: var(--doel-min);
   color: var(--tekst);
   font-weight: 400;
   text-decoration: none;
+  transition: color 100ms;
 }
 
 .voet__lijst a:hover,
@@ -146,10 +135,21 @@ const kanalen = [
   text-decoration: underline;
 }
 
+/* Ingedrukt: de links terracotta diep (4,51:1 op crème), het e-mailadres groen (6,11:1) */
+.voet__lijst a:active {
+  color: var(--kleur-terracotta-diep);
+  text-decoration: underline;
+}
+
 /* E-mailadres in terracotta diep: het oorspronkelijke terracotta haalt 3,48:1 op crème */
 .voet__mail {
   color: var(--kleur-terracotta-diep);
   text-decoration: underline;
+  transition: color 100ms;
+}
+
+.voet__mail:active {
+  color: var(--kleur-groen);
 }
 
 .voet__iconen {
@@ -161,9 +161,22 @@ const kanalen = [
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  inline-size: 2.25rem;
-  block-size: 2.25rem;
+  inline-size: var(--doel-min);
+  block-size: var(--doel-min);
   color: var(--kleur-terracotta-diep);
+  transition:
+    color 100ms,
+    scale 100ms;
+}
+
+.voet__iconen a:active {
+  color: var(--kleur-groen);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .voet__iconen a:active {
+    scale: 0.94;
+  }
 }
 
 .voet__onder {

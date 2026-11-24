@@ -134,6 +134,7 @@ try {
 }
 tekst(homePad, home, 'seoTitel', { max: 60 })
 tekst(homePad, home, 'description', { min: 70, max: 160 })
+tekst(homePad, home, 'deelafbeeldingRegel', { max: 60 })
 if (!Array.isArray(home.heroRegels) || !home.heroRegels.length)
   fout(homePad, 'heroRegels ontbreekt')
 for (const slug of home.voetlijst ?? [])

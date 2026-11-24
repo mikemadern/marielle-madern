@@ -5,6 +5,7 @@ uitgave: ep
 volgorde: 6
 duur: "4:27"
 kaartregel: "Over de kracht van Gods liefde."
+bladmuziek: true
 cover:
   src: /covers/wat-een-liefde.webp
   alt: "Wat een liefde"

@@ -16,11 +16,45 @@ useSeoMeta({
 })
 useNummerDeelafbeelding(slug, nummer.value.title)
 
+// Schema.org: het nummer, met de EP als het daarop staat, en het kruimelpad. Alleen gegevens uit de content:
+// geen uitgavedatum en geen origineel nummer, want die zijn nog niet bevestigd.
+const { data: uitgave } = await useAsyncData('uitgave-ep-schema', () =>
+  queryCollection('uitgaven').select('title', 'nummers').first(),
+)
+const site = useSiteConfig().url
+useSchemaOrg([
+  defineMusicRecording(nummerSchema(site, nummer.value, uitgave.value)),
+  defineBreadcrumb({
+    itemListElement: [
+      { name: 'Home', item: `${site}/` },
+      { name: 'Over de muziek', item: `${site}/over-de-muziek/` },
+      { name: nummer.value.title, item: `${site}${nummer.value.path}/` },
+    ],
+  }),
+])
+
 // Alinea's zijn gescheiden door een lege regel. Een alinea die met “ begint is een citaat.
 const alineas = (tekst: string | undefined) => (tekst ?? '').trim().split(/\n\s*\n/)
 const verhaal = computed(() => alineas(nummer.value?.verhaal))
 const bijzonder = computed(() => alineas(nummer.value?.bijzonder))
 const strofen = computed(() => alineas(nummer.value?.liedtekst))
+
+// Vorig en volgend nummer, in dezelfde volgorde als op Over de muziek (zie app/utils/nummer-volgorde.ts); de EP-volgorde
+// komt uit dezelfde `uitgave` als het schema hierboven
+const { data: alleNummers } = await useAsyncData('nummer-volgorde', () =>
+  queryCollection('nummers').select('path', 'title', 'uitgave', 'volgorde').all(),
+)
+const volgorde = computed(() =>
+  nummerVolgorde(alleNummers.value ?? [], uitgave.value?.nummers ?? []),
+)
+const plek = computed(() => volgorde.value.findIndex((n) => n.path.endsWith(`/${slug}`)))
+const vorige = computed(() => (plek.value > 0 ? volgorde.value[plek.value - 1] : undefined))
+const volgende = computed(() => (plek.value >= 0 ? volgorde.value[plek.value + 1] : undefined))
+
+// Het formulier voor de bladmuziek: alleen bij een nummer met `bladmuziek: true` (en met een Turnstile-sitesleutel)
+const sitekey = useRuntimeConfig().public.turnstileSitekey
+const metBladmuziek = computed(() => Boolean(nummer.value?.bladmuziek && sitekey))
+const formulier = ref<{ laad: () => void } | null>(null)
 </script>
 
 <template>
@@ -59,6 +93,10 @@ const strofen = computed(() => alineas(nummer.value?.liedtekst))
             <Icoon naam="youtube" />
           </a>
         </div>
+        <a v-if="metBladmuziek" class="bladlink" href="#bladmuziek" @click="formulier?.laad()">
+          <span class="bladlink__tekst">Bladmuziek van dit nummer</span
+          ><span class="bladlink__pijl" aria-hidden="true">↓</span>
+        </a>
       </div>
     </div>
 
@@ -87,12 +125,22 @@ const strofen = computed(() => alineas(nummer.value?.liedtekst))
       </div>
     </div>
 
-    <div class="sectie sectie--eind">
+    <div :class="['sectie', !metBladmuziek && 'sectie--eind']">
       <div class="kolom">
-        <KopBlok accent="Liedtekst" :kop="nummer.title" />
+        <KopBlok :accent="nummer.title" kop="Liedtekst" />
         <div class="tekst">
           <p v-for="(strofe, i) in strofen" :key="i" class="strofen">{{ strofe }}</p>
         </div>
+        <NummerNav v-if="!metBladmuziek" :vorige="vorige" :volgende="volgende" />
+      </div>
+    </div>
+
+    <!-- Na de liedtekst, boven de voet (design/bladmuziek-formulier.md) -->
+    <div v-if="metBladmuziek" class="sectie sectie--eind">
+      <div class="kolom">
+        <LazyBladmuziekFormulier ref="formulier" :nummer="slug" :titel="nummer.title" />
+        <!-- De nummerlinks blijven als laatste vóór de voet: bij een nummer met formulier staan ze eronder -->
+        <NummerNav :vorige="vorige" :volgende="volgende" />
       </div>
     </div>
   </article>
@@ -136,6 +184,27 @@ const strofen = computed(() => alineas(nummer.value?.liedtekst))
   inline-size: var(--doel-min);
   block-size: var(--doel-min);
   color: var(--kleur-terracotta-diep);
+}
+
+/* De koppeling naar het formulier onder de luisterbalk: een tikdoel van minstens 44 px */
+.bladlink {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--doel-min);
+  margin-block-start: 0.5rem;
+  color: var(--link);
+  text-decoration: none;
+}
+
+.bladlink__tekst {
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+/* De pijl omlaag staat buiten de onderstreping, in de tekstkleur */
+.bladlink__pijl {
+  margin-inline-start: 0.4rem;
+  color: var(--tekst);
 }
 
 .bijzonder {

@@ -17,14 +17,38 @@ function bijToets(e: KeyboardEvent) {
   open.value = false
   menuKnop.value?.focus()
 }
-onMounted(() => document.addEventListener('keydown', bijToets))
-onBeforeUnmount(() => document.removeEventListener('keydown', bijToets))
+
+// Een tik buiten het menu sluit het ook. composedPath en niet event.target: Vue wisselt het icoon in de knop bij een
+// klik, waarna het aangeklikte element al uit de pagina is en het menu meteen weer zou sluiten.
+const menu = ref<HTMLElement | null>(null)
+function bijKlik(e: MouseEvent) {
+  if (!open.value) return
+  const pad = e.composedPath()
+  if (!pad.includes(menu.value as EventTarget) && !pad.includes(menuKnop.value as EventTarget)) open.value = false
+}
+onMounted(() => {
+  document.addEventListener('keydown', bijToets)
+  document.addEventListener('click', bijKlik)
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('keydown', bijToets)
+  document.removeEventListener('click', bijKlik)
+})
 
 const links = [
   { to: '/over-mij/', tekst: 'Over mij' },
   { to: '/over-de-muziek/', tekst: 'Over de muziek' },
   { to: '/contact/', tekst: 'Contact' },
 ]
+
+// Een nummerpagina (/over-de-muziek/<nummer>/) hoort bij 'Over de muziek': de router ziet de overzichtspagina en een
+// nummerpagina als losse pagina's en zet daar geen router-link-active, dus bepalen we het zelf op het pad. 'page'
+// op de pagina zelf, 'true' op het onderdeel waar de pagina bij hoort. Andere pagina's (ook de 404) geven niets.
+function huidig(to: string): 'page' | 'true' | undefined {
+  const pad = route.path.endsWith('/') ? route.path : `${route.path}/`
+  if (pad === to) return 'page'
+  return pad.startsWith(to) ? 'true' : undefined
+}
 </script>
 
 <template>
@@ -65,12 +89,13 @@ const links = [
 
       <nav
         id="hoofdmenu"
+        ref="menu"
         :class="['sitekop__menu', open && 'sitekop__menu--open']"
         aria-label="Hoofdmenu"
       >
         <ul>
           <li v-for="link in links" :key="link.to">
-            <NuxtLink :to="link.to">{{ link.tekst }}</NuxtLink>
+            <NuxtLink :to="link.to" :aria-current="huidig(link.to)">{{ link.tekst }}</NuxtLink>
           </li>
         </ul>
       </nav>
@@ -116,6 +141,15 @@ const links = [
   cursor: pointer;
 }
 
+/* Ingedrukt: een crème vlak over het hele tikvlak */
+.sitekop__knop {
+  transition: background-color 100ms;
+}
+
+.sitekop__knop:active {
+  background: var(--kleur-creme);
+}
+
 .sitekop__icoon {
   inline-size: 1.75rem;
   block-size: 1.75rem;
@@ -136,6 +170,7 @@ const links = [
   color: var(--tekst);
   font-weight: 400;
   text-decoration: none;
+  transition: color 100ms;
 }
 
 .sitekop__menu a:hover {
@@ -143,10 +178,15 @@ const links = [
   text-underline-offset: 0.3em;
 }
 
-/* De huidige pagina in goud. Goud tekst haalt 4,89:1 op wit, het oorspronkelijke goud 2,40:1 */
-.sitekop__menu a.router-link-active,
-.sitekop__menu a[aria-current='page'] {
+/* De huidige pagina in goud, met een dunne gouden streep eronder (voorstel van de Designer): niet alleen de kleur
+   maar ook de streep laat zien waar je bent. Goud tekst haalt 4,89:1 op wit, het oorspronkelijke goud 2,40:1.
+   aria-current="true" staat op het onderdeel waar een nummerpagina bij hoort. */
+.sitekop__menu a[aria-current] {
   color: var(--kleur-goud-tekst);
+  text-decoration: underline;
+  text-decoration-color: var(--kleur-goud-tekst);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.3em;
 }
 
 @media (max-width: 47.9375rem) {
@@ -158,8 +198,12 @@ const links = [
     display: inline-flex;
   }
 
+  /* Het menu is altijd aanwezig en wordt zichtbaar met visibility en opacity (in plaats van display), zodat het kan
+     overgaan. visibility: hidden houdt de links onbereikbaar met Tab en schermlezer zolang het menu dicht is. */
   .sitekop__menu {
-    display: none;
+    display: block;
+    visibility: hidden;
+    opacity: 0;
     position: absolute;
     inset-block-start: 100%;
     inset-inline: -1.25rem;
@@ -169,12 +213,40 @@ const links = [
   }
 
   .sitekop__menu--open {
-    display: block;
+    visibility: visible;
+    opacity: 1;
+  }
+
+  /* Openen 150 ms (ease-out): doorzichtigheid 0 naar 1, 8 px omlaag naar zijn plek. Sluiten 100 ms (ease-in): omgekeerd.
+     Wie 'minder beweging' heeft ingesteld, krijgt geen overgang: het menu verschijnt en verdwijnt direct, zoals voorheen. */
+  @media (prefers-reduced-motion: no-preference) {
+    .sitekop__menu {
+      translate: 0 -0.5rem;
+      transition:
+        opacity 100ms ease-in,
+        translate 100ms ease-in,
+        visibility 0s linear 100ms;
+    }
+
+    .sitekop__menu--open {
+      translate: 0 0;
+      transition:
+        opacity 150ms ease-out,
+        translate 150ms ease-out,
+        visibility 0s;
+    }
   }
 
   .sitekop__menu ul {
     flex-direction: column;
     gap: 0;
   }
+}
+
+/* Ingedrukt: terracotta diep (4,89:1 op wit) en onderstreept */
+.sitekop__menu a:active {
+  color: var(--kleur-terracotta-diep);
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
 }
 </style>

@@ -65,6 +65,23 @@ img {
   font-display: swap;
 }
 
+/* Terugletter voor mae-variable (Adobe Fonts, niet zelf te hosten). Het stylesheet van Adobe laadt niet-blokkerend,
+   dus de pagina staat eerst in een systeemletter en wisselt daarna. Arial (en de letters met dezelfde breedtes:
+   Helvetica, Liberation Sans, Nimbus Sans) krijgt hier de maten van mae-variable, zodat de wissel de regelbreedtes
+   en regelhoogtes nauwelijks verandert. Gemeten met een Nederlandse tekst bij 100 px: mae-variable 11670 px
+   breed, Arial 12450 px (dus 93,74 procent); mae-variable heeft 75 boven en 25 onder de lijn (gedeeld door
+   0,9374: 80,0 en 26,7 procent). Op apparaten zonder een van deze letters (bijvoorbeeld Android) geldt gewoon
+   de systeemletter. */
+@font-face {
+  font-family: 'mae-variable Fallback';
+  src: local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Nimbus Sans');
+  font-weight: 100 900;
+  size-adjust: 93.74%;
+  ascent-override: 80%;
+  descent-override: 26.7%;
+  line-gap-override: 0%;
+}
+
 /* ---------- Indeling ---------- */
 
 .container {
@@ -125,11 +142,15 @@ img {
 
 /* ---------- Handschrift boven een kop ---------- */
 
-/* Het handschrift valt deels over de kop, zoals op de huidige site: een tekstvak van 31 px
-   met daarin 70 px handschrift. De kop staat 20 px onder dat vak. */
+/* Het handschrift valt deels over de kop, zoals op de huidige site. Het heeft zijn eigen hoogte (50 px per regel)
+   en een vaste negatieve marge eronder (31 px min 50 px): de laatste regel handschrift valt zo altijd op dezelfde
+   manier over de kop als bij één regel, en extra regels komen erboven in plaats van dwars door de kop. Bij één
+   regel (vanaf 768 px) is alles pixelgelijk aan het vaste vak van 31 px met de kop 20 px eronder. */
 .accent {
   margin: 0;
-  block-size: 1.9375rem;
+  margin-block-end: -1.1875rem;
+  block-size: auto;
+  text-wrap: balance;
   font-family: var(--font-accent);
   font-size: var(--tekst-accent);
   font-weight: 400;
@@ -165,6 +186,15 @@ img {
 
 .kopblok {
   margin-block-end: 1.25rem;
+}
+
+/* Korte koppen (de kop in het kopblok, de titel in de paginakop en de tussenkoppen in een tekst): de regels even
+   lang verdelen, zodat er geen los woord op de laatste regel staat. Alleen op koppen, niet op lopende tekst:
+   het verdelen kost rekentijd en werkt tot ongeveer zes regels. Browsers zonder steun breken zoals voorheen. */
+.kop,
+.banner__titel,
+.tekst h2 {
+  text-wrap: balance;
 }
 
 /* ---------- Kopbalk met bladtekeningen ---------- */
@@ -303,6 +333,11 @@ img {
   color: var(--knop-tekst);
   font-weight: 400;
   text-decoration: none;
+  transition:
+    background-color 100ms,
+    border-color 100ms,
+    color 100ms,
+    translate 100ms;
 }
 
 .knop:hover {
@@ -315,10 +350,6 @@ img {
   border: 2px solid var(--kleur-terracotta-diep);
   background: var(--kleur-wit);
   color: var(--tekst);
-  transition:
-    background-color 150ms,
-    border-color 150ms,
-    color 150ms;
 }
 
 .knop.knop--licht .icoon {
@@ -335,6 +366,24 @@ img {
 
 .knop.knop--licht:hover .icoon {
   color: var(--kleur-wit);
+}
+
+/* Ingedrukt: groen diep (8,26:1 met wit); de beweging van 1 px alleen zonder 'minder beweging' */
+.knop:active,
+.knop--licht:active {
+  border-color: var(--kleur-groen-diep);
+  background: var(--kleur-groen-diep);
+  color: var(--kleur-wit);
+}
+
+.knop.knop--licht:active .icoon {
+  color: var(--kleur-wit);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .knop:active {
+    translate: 0 1px;
+  }
 }
 
 /* ---------- Lopende tekst ---------- */

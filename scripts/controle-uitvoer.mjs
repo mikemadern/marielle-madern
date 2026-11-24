@@ -5,11 +5,41 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import sharp from 'sharp'
+import { parse } from 'yaml'
 
 const SITE = 'https://mariellemadern.nl'
 const wortel = fileURLToPath(new URL('..', import.meta.url))
 const uitvoer = join(wortel, '.output', 'public')
 const fouten = []
+
+// Wat de bouw moet kloppen met: de kanalen, de EP en de volgorde op Over de muziek komen uit de bron
+const aantalKanalen = [
+  ...readFileSync(join(wortel, 'app', 'data', 'kanalen.ts'), 'utf-8').matchAll(/link:/g),
+].length
+const kopblok = (pad) =>
+  parse(readFileSync(join(wortel, pad), 'utf-8').match(/^---\n([\s\S]*?)\n---/)?.[1] ?? '') ?? {}
+const home = parse(readFileSync(join(wortel, 'content', 'home.yml'), 'utf-8')) ?? {}
+const ep = parse(readFileSync(join(wortel, 'content', 'uitgaven', 'u-ziet-mij.yml'), 'utf-8'))
+// Over de muziek toont de nummers van de EP en alle singles
+const aantalSingles = readdirSync(join(wortel, 'content', 'nummers'))
+  .filter((f) => f.endsWith('.md'))
+  .filter((f) => kopblok(`content/nummers/${f}`).uitgave === 'single').length
+const verwachtAantalNummers = ep.nummers.length + aantalSingles
+// Persoonsgegevens horen niet in de schema.org-gegevens (besluit van de eigenaar, 2026-11-16)
+const VERBODEN = [
+  'birthDate',
+  'deathDate',
+  'spouse',
+  'children',
+  'parent',
+  'sibling',
+  'relatedTo',
+  'telephone',
+  'address',
+  'homeLocation',
+  'gender',
+  'email',
+]
 
 function* paginas(map) {
   for (const item of readdirSync(map, { withFileTypes: true })) {
@@ -32,6 +62,14 @@ function metaTags(html) {
 const meta = (tags, sleutel) =>
   tags.find((t) => t.property === sleutel || t.name === sleutel)?.content
 
+// De toegestane lijst en het manifest van de deelafbeeldingen (scripts/og, public/afbeeldingen/og)
+const toegestaan = JSON.parse(
+  readFileSync(join(wortel, 'scripts', 'deelafbeeldingen-toegestaan.json'), 'utf-8'),
+)
+const manifest = JSON.parse(
+  readFileSync(join(uitvoer, 'afbeeldingen', 'og', 'manifest.json'), 'utf-8'),
+)
+const paginaHtml = {}
 const lijst = [...paginas(uitvoer)]
 if (lijst.length < 15)
   fouten.push(`Er zijn maar ${lijst.length} pagina's gebouwd, verwacht minstens 15`)
@@ -56,6 +94,14 @@ for (const pad of lijst) {
     if (!existsSync(bestandPad)) fout(`og:image bestaat niet in de bouw: ${ogImage}`)
     else if (statSync(bestandPad).size > 150_000) fout(`${ogImage} is groter dan 150 KB`)
   }
+  // De afbeelding staat in het manifest, en de alt bevat de tekst die op de afbeelding staat
+  const naam = ogImage?.match(/\/afbeeldingen\/og\/([^/]+)\.jpg$/)?.[1]
+  if (naam) {
+    const regel = manifest[naam]
+    if (!regel) fout(`${naam}.jpg staat niet in het manifest (pnpm og)`)
+    else if (!meta(tags, 'og:image:alt')?.toLowerCase().includes(regel.titel.toLowerCase()))
+      fout(`og:image:alt bevat de tekst op de afbeelding niet: "${regel.titel}"`)
+  }
   if (meta(tags, 'twitter:image') !== ogImage) fout('twitter:image is niet gelijk aan og:image')
   if (!meta(tags, 'og:image:alt')?.trim()) fout('og:image:alt ontbreekt')
   if (!meta(tags, 'twitter:image:alt')?.trim()) fout('twitter:image:alt ontbreekt')
@@ -66,15 +112,118 @@ for (const pad of lijst) {
   if (meta(tags, 'og:locale') !== 'nl_NL')
     fout(`og:locale is ${meta(tags, 'og:locale')}, verwacht nl_NL`)
 
-  // De deelafbeelding van de homepage hoort bij het uitgelichte nummer (home.yml, veld uitgelicht); zonder dat veld het logo
+  // Koppen en links, en de pagina bewaren voor de controle van vorig en volgend nummer
+  controleerKoppenEnLinks(route, html, fout)
+  paginaHtml[route] = html
+
+  // De homepage heeft zijn eigen afbeelding (home.jpg: logo en de regel van de home)
   if (route === '/') {
-    // content/home.yml, veld uitgelicht; zonder dat veld het logo
-    const homeYml = readFileSync(join(wortel, 'content', 'home.yml'), 'utf-8')
-    const verwacht = homeYml.match(/^uitgelicht:\s*(\S+)/m)?.[1] ?? 'algemeen'
-    if (!ogImage?.endsWith(`/afbeeldingen/og/${verwacht}.jpg`))
-      fout(`de deelafbeelding van de homepage moet ${verwacht}.jpg zijn, niet ${ogImage}`)
+    if (!ogImage?.endsWith('/afbeeldingen/og/home.jpg'))
+      fout(`de deelafbeelding van de homepage moet home.jpg zijn, niet ${ogImage}`)
     controleerHero(html, fout)
   }
+  controleerLettertype(html, fout)
+  controleerJsonLd(route, html, fout)
+}
+
+function controleerJsonLd(route, html, fout) {
+  const blokken = [
+    ...html.matchAll(/<script type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g),
+  ].map((m) => m[1])
+  if (!blokken.length) return fout('geen JSON-LD')
+  const nodes = []
+  for (const tekst of blokken) {
+    try {
+      const d = JSON.parse(tekst)
+      nodes.push(...(d['@graph'] ?? [d]))
+    } catch (e) {
+      return fout(`JSON-LD is geen geldige JSON (${e.message})`)
+    }
+  }
+  const typen = (n) => [].concat(n['@type'])
+  const van = (t) => nodes.filter((n) => typen(n).includes(t))
+  const ids = nodes.map((n) => n['@id']).filter(Boolean)
+  if (new Set(ids).size !== ids.length) fout("JSON-LD heeft dubbele @id's")
+  if (van('WebSite').length !== 1) fout('JSON-LD moet precies één WebSite hebben')
+  if (van('WebPage').length !== 1) fout('JSON-LD moet precies één WebPage hebben')
+  if (van('VideoObject').length)
+    fout('VideoObject hoort er niet in (uploadDate is nog niet bevestigd)')
+  const personen = van('Person')
+  if (personen.length !== 1 || personen[0].name !== 'Mariëlle Madern')
+    fout('JSON-LD moet één Person "Mariëlle Madern" hebben')
+  else if ((personen[0].sameAs ?? []).length !== aantalKanalen)
+    fout(
+      `Person.sameAs heeft ${(personen[0].sameAs ?? []).length} kanalen, verwacht ${aantalKanalen}`,
+    )
+  const sleutels = (o) =>
+    o && typeof o === 'object' ? Object.entries(o).flatMap(([k, v]) => [k, ...sleutels(v)]) : []
+  for (const k of sleutels(nodes))
+    if (VERBODEN.includes(k)) fout(`JSON-LD bevat ${k}, dat hoort er niet in`)
+
+  const nummer = route.match(/^\/over-de-muziek\/([^/]+)\/$/)?.[1]
+  if (nummer) {
+    const [n] = van('MusicRecording')
+    if (!n) return fout('nummerpagina heeft geen MusicRecording')
+    if (n.url !== `${SITE}${route}`) fout(`MusicRecording.url is ${n.url}`)
+    if (!/^PT\d+M\d{1,2}S$/.test(n.duration ?? '')) fout(`MusicRecording.duration is ${n.duration}`)
+    if (n.byArtist?.['@id'] !== `${SITE}/#identity`)
+      fout('MusicRecording.byArtist verwijst niet naar de Person')
+    if (!!n.inAlbum !== ep.nummers.includes(nummer))
+      fout('MusicRecording.inAlbum klopt niet met de EP in content/uitgaven')
+    const [b] = van('BreadcrumbList')
+    if (b?.itemListElement?.length !== 3) fout('nummerpagina heeft geen kruimelpad van 3 stappen')
+    if ('lyrics' in n || 'datePublished' in n || 'recordingOf' in n)
+      fout('lyrics, datePublished en recordingOf horen er niet in (nog niet bevestigd)')
+  }
+  if (route === '/bestel-de-ep/') {
+    const [a] = van('MusicAlbum')
+    if (!a) fout('geen MusicAlbum')
+    else if (a.numTracks !== ep.nummers.length || a.track?.length !== ep.nummers.length)
+      fout(
+        `MusicAlbum: numTracks ${a.numTracks}, ${a.track?.length} tracks, maar de EP in content/uitgaven heeft er ${ep.nummers.length}`,
+      )
+    if (van('Product').length || van('Offer').length)
+      fout('Product en Offer horen er niet in (geen webshop)')
+  }
+  if (route === '/over-de-muziek/') {
+    const [l] = van('ItemList')
+    if (l?.itemListElement?.length !== verwachtAantalNummers)
+      fout(
+        `ItemList heeft ${l?.itemListElement?.length} nummers, EP en singles samen hebben er ${verwachtAantalNummers}`,
+      )
+  }
+  if (route === '/contact/' && !van('ContactPage').length) fout('geen ContactPage')
+  if (route === '/over-mij/' && !van('AboutPage').length) fout('geen AboutPage')
+  // [home-json-ld] De homepage toont het uitgelichte nummer en de lijst met nummers; de JSON-LD volgt dat
+  if (route === '/') {
+    const lijst = van('ItemList')[0]
+    const verwacht = (home.videolijst ?? []).length
+    if (lijst?.itemListElement?.length !== verwacht)
+      fout(
+        `ItemList heeft ${lijst?.itemListElement?.length} nummers, de videolijst in content/home.yml heeft er ${verwacht}`,
+      )
+    if (
+      home.uitgelicht &&
+      !van('MusicRecording').some((n) => n.url === `${SITE}/over-de-muziek/${home.uitgelicht}/`)
+    )
+      fout(`het uitgelichte nummer ${home.uitgelicht} ontbreekt als MusicRecording`)
+  }
+}
+
+// Snelheid: het stylesheet van Adobe Fonts blokkeert de eerste weergave niet
+function controleerLettertype(html, fout) {
+  // Eerst de <noscript>-blokken weghalen: daar staat de gewone (blokkerende) link bewust, voor wie geen JavaScript heeft
+  const zonderNoscript = html.replace(/<noscript>[\s\S]*?<\/noscript>/g, '')
+  const kit = [...zonderNoscript.matchAll(/<link[^>]*bxn6xtn\.css[^>]*>/g)].map((m) => m[0])
+  if (!kit.length) return fout('het stylesheet van Adobe Fonts ontbreekt')
+  if (kit.some((t) => !/\smedia="print"/.test(t)))
+    fout('het stylesheet van Adobe Fonts blokkeert nog (media="print" ontbreekt)')
+  if (
+    !html.includes(
+      '<noscript><link rel="stylesheet" href="https://use.typekit.net/bxn6xtn.css"></noscript>',
+    )
+  )
+    fout('de <noscript>-terugval voor het lettertype ontbreekt')
 }
 
 // [hero-poster] De hero heeft een poster die direct in de pagina staat (stilstaand beeld uit de video)
@@ -90,20 +239,68 @@ function controleerHero(html, fout) {
     fout(`het poster-bestand bestaat niet in de bouw: ${src}`)
 }
 
+// Koppen en links: één h1, geen kopniveau overslaan, en de nummerpagina's hebben links in de inhoud
+function controleerKoppenEnLinks(route, html, fout) {
+  const hoofd = html.match(/<main[\s\S]*<\/main>/)?.[0] ?? ''
+  const koppen = [...html.matchAll(/<h([1-6])[\s>]/g)].map((m) => Number(m[1]))
+  const aantalH1 = koppen.filter((k) => k === 1).length
+  if (aantalH1 !== 1) fout(`${aantalH1} h1's, verwacht precies 1`)
+  koppen.forEach((k, i) => {
+    if (i > 0 && k > koppen[i - 1] + 1) fout(`kopniveau springt van h${koppen[i - 1]} naar h${k}`)
+  })
+  if (/^\/over-de-muziek\/[^/]+\/$/.test(route)) {
+    if (!/<h2[^>]*>Liedtekst<\/h2>/.test(hoofd))
+      fout('de kop boven de liedtekst moet "Liedtekst" zijn')
+    if (!hoofd.includes('href="/over-de-muziek/"'))
+      fout('geen link naar Over de muziek in de inhoud')
+    if (!/rel="(prev|next)"/.test(hoofd))
+      fout('geen link naar een vorig of volgend nummer in de inhoud')
+  }
+  if (route === '/over-de-muziek/') {
+    // Elke link naar een nummer heeft een naam: linktekst, alt-tekst van de afbeelding of aria-label
+    for (const [, tag, binnen] of hoofd.matchAll(
+      /<a ([^>]*href="\/over-de-muziek\/[^"/]+\/"[^>]*)>([\s\S]*?)<\/a>/g,
+    )) {
+      const tekst = binnen.replace(/<[^>]+>/g, '').trim()
+      const alt = binnen.match(/\salt="([^"]+)"/)?.[1]
+      const label = tag.match(/aria-label="([^"]+)"/)?.[1]
+      if (!tekst && !alt && !label)
+        fout(`een link naar een nummer heeft geen naam (${tag.slice(0, 60)})`)
+    }
+  }
+}
+
+// De vorige- en volgende-links op elke nummerpagina volgen de volgorde van de covers op Over de muziek
+function controleerNummerVolgorde(pagina, fout) {
+  const overzicht = pagina['/over-de-muziek/']?.match(/<main[\s\S]*<\/main>/)?.[0] ?? ''
+  const volgorde = [...overzicht.matchAll(/<a [^>]*href="(\/over-de-muziek\/[^"/]+\/)"/g)].map(
+    (m) => m[1],
+  )
+  if (!volgorde.length) return fout('/over-de-muziek/: geen covers gevonden')
+  volgorde.forEach((pad, i) => {
+    const hoofd = pagina[pad]?.match(/<main[\s\S]*<\/main>/)?.[0] ?? ''
+    const rel = (soort) =>
+      [...hoofd.matchAll(/<a ([^>]*)>/g)]
+        .map((m) => m[1])
+        .find((a) => new RegExp(`rel="${soort}"`).test(a))
+        ?.match(/href="([^"]+)"/)?.[1]
+    if (rel('prev') !== volgorde[i - 1])
+      fout(`${pad}: vorige is ${rel('prev')}, verwacht ${volgorde[i - 1]}`)
+    if (rel('next') !== volgorde[i + 1])
+      fout(`${pad}: volgende is ${rel('next')}, verwacht ${volgorde[i + 1]}`)
+  })
+}
+
 // Privacy: een hoes mag alleen als deelafbeelding als het nummer op de toegestane lijst staat
-const toegestaan = JSON.parse(
-  readFileSync(join(wortel, 'scripts', 'deelafbeeldingen-toegestaan.json'), 'utf-8'),
-)
-const manifest = JSON.parse(
-  readFileSync(join(uitvoer, 'afbeeldingen', 'og', 'manifest.json'), 'utf-8'),
-)
 for (const [naam, m] of Object.entries(manifest)) {
-  const mag = naam === 'ep' ? toegestaan.ep === true : toegestaan.nummers.includes(naam)
+  const mag = naam === 'bestel-de-ep' ? toegestaan.ep === true : toegestaan.nummers.includes(naam)
   if (m.hoes && !mag)
     fouten.push(
       `${naam}.jpg gebruikt een hoes die niet op de toegestane lijst staat (scripts/deelafbeeldingen-toegestaan.json)`,
     )
 }
+
+controleerNummerVolgorde(paginaHtml, (t) => fouten.push(t))
 
 // De afbeeldingen zelf: 1200 x 630, JPEG
 for (const f of readdirSync(join(uitvoer, 'afbeeldingen', 'og')).filter((f) =>
@@ -113,6 +310,11 @@ for (const f of readdirSync(join(uitvoer, 'afbeeldingen', 'og')).filter((f) =>
   if (m.width !== 1200 || m.height !== 630 || m.format !== 'jpeg')
     fouten.push(`afbeeldingen/og/${f} is ${m.width}x${m.height} ${m.format}`)
 }
+
+// 404.html (de pagina die Cloudflare toont bij een onbekend adres): een titel en een kop in de HTML zelf
+const nietGevonden = readFileSync(join(uitvoer, '404.html'), 'utf-8')
+if (!/<title>[^<]+<\/title>/.test(nietGevonden)) fouten.push('404.html heeft geen <title>')
+if (!/<h1[^>]*>[^<]+<\/h1>/.test(nietGevonden)) fouten.push('404.html heeft geen <h1>')
 
 if (fouten.length) {
   console.error(`Uitvoer: ${fouten.length} fout(en)\n` + fouten.map((f) => `  - ${f}`).join('\n'))

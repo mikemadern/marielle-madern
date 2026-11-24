@@ -8,6 +8,7 @@
 :root {
   /* Merkkleuren, ongewijzigd uit de huidige site */
   --kleur-groen: #52623b;
+  --kleur-groen-diep: #465332; /* ingedrukt (:active), 8,26:1 met wit */
   --kleur-terracotta: #b5744e;
   --kleur-goud: #ce9f5b;
   --kleur-lichtgoud: #e3d49b;
@@ -21,6 +22,9 @@
   --kleur-terracotta-diep: #9d6342; /* 4,89:1 op wit, 4,51:1 op crème */
   --kleur-goud-tekst: #93692c; /* 4,89:1 op wit, 4,51:1 op crème */
   --kleur-goud-groot: #ba8437; /* 3,26:1 op wit. Alleen tekst vanaf 24px, niet op crème */
+
+  /* Foutmeldingen (voorstel Designer, akkoord eigenaar nodig): 6,9:1 op wit, 6,4:1 op crème */
+  --kleur-fout: #a3312b;
 
   /* Rollen */
   --achtergrond: var(--kleur-wit);
@@ -43,7 +47,7 @@
   --focus-afstand: 3px;
 
   /* Lettertypen. mae-variable komt uit de Adobe Fonts-kit bxn6xtn. Atlantis: licentie aanwezig, omzetten naar WOFF2 toegestaan */
-  --font-tekst: 'mae-variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-tekst: 'mae-variable', 'mae-variable Fallback', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-accent: 'Atlantis', 'Segoe Script', 'Brush Script MT', cursive;
 
   /* Lettergroottes in rem, zodat bezoekers hun eigen tekstgrootte behouden. Basis is 19px (1,1875rem) zoals nu */
