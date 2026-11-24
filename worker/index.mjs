@@ -2,7 +2,7 @@
 // Alles wat geen /api/-verzoek is, gaat rechtstreeks naar de statische bestanden en komt hier niet langs.
 // worker/bladmuziek.json (de nummers met bladmuziek) maakt scripts/bladmuziek-lijst.mjs bij elke bouw.
 import lijst from './bladmuziek.json'
-import { behandel } from './bladmuziek.mjs'
+import { behandel } from './api.mjs'
 
 export default {
   async fetch(request, env) {
