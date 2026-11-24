@@ -47,7 +47,14 @@
   // dit bestand maar alleen in het Cloudflare-dashboard. Zie README.md, "Het hoofdadres van de Worker".
   // CONTACT_AAN: 'aan' zet het contactformulier (POST /api/contact) aan; elke andere waarde, of de regel weghalen, geeft
   // 503 (dan toont het formulier de melding met hallo@mariellemadern.nl). Terugdraaien is dus één regel.
-  "vars": { "TOEGESTANE_HOSTS": "mariellemadern.mmadern.workers.dev", "CONTACT_AAN": "aan" },
+  // BREVO_LIJST_ID: het nummer van de lijst 'Nieuwsbrief' in Brevo (gewoon een nummer, geen geheim): wie zich aanmeldt
+  // (nu: het vakje bij de bladmuziek) komt op die lijst. De sleutel BREVO_API_KEY is een secret in het Cloudflare-dashboard.
+  // Zonder sleutel of met een ongeldig nummer meldt de Worker niemand aan (de bladmuziek gaat gewoon).
+  "vars": {
+    "TOEGESTANE_HOSTS": "mariellemadern.mmadern.workers.dev",
+    "CONTACT_AAN": "aan",
+    "BREVO_LIJST_ID": "4"
+  },
   // Elke 5 minuten draait `scheduled` in worker/index.mjs (worker/onderhoud.mjs): berichten waarvan een mail niet is
   // gelukt opnieuw versturen (tot 24 uur) en berichten van 30 dagen of ouder anonimiseren. Zonder de database
   // (binding BERICHTEN) doet het niets. Het gratis plan kent 5 Cron Triggers per account; dit is er één.

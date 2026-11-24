@@ -76,17 +76,23 @@ const STATUS = { ok: 'verzonden', permanent: 'mislukt' }
 // Zonder id (niet opgeslagen) is het gewoon `stuurMail`. Geeft de uitkomst van Resend.
 export async function verstuurEnMarkeer(env, deps, { id, welke, mail, afzender }, nu = new Date()) {
   const uitslag = await stuurMail(env, deps, mail, afzender, id ? `${id}-${welke}` : undefined)
-  if (id) {
-    try {
-      await env.BERICHTEN.prepare(
-        `UPDATE berichten SET ${KOLOMMEN[welke]} = CASE WHEN ?1 IS NULL THEN ${KOLOMMEN[welke]} ELSE ?1 END,
-         pogingen = COALESCE(pogingen, 0) + 1, laatste_poging = ?2 WHERE id = ?3`,
-      )
-        .bind(STATUS[uitslag] ?? null, nu.toISOString(), id)
-        .run()
-    } catch {
-      // een fout in de database verandert niets aan het versturen
-    }
-  }
+  await markeer(env, id, welke, uitslag, nu)
   return uitslag
+}
+
+// Werkt de status van één stap van een bericht bij (hoofd of tweede) volgens de uitslag van het versturen of
+// aanmelden: 'verzonden', 'mislukt', of ongewijzigd (`wacht`) bij een tijdelijke fout. Zonder id (niet opgeslagen)
+// gebeurt er niets. Een fout in de database verandert niets aan het versturen.
+export async function markeer(env, id, welke, uitslag, nu = new Date()) {
+  if (!id) return
+  try {
+    await env.BERICHTEN.prepare(
+      `UPDATE berichten SET ${KOLOMMEN[welke]} = CASE WHEN ?1 IS NULL THEN ${KOLOMMEN[welke]} ELSE ?1 END,
+       pogingen = COALESCE(pogingen, 0) + 1, laatste_poging = ?2 WHERE id = ?3`,
+    )
+      .bind(STATUS[uitslag] ?? null, nu.toISOString(), id)
+      .run()
+  } catch {
+    // een fout in de database verandert niets aan het versturen
+  }
 }

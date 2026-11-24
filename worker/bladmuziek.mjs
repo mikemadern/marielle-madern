@@ -21,8 +21,9 @@ import {
   TOEGESTANE_HOSTS,
 } from './gedeeld.mjs'
 
-import { ADRES_MARIELLE, AFZENDER, mailBezoeker, mailMarielle } from './teksten.mjs'
-import { bewaar, verstuurEnMarkeer } from './opslag.mjs'
+import { AFZENDER, mailBezoeker } from './teksten.mjs'
+import { bewaar, dagAmsterdam, verstuurEnMarkeer } from './opslag.mjs'
+import { meldAanEnMarkeer } from './brevo.mjs'
 
 export const PAD = '/api/bladmuziek'
 const MAX_VERZOEK = 4096
@@ -58,16 +59,11 @@ export async function leesPdf(env, nummer) {
   return { inhoud: naarBase64(await bestand.arrayBuffer()) }
 }
 
-// De mail met de pdf aan de bezoeker, en de nieuwsbriefmail aan Mariëlle (eerste versie, geen nieuwsbriefsoftware)
+// De mail met de pdf aan de bezoeker
 export const bladmuziekMail = ({ naam, email, nummer, titel, nieuwsbrief, inhoud }) => ({
   to: [email],
   ...mailBezoeker({ naam, titel, nieuwsbrief }),
   attachments: [{ filename: `bladmuziek-${nummer}.pdf`, content: inhoud }],
-})
-export const nieuwsbriefMail = ({ naam, email, titel }) => ({
-  to: [ADRES_MARIELLE],
-  reply_to: email,
-  ...mailMarielle({ naam, email, titel, nieuwsbrief: true }),
 })
 
 // Controleert de velden. Geeft { fout, veld } bij een fout, anders de schone waarden.
@@ -162,23 +158,25 @@ export async function behandel(request, env, deps) {
   if (uitslag !== 'ok') {
     // Een tijdelijke fout met het bericht veilig opgeslagen: de bezoeker hoort dat het is aangekomen, de mail volgt
     if (id && (uitslag === 'limiet' || uitslag === 'later'))
-      return antwoord(200, { ok: true, later: true, nieuwsbriefVerstuurd: false })
+      return antwoord(200, { ok: true, later: true, nieuwsbriefAangemeld: false })
     if (uitslag === 'limiet') return antwoord(503, { fout: 'tijdelijk_niet_beschikbaar' })
     return antwoord(502, { fout: 'verzenden_mislukt' })
   }
 
-  // Nieuwsbrief: een mail aan Mariëlle met de naam en het adres
-  let nieuwsbriefVerstuurd = false
+  // Nieuwsbrief: het adres (alleen het adres, niet de naam) gaat naar Brevo, nadat de mail met de pdf is gelukt. Mislukt
+  // dat tijdelijk, dan blijft het op `wacht` staan en probeert de Cron het opnieuw (tot 24 uur); de bezoeker heeft de
+  // bladmuziek en merkt niets. Er gaat geen mail meer naar Mariëlle: Brevo is de enige plek.
+  let nieuwsbriefAangemeld = false
   if (v.nieuwsbrief) {
-    nieuwsbriefVerstuurd =
-      (await verstuurEnMarkeer(
+    nieuwsbriefAangemeld =
+      (await meldAanEnMarkeer(
         env,
         deps,
-        { id, welke: 'tweede', afzender: AFZENDER, mail: nieuwsbriefMail({ ...v, titel }) },
+        { id, email: v.email, bron: `bladmuziek:${v.nummer}`, dag: dagAmsterdam(nu) },
         nu,
       )) === 'ok'
   }
-  return antwoord(200, { ok: true, nieuwsbriefVerstuurd })
+  return antwoord(200, { ok: true, nieuwsbriefAangemeld })
 }
 
 // De hostcontrole is gedeeld met het contactformulier (gedeeld.mjs); de tests van de bladmuziek importeren haar hier
