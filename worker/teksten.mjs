@@ -54,19 +54,16 @@ export function mailMarielle({ naam, email, titel, nieuwsbrief }) {
 }
 
 // ---------- Contactformulier ----------
-// VOORLOPIGE teksten: de Tekstschrijver levert de definitieve. De waarden van de onderwerpen (sleutels) zijn vast;
-// alleen de labels kunnen nog veranderen.
+// De teksten van de Tekstschrijver (design/teksten-contactformulier.md, 2026-11-24). De sleutels van het onderwerp en
+// de velden zijn vast; de labels komen uit het ontwerp.
 export const ONDERWERPEN = {
   vraag: 'Algemene vraag',
   boeking: 'Boeking',
-  samenwerking: 'Samenwerking',
-  anders: 'Anders',
 }
 
-// Labels van de velden die alleen bij een boeking horen (allemaal optioneel)
+// De velden die alleen bij een boeking horen (alle zes optioneel, gewone tekstvelden)
 export const BOEKINGSVELDEN = {
-  datum: 'Datum',
-  tijd: 'Tijd',
+  datumtijd: 'Datum en tijd',
   plaats: 'Plaats',
   gelegenheid: 'Soort gelegenheid',
   aantal: 'Verwacht aantal bezoekers',
@@ -74,15 +71,35 @@ export const BOEKINGSVELDEN = {
   budget: 'Budget',
 }
 
+// Wat staat er in de bevestigingsmail aan de bezoeker?
+//   false (standaard, de veilige keuze): ALLEEN vaste tekst, plus het onderwerp uit de vaste lijst. Niets van wat de
+//     bezoeker intikte (geen naam, geen bericht, geen link): het formulier kan dan niet worden gebruikt om met onze
+//     afzender een eigen tekst naar iemand anders te sturen.
+//   true (zoals de Tekstschrijver het schreef): met de naam, de gegevens van de boeking en het bericht van de bezoeker
+//     erin, zodat de bezoeker kan controleren wat er is aangekomen. Dat maakt misbruik mogelijk (iemand vult een ander
+//     adres in en zet een eigen tekst in het bericht); de beperkingen zijn dan alleen Turnstile en de limieten.
+// Een besluit van de eigenaar; zie de PR-tekst.
+export const BEVESTIGING_MET_GEGEVENS = false
+
+// Een stukje van de bezoeker voor in een onderwerpregel: zonder regeleinden en stuurtekens, afgekapt
+const kort = (tekst, max) => [...regel(tekst)].slice(0, max).join('')
+
 // De mail aan Mariëlle. Alles wat de bezoeker intikt komt hier terecht (platte tekst en veilig gemaakte HTML); het
-// antwoord gaat via reply_to naar de bezoeker. Het onderwerp heeft een vast voorvoegsel, het onderwerp uit de
-// vaste lijst en de naam (maximaal 60 tekens, zonder regeleinden en stuurtekens).
+// antwoord gaat via reply_to naar de bezoeker. Onderwerp: 'Boeking: [plaats of datum] van [naam]' of 'Vraag van
+// [naam]'.
 export function mailContactMarielle({ naam, email, onderwerp, bericht, boeking }) {
-  const kort = regel(naam).slice(0, 60)
-  const velden = Object.entries(boeking ?? {}).map(([k, v]) => `${BOEKINGSVELDEN[k]}: ${regel(v)}`)
+  const b = boeking ?? {}
+  const kopje =
+    onderwerp === 'boeking'
+      ? `Boeking: ${kort(b.plaats || b.datumtijd || 'zonder plaats of datum', 60)} van ${kort(naam, 60)}`
+      : `Vraag van ${kort(naam, 60)}`
+  const velden =
+    onderwerp === 'boeking'
+      ? Object.entries(BOEKINGSVELDEN).map(([k, label]) =>
+          `${label}: ${regel(b[k] ?? '')}`.trimEnd(),
+        )
+      : []
   const regels = [
-    'Bericht via het contactformulier.',
-    '',
     `Onderwerp: ${ONDERWERPEN[onderwerp]}`,
     `Naam: ${regel(naam)}`,
     `E-mailadres: ${email}`,
@@ -92,7 +109,7 @@ export function mailContactMarielle({ naam, email, onderwerp, bericht, boeking }
     bericht,
   ]
   return {
-    subject: `Contactformulier: ${ONDERWERPEN[onderwerp]} (${kort})`,
+    subject: kopje,
     text: regels.join('\n'),
     html: regels
       .map((r) => (r === '' ? '<br>' : `<p>${html(r).replace(/\n/g, '<br>')}</p>`))
@@ -100,20 +117,33 @@ export function mailContactMarielle({ naam, email, onderwerp, bericht, boeking }
   }
 }
 
-// De bevestiging aan de bezoeker: ALLEEN vaste tekst. Niets van wat de bezoeker intikte (geen naam, geen bericht,
-// geen link) staat erin, zodat het formulier niet kan worden gebruikt om iemand anders met onze afzender en een
-// eigen tekst te mailen. Alleen het onderwerp uit de vaste lijst. Geen belofte over een reactietermijn.
-export function mailContactBevestiging({ onderwerp }) {
-  const alineas = [
-    'Dag,',
-    'Je bericht via de website van Mariëlle Madern is binnengekomen.',
+// De bevestiging aan de bezoeker (zie BEVESTIGING_MET_GEGEVENS). Geen belofte over een reactietermijn.
+export function mailContactBevestiging(
+  { naam, onderwerp, bericht, boeking },
+  gegevens = BEVESTIGING_MET_GEGEVENS,
+) {
+  const b = boeking ?? {}
+  const samenvatting = [
     `Onderwerp: ${ONDERWERPEN[onderwerp]}`,
-    'Heb jij dit bericht niet verstuurd? Dan hoef je niets te doen.',
+    ...(gegevens && onderwerp === 'boeking'
+      ? Object.entries(BOEKINGSVELDEN)
+          .filter(([k]) => regel(b[k] ?? '') !== '')
+          .map(([k, label]) => `${label}: ${regel(b[k])}`)
+      : []),
+    ...(gegevens ? [`Je bericht: ${bericht}`] : []),
+  ]
+  const alineas = [
+    gegevens ? `Dag ${regel(naam)},` : 'Dag,',
+    'Dank je voor je bericht. Het is bij mij aangekomen, en ik reageer zo snel ik kan.',
+    ...(gegevens ? ['Dit heb je gestuurd:'] : []),
+    samenvatting.join('\n'),
+    ...(gegevens ? [] : ['Heb jij dit bericht niet verstuurd? Dan hoef je niets te doen.']),
+    'Hartelijke groet,',
     'Mariëlle Madern',
   ]
   return {
-    subject: 'Je bericht aan Mariëlle Madern is binnengekomen',
+    subject: 'Ik heb je bericht ontvangen',
     text: alineas.join('\n\n'),
-    html: alineas.map((a) => `<p>${html(a)}</p>`).join('\n'),
+    html: alineas.map((a) => `<p>${html(a).replace(/\n/g, '<br>')}</p>`).join('\n'),
   }
 }
