@@ -11,7 +11,6 @@ import {
   EMAIL,
   hostToegestaan,
   leesJson,
-  stuurMail as stuurMailVan,
   teVaak,
 } from './gedeeld.mjs'
 import {
@@ -22,6 +21,7 @@ import {
   mailContactMarielle,
   ONDERWERPEN,
 } from './teksten.mjs'
+import { bewaar, verstuurEnMarkeer } from './opslag.mjs'
 
 export const PAD = '/api/contact'
 // 5.000 tekens kunnen tot 20 KB UTF-8 zijn, plus de overige velden en het token
@@ -83,8 +83,6 @@ export function controleer(invoer) {
   return { naam, email, onderwerp, bericht, token, boeking }
 }
 
-const stuurMail = (env, deps, mail) => stuurMailVan(env, deps, mail, AFZENDER)
-
 // Geeft een Response voor een verzoek aan /api/contact (de router stuurt alleen dat pad hierheen).
 export async function behandel(request, env, deps) {
   const url = new URL(request.url)
@@ -120,22 +118,54 @@ export async function behandel(request, env, deps) {
   )
     return antwoord(429, { fout: 'te_vaak' }, { 'retry-after': '60' })
 
-  // Eerst de mail aan Mariëlle: dat is de belangrijke. Die lukt niet (Resend vol of kapot): de bezoeker hoort dat.
-  const aanMarielle = await stuurMail(env, deps, {
-    to: [ADRES_MARIELLE],
-    reply_to: v.email,
-    ...mailContactMarielle(v),
-  })
-  if (aanMarielle === 'limiet') return antwoord(503, { fout: 'tijdelijk_niet_beschikbaar' })
-  if (aanMarielle !== 'ok') return antwoord(502, { fout: 'verzenden_mislukt' })
+  // Eerst opslaan (als er een database is): staat het bericht daar, dan gaat er niets verloren als de mail niet lukt
+  const nu = deps.nu?.() ?? new Date()
+  const id = await bewaar(
+    env,
+    {
+      soort: 'contact',
+      onderwerp: v.onderwerp,
+      naam: v.naam,
+      email: v.email,
+      bericht: v.bericht,
+      extra: Object.keys(v.boeking).length ? v.boeking : null,
+      tweede: true,
+    },
+    nu,
+  )
+
+  // Dan de mail aan Mariëlle: dat is de belangrijke.
+  const aanMarielle = await verstuurEnMarkeer(
+    env,
+    deps,
+    {
+      id,
+      welke: 'hoofd',
+      afzender: AFZENDER,
+      mail: { to: [ADRES_MARIELLE], reply_to: v.email, ...mailContactMarielle(v) },
+    },
+    nu,
+  )
+  if (aanMarielle !== 'ok') {
+    // Een tijdelijke fout met het bericht veilig opgeslagen: de bezoeker hoort dat het is aangekomen, de mail volgt
+    if (id && (aanMarielle === 'limiet' || aanMarielle === 'later'))
+      return antwoord(200, { ok: true, later: true, bevestigingVerstuurd: false })
+    if (aanMarielle === 'limiet') return antwoord(503, { fout: 'tijdelijk_niet_beschikbaar' })
+    return antwoord(502, { fout: 'verzenden_mislukt' })
+  }
 
   // Dan de bevestiging, als bijzaak: mislukt die, dan is het bericht toch aangekomen
-  const bevestigingVerstuurd = await stuurMail(env, deps, {
-    to: [v.email],
-    ...mailContactBevestiging(),
-  }).then(
-    (uitslag) => uitslag === 'ok',
-    () => false,
-  )
+  const bevestigingVerstuurd =
+    (await verstuurEnMarkeer(
+      env,
+      deps,
+      {
+        id,
+        welke: 'tweede',
+        afzender: AFZENDER,
+        mail: { to: [v.email], ...mailContactBevestiging() },
+      },
+      nu,
+    )) === 'ok'
   return antwoord(200, { ok: true, bevestigingVerstuurd })
 }

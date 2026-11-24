@@ -122,13 +122,26 @@ export async function teVaak(env, regels) {
   return false
 }
 
-export async function stuurMail(env, deps, mail, afzender) {
-  const res = await deps.fetch(RESEND, {
-    method: 'POST',
-    headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
-    body: JSON.stringify({ from: afzender, ...mail }),
-  })
+// Stuurt een mail via Resend. Uitkomst: 'ok'; 'limiet' (de daglimiet of maandlimiet van Resend: 429); 'later' (een
+// tijdelijke fout: 5xx of geen verbinding, een nieuwe poging kan slagen); 'permanent' (een andere 4xx, bijvoorbeeld
+// een ongeldig adres: opnieuw proberen helpt niet). Met een `sleutel` krijgt het verzoek een Idempotency-Key: Resend
+// verstuurt dezelfde sleutel binnen 24 uur maar één keer, dus een herhaling kan geen dubbele mail geven.
+export async function stuurMail(env, deps, mail, afzender, sleutel) {
+  let res
+  try {
+    res = await deps.fetch(RESEND, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${env.RESEND_API_KEY}`,
+        'content-type': 'application/json',
+        ...(sleutel ? { 'idempotency-key': sleutel } : {}),
+      },
+      body: JSON.stringify({ from: afzender, ...mail }),
+    })
+  } catch {
+    return 'later'
+  }
   if (res.ok) return 'ok'
-  // Daglimiet of maandlimiet van Resend: tijdelijk niet beschikbaar, niet een fout van de bezoeker
-  return res.status === 429 ? 'limiet' : 'mislukt'
+  if (res.status === 429) return 'limiet'
+  return res.status >= 500 ? 'later' : 'permanent'
 }

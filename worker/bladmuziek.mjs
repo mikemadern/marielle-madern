@@ -16,12 +16,12 @@ import {
   EMAIL,
   hostToegestaan,
   leesJson,
-  stuurMail as stuurMailVan,
   teVaak,
   TOEGESTANE_HOSTS,
 } from './gedeeld.mjs'
 
 import { ADRES_MARIELLE, AFZENDER, mailBezoeker, mailMarielle } from './teksten.mjs'
+import { bewaar, verstuurEnMarkeer } from './opslag.mjs'
 
 export const PAD = '/api/bladmuziek'
 const MAX_VERZOEK = 4096
@@ -63,8 +63,6 @@ function controleer(invoer, lijst) {
   if (!token || token.length > 2048) return { fout: 'controle_mislukt' }
   return { naam, email, nummer, token, nieuwsbrief: invoer.nieuwsbrief === true }
 }
-
-const stuurMail = (env, deps, mail) => stuurMailVan(env, deps, mail, AFZENDER)
 
 // Geeft een Response voor elk verzoek aan /api/..., en null voor al het andere.
 export async function behandel(request, env, deps) {
@@ -114,22 +112,60 @@ export async function behandel(request, env, deps) {
   const inhoud = naarBase64(await bestand.arrayBuffer())
 
   const titel = deps.lijst[v.nummer].titel
+  const nu = deps.nu?.() ?? new Date()
+  // Eerst opslaan (als er een database is): staat het bericht daar, dan gaat er niets verloren als de mail niet lukt
+  const id = await bewaar(
+    env,
+    {
+      soort: 'bladmuziek',
+      onderwerp: v.nummer,
+      naam: v.naam,
+      email: v.email,
+      extra: { nieuwsbrief: v.nieuwsbrief },
+      tweede: v.nieuwsbrief,
+    },
+    nu,
+  )
   const bezoeker = mailBezoeker({ naam: v.naam, titel, nieuwsbrief: v.nieuwsbrief })
-  const uitslag = await stuurMail(env, deps, {
-    to: [v.email],
-    ...bezoeker,
-    attachments: [{ filename: `bladmuziek-${v.nummer}.pdf`, content: inhoud }],
-  })
-  if (uitslag === 'limiet') return antwoord(503, { fout: 'tijdelijk_niet_beschikbaar' })
-  if (uitslag !== 'ok') return antwoord(502, { fout: 'verzenden_mislukt' })
+  const uitslag = await verstuurEnMarkeer(
+    env,
+    deps,
+    {
+      id,
+      welke: 'hoofd',
+      afzender: AFZENDER,
+      mail: {
+        to: [v.email],
+        ...bezoeker,
+        attachments: [{ filename: `bladmuziek-${v.nummer}.pdf`, content: inhoud }],
+      },
+    },
+    nu,
+  )
+  if (uitslag !== 'ok') {
+    // Een tijdelijke fout met het bericht veilig opgeslagen: de bezoeker hoort dat het is aangekomen, de mail volgt
+    if (id && (uitslag === 'limiet' || uitslag === 'later'))
+      return antwoord(200, { ok: true, later: true, nieuwsbriefVerstuurd: false })
+    if (uitslag === 'limiet') return antwoord(503, { fout: 'tijdelijk_niet_beschikbaar' })
+    return antwoord(502, { fout: 'verzenden_mislukt' })
+  }
 
   // Nieuwsbrief: een mail aan Mariëlle met de naam en het adres (eerste versie, geen nieuwsbriefsoftware)
   let nieuwsbriefVerstuurd = false
   if (v.nieuwsbrief) {
     const aanvraag = mailMarielle({ naam: v.naam, email: v.email, titel, nieuwsbrief: true })
     nieuwsbriefVerstuurd =
-      (await stuurMail(env, deps, { to: [ADRES_MARIELLE], reply_to: v.email, ...aanvraag })) ===
-      'ok'
+      (await verstuurEnMarkeer(
+        env,
+        deps,
+        {
+          id,
+          welke: 'tweede',
+          afzender: AFZENDER,
+          mail: { to: [ADRES_MARIELLE], reply_to: v.email, ...aanvraag },
+        },
+        nu,
+      )) === 'ok'
   }
   return antwoord(200, { ok: true, nieuwsbriefVerstuurd })
 }
