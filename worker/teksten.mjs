@@ -110,7 +110,7 @@ export function mailContactBevestiging() {
   const alineas = [
     'Dag,',
     'Dank je voor je bericht. Het is bij mij aangekomen, en ik reageer zo snel ik kan.',
-    'Hartelijke groet,',
+    'Liefs,',
     'Mariëlle Madern',
   ]
   return {
