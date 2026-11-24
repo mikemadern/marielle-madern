@@ -1,5 +1,5 @@
 // Gedeelde stappen van de eindpunten van de Worker (bladmuziek en contact): antwoorden, hostcontrole, het verzoek
-// lezen en controleren, Turnstile, limieten en Resend. Geen opslag en geen logging van gegevens van bezoekers.
+// lezen en controleren, Turnstile, limieten en Resend. Geen logging van gegevens van bezoekers (de opslag staat in opslag.mjs).
 
 export const RESEND = 'https://api.resend.com/emails'
 export const TURNSTILE = 'https://challenges.cloudflare.com/turnstile/v0/siteverify'

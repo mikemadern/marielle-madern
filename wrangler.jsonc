@@ -28,6 +28,17 @@
   // De privé-bucket met de bladmuziek (pdf's als bladmuziek/<bestandsnaam van het nummer>.pdf). De Worker leest
   // alleen (get) en schrijft nooit. Een preview-bouw bindt dezelfde bucket (previews erft deze instellingen).
   "r2_buckets": [{ "binding": "BLADMUZIEK", "bucket_name": "marielle-madern" }],
+  // De database met de ingevulde formulieren (D1, jurisdictie EU), als back-up voor als Resend even niet bereikbaar is:
+  // 30 dagen leesbaar, daarna geanonimiseerd (alleen dag, soort, onderwerp of nummer en status blijven). Zie README.md,
+  // "Opslag van berichten (D1)". LET OP: eerst de tabel aanmaken (de CREATE TABLE uit de README, in de D1-console), dan
+  // pas deze binding uitrollen: zonder tabel mislukt het opslaan stil en leunt alles weer alleen op de mail.
+  "d1_databases": [
+    {
+      "binding": "BERICHTEN",
+      "database_name": "marielle-madern",
+      "database_id": "74756d1e-94a8-4909-9165-14e6190d95d4"
+    }
+  ],
   // Hostnamen waarop de Worker bladmuziek mag versturen, naast mariellemadern.nl en www.mariellemadern.nl (die staan als
   // code-constante in worker/bladmuziek.mjs). Besluit van de eigenaar, 2026-11-19: het formulier moet ook werken op het
   // hoofdadres https://mariellemadern.mmadern.workers.dev. Eén exacte hostnaam: geen wildcard en geen achtervoegsel, dus
