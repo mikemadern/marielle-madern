@@ -11,6 +11,7 @@
 // De Origin-controle is alleen een eenvoudig filter tegen verkeerd gebruik door een browser: elk script kan
 // die kop zelf zetten, het is geen verificatie.
 import { ADRES_MARIELLE, AFZENDER, mailBezoeker, mailMarielle } from './teksten.mjs'
+import { telAanvraag } from './statistiek.mjs'
 
 export const PAD = '/api/bladmuziek'
 const MAX_VERZOEK = 4096
@@ -216,6 +217,12 @@ export async function behandel(request, env, deps) {
   })
   if (uitslag === 'limiet') return antwoord(503, { fout: 'tijdelijk_niet_beschikbaar' })
   if (uitslag !== 'ok') return antwoord(502, { fout: 'verzenden_mislukt' })
+
+  // Statistiek: alleen na een gelukte mail aan de bezoeker, alleen dag en nummer. Op de achtergrond (waitUntil), zodat
+  // het antwoord er niet op wacht; een fout wordt stil ingeslikt en de bezoeker merkt er niets van.
+  const telling = telAanvraag(env, v.nummer, deps.nu?.())
+  if (deps.wachtOp) deps.wachtOp(telling)
+  else await telling
 
   // Nieuwsbrief: een mail aan Mariëlle met de naam en het adres (eerste versie, geen nieuwsbriefsoftware)
   let nieuwsbriefVerstuurd = false

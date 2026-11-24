@@ -3,8 +3,10 @@
 // Draaien: pnpm test:worker
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
+import { DatabaseSync } from 'node:sqlite'
 import { afterEach, beforeEach, describe, test } from 'node:test'
 import { behandel, geconfigureerd, hostToegestaan, TOEGESTANE_HOSTS } from './bladmuziek.mjs'
+import { dagAmsterdam, telAanvraag } from './statistiek.mjs'
 
 const SITE = 'https://mariellemadern.nl'
 const HOSTNAME = 'mariellemadern.nl'
@@ -503,5 +505,191 @@ describe('privacy', () => {
     assert.equal(res.headers.get('cache-control'), 'no-store')
     assert.equal(res.headers.get('x-robots-tag'), 'noindex')
     assert.equal(res.headers.get('x-content-type-options'), 'nosniff')
+  })
+})
+
+describe('statistiek (alleen dag en nummer, anoniem)', () => {
+  // Een nagebootste D1-binding die de aanroepen vastlegt
+  const maakStatistiek = ({ fout = false } = {}) => ({
+    aanroepen: [],
+    prepare(sql) {
+      return {
+        bind: (...args) => ({
+          run: async () => {
+            this.aanroepen.push({ sql, args })
+            if (fout) throw new Error('database kapot')
+            return { success: true }
+          },
+        }),
+      }
+    },
+  })
+  const metStatistiek = (opties) => ({ ...maakOmgeving(opties), STATISTIEK: maakStatistiek() })
+  // behandel met de achtergrondtaken (waitUntil) verzameld, zoals de Worker dat doet
+  const runMet = async (request, env, extra = {}, fetchFn = maakFetch()) => {
+    const taken = []
+    const res = await behandel(request, env, {
+      lijst: LIJST,
+      fetch: fetchFn,
+      wachtOp: (belofte) => taken.push(belofte),
+      ...extra,
+    })
+    await Promise.all(taken)
+    return { res, taken }
+  }
+
+  test('na een gelukte mail aan de bezoeker: één telling met alleen de dag en het nummer', async () => {
+    const env = metStatistiek()
+    const nu = new Date('2026-07-01T10:00:00Z')
+    const { res, taken } = await runMet(verzoek({ ...GOED, nieuwsbrief: true }), env, {
+      nu: () => nu,
+    })
+    assert.equal(res.status, 200)
+    assert.equal(taken.length, 1)
+    assert.equal(env.STATISTIEK.aanroepen.length, 1)
+    const { sql, args } = env.STATISTIEK.aanroepen[0]
+    assert.deepEqual(args, ['2026-07-01', 'hart-van-glas'])
+    assert.match(sql, /ON CONFLICT \(dag, nummer\) DO UPDATE SET aantal = aantal \+ 1/)
+    // Niets van de bezoeker in de opdracht of de parameters
+    for (const tekst of [sql, ...args]) {
+      assert.ok(!/Proefpersoon|test@example|192\.0\.2/.test(tekst), tekst)
+    }
+  })
+
+  test('niet geteld als het versturen niet gelukt is of niet mocht', async () => {
+    const gevallen = [
+      ['limiet per adres', verzoek(GOED), metStatistiek({ limiet: false }), maakFetch()],
+      ['limiet per IP-adres', verzoek(GOED), metStatistiek({ ipLimiet: false }), maakFetch()],
+      [
+        'onbekend nummer',
+        verzoek({ ...GOED, nummer: 'bestaat-niet' }),
+        metStatistiek(),
+        maakFetch(),
+      ],
+      ['geen bestand in de bucket', verzoek(GOED), metStatistiek({ bestand: false }), maakFetch()],
+      ['mail mislukt (502)', verzoek(GOED), metStatistiek(), maakFetch({ resend: [500] })],
+      ['daglimiet van Resend (503)', verzoek(GOED), metStatistiek(), maakFetch({ resend: [429] })],
+      ['honeypot', verzoek({ ...GOED, website: 'http://x' }), metStatistiek(), maakFetch()],
+      [
+        'Turnstile mislukt',
+        verzoek(GOED),
+        metStatistiek(),
+        maakFetch({ turnstile: { success: false } }),
+      ],
+      ['ongeldig adres', verzoek({ ...GOED, email: 'kapot' }), metStatistiek(), maakFetch()],
+      [
+        'preview-adres (403)',
+        new Request('https://preview-pr-1-mariellemadern.mmadern.workers.dev/api/bladmuziek', {
+          method: 'POST',
+          headers: {
+            origin: 'https://preview-pr-1-mariellemadern.mmadern.workers.dev',
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify(GOED),
+        }),
+        metStatistiek(),
+        maakFetch(),
+      ],
+    ]
+    for (const [naam, request, env, fetchFn] of gevallen) {
+      const { res, taken } = await runMet(request, env, {}, fetchFn)
+      // De honeypot doet bewust alsof het gelukt is (200), maar telt niet
+      if (naam !== 'honeypot') assert.notEqual(res.status, 200, naam)
+      assert.equal(env.STATISTIEK.aanroepen.length, 0, `${naam}: toch geteld`)
+      assert.equal(taken.length, 0, `${naam}: toch een achtergrondtaak`)
+    }
+  })
+
+  test('een fout in de database verandert het antwoord niet en wordt niet gelogd', async () => {
+    const env = { ...maakOmgeving(), STATISTIEK: maakStatistiek({ fout: true }) }
+    const { res } = await runMet(verzoek(GOED), env) // Promise.all gooit niet: de fout is ingeslikt
+    assert.equal(res.status, 200)
+    assert.deepEqual(await json(res), { ok: true, nieuwsbriefVerstuurd: false })
+    assert.equal(env.STATISTIEK.aanroepen.length, 1)
+    assert.equal(resendAanroepen().length, 1)
+    assert.deepEqual(logregels, [])
+    // Ook zonder waitUntil (zoals in een test) blijft het antwoord gewoon 200
+    const zonder = await run(verzoek(GOED), {
+      ...maakOmgeving(),
+      STATISTIEK: maakStatistiek({ fout: true }),
+    })
+    assert.equal(zonder.status, 200)
+  })
+
+  test('zonder binding: overslaan, geen fout en geen extra taak met gevolgen', async () => {
+    const env = maakOmgeving() // geen STATISTIEK
+    const { res } = await runMet(verzoek(GOED), env)
+    assert.equal(res.status, 200)
+    assert.equal(await telAanvraag({}, 'hart-van-glas'), false)
+    assert.equal(await telAanvraag({ STATISTIEK: null }, 'hart-van-glas'), false)
+  })
+
+  test('de telling wacht het antwoord niet op: ze loopt via waitUntil', async () => {
+    let klaar = false
+    const env = {
+      ...maakOmgeving(),
+      STATISTIEK: {
+        prepare: () => ({
+          bind: () => ({
+            run: () => new Promise((ok) => setTimeout(() => ((klaar = true), ok({})), 30)),
+          }),
+        }),
+      },
+    }
+    const taken = []
+    const res = await behandel(verzoek(GOED), env, {
+      lijst: LIJST,
+      fetch: maakFetch(),
+      wachtOp: (belofte) => taken.push(belofte),
+    })
+    assert.equal(res.status, 200)
+    assert.equal(klaar, false, 'het antwoord wachtte op de database')
+    await Promise.all(taken)
+    assert.equal(klaar, true)
+  })
+
+  test('de dag volgt Europe/Amsterdam, niet UTC', () => {
+    assert.equal(dagAmsterdam(new Date('2026-07-01T21:30:00Z')), '2026-07-01') // 23:30 zomertijd
+    assert.equal(dagAmsterdam(new Date('2026-07-01T22:30:00Z')), '2026-07-02') // 00:30 zomertijd
+    assert.equal(dagAmsterdam(new Date('2026-12-31T22:30:00Z')), '2026-12-31') // 23:30 wintertijd
+    assert.equal(dagAmsterdam(new Date('2026-12-31T23:30:00Z')), '2027-01-01') // 00:30 wintertijd
+  })
+
+  test('de opdracht werkt op echte SQLite (zoals D1): dezelfde dag en nummer telt op, een ander nummer of een andere dag is een nieuwe rij', async () => {
+    const db = new DatabaseSync(':memory:')
+    db.exec(
+      'CREATE TABLE aanvragen (dag TEXT NOT NULL, nummer TEXT NOT NULL, aantal INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (dag, nummer)) WITHOUT ROWID',
+    )
+    const env = {
+      STATISTIEK: {
+        prepare: (sql) => {
+          const opdracht = db.prepare(sql)
+          return { bind: (...args) => ({ run: async () => opdracht.run(...args) }) }
+        },
+      },
+    }
+    const dag1 = new Date('2026-11-24T10:00:00Z')
+    const dag2 = new Date('2026-11-25T10:00:00Z')
+    await telAanvraag(env, 'spiegel', dag1)
+    await telAanvraag(env, 'spiegel', dag1)
+    await telAanvraag(env, 'in-het-licht', dag1)
+    await telAanvraag(env, 'spiegel', dag2)
+    const rijen = db.prepare('SELECT dag, nummer, aantal FROM aanvragen ORDER BY dag, nummer').all()
+    assert.deepEqual(
+      rijen.map((r) => ({ ...r })),
+      [
+        { dag: '2026-11-24', nummer: 'in-het-licht', aantal: 1 },
+        { dag: '2026-11-24', nummer: 'spiegel', aantal: 2 },
+        { dag: '2026-11-25', nummer: 'spiegel', aantal: 1 },
+      ],
+    )
+    // Er zijn precies drie kolommen: niets persoonlijks kan erin
+    assert.deepEqual(
+      db
+        .prepare('PRAGMA table_info(aanvragen)')
+        .all()
+        .map((k) => k.name),
+      ['dag', 'nummer', 'aantal'],
+    )
   })
 })

@@ -5,8 +5,13 @@ import lijst from './bladmuziek.json'
 import { behandel } from './bladmuziek.mjs'
 
 export default {
-  async fetch(request, env) {
-    const uitslag = await behandel(request, env, { lijst, fetch: (...args) => fetch(...args) })
+  async fetch(request, env, ctx) {
+    const uitslag = await behandel(request, env, {
+      lijst,
+      fetch: (...args) => fetch(...args),
+      // Werk op de achtergrond (de statistiek) houdt het antwoord niet op
+      wachtOp: (belofte) => ctx.waitUntil(belofte),
+    })
     return uitslag ?? env.ASSETS.fetch(request)
   },
 }
