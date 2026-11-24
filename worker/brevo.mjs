@@ -14,6 +14,9 @@ import { dagAmsterdam, markeer } from './opslag.mjs'
 import { veiligeNaam } from './teksten.mjs'
 
 export const BREVO = 'https://api.brevo.com/v3/contacts'
+// De ene ingevulde naam uit het bladmuziekformulier gaat helemaal in FIRSTNAME (LASTNAME blijft leeg: één vrij veld is niet
+// betrouwbaar te splitsen), met dit maximum aantal tekens; een voor- of achternaam van het losse formulier mag 60 zijn.
+export const VOLLEDIGE_NAAM_MAX = 80
 // Brevo moet binnen deze tijd antwoorden, anders wacht de bezoeker te lang (de Cron probeert het later opnieuw)
 const WACHT_MS = 5000
 
@@ -92,7 +95,7 @@ export async function meldAan(
 export async function meldAanEnMarkeer(
   env,
   deps,
-  { id, email, bron, dag, voornaam, achternaam, welke = 'tweede' },
+  { id, email, bron, dag, voornaam, achternaam, voornaamMax, welke = 'tweede' },
   nu = new Date(),
 ) {
   const uitslag = await meldAan(env, deps, {
@@ -101,6 +104,7 @@ export async function meldAanEnMarkeer(
     dag: dag ?? dagAmsterdam(nu),
     voornaam,
     achternaam,
+    voornaamMax,
   })
   await markeer(env, id, welke, uitslag, nu)
   return uitslag

@@ -223,6 +223,12 @@ describe('opslaan bij gelukt versturen', () => {
       assert.deepEqual([r2.status_hoofd, r2.status_tweede], ['verzonden', 'wacht'], String(brevo))
       assert.equal(r2.email, 'test@example.org')
     }
+    // De naam van de aanvraag gaat mee naar Brevo (de hele naam in FIRSTNAME), en de rij houdt hem 30 dagen
+    const env4 = maakOmgeving()
+    await bladmuziek({ ...BLADMUZIEK, nieuwsbrief: true }, env4)
+    const b = brevoGesprekken().pop()
+    assert.equal(JSON.parse(b.init.body).attributes.FIRSTNAME, 'Proefpersoon Verzonnen')
+    assert.equal(rijen(env4.BERICHTEN)[0].naam, 'Proefpersoon Verzonnen')
     // Brevo keurt het adres voorgoed af (een andere 400): mislukt, geen nieuwe poging
     const env3 = maakOmgeving()
     await bladmuziek({ ...BLADMUZIEK, nieuwsbrief: true }, env3, { brevo: [400, 400] })
