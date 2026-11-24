@@ -481,12 +481,17 @@ describe('versturen', () => {
     // Precies de vaste tekst van de Tekstschrijver, zonder samenvatting en zonder naam
     assert.equal(
       bevestiging.text,
-      'Dag,\n\nDank je voor je bericht. Het is bij mij aangekomen, en ik reageer zo snel ik kan.\n\nLiefs,\n\nMariëlle Madern',
+      'Dag,\n\nDank je voor je bericht. Het is bij mij aangekomen, en ik reageer zo snel ik kan.\n\nHeb jij dit bericht niet verstuurd? Dan hoef je niets te doen.\n\nLiefs,\n\nMariëlle Madern',
     )
     assert.doesNotMatch(bevestiging.text, /Onderwerp|Boeking|termijn|binnen \d/)
     // Mariëlle sluit haar mails af met 'Liefs,' (platte tekst en HTML)
     assert.match(bevestiging.html, /<p>Liefs,<\/p>\n<p>Mariëlle Madern<\/p>$/)
     assert.doesNotMatch(bevestiging.text + bevestiging.html, /Hartelijke groet/)
+    // De vaste regel voor wie niets heeft verstuurd staat vóór de groet, in platte tekst en HTML
+    assert.match(
+      bevestiging.html,
+      /<p>Heb jij dit bericht niet verstuurd\? Dan hoef je niets te doen\.<\/p>\n<p>Liefs,<\/p>/,
+    )
     assert.equal(bevestiging.from, 'Mariëlle Madern <hallo@mariellemadern.nl>')
     assert.deepEqual(Object.keys(bevestiging).sort(), ['from', 'html', 'subject', 'text', 'to'])
   })
