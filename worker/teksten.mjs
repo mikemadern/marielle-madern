@@ -119,11 +119,13 @@ export function mailContactMarielle({ naam, email, onderwerp, bericht, boeking }
 
 // De bevestiging aan de bezoeker: ALLEEN vaste tekst. Niets van wat de bezoeker intikte (geen naam, geen bericht,
 // geen samenvatting, geen link) staat erin, zodat het formulier niet kan worden gebruikt om met onze afzender een
-// eigen tekst naar iemand anders te sturen (besluit, 2026-11-24). Geen belofte over een reactietermijn.
+// eigen tekst naar iemand anders te sturen (besluit, 2026-11-24). De vaste regel 'Heb jij dit bericht niet verstuurd?'
+// helpt iemand wiens adres is gebruikt (besluit van de Manager). Geen belofte over een reactietermijn.
 export function mailContactBevestiging() {
   const alineas = [
     'Dag,',
     'Dank je voor je bericht. Het is bij mij aangekomen, en ik reageer zo snel ik kan.',
+    'Heb jij dit bericht niet verstuurd? Dan hoef je niets te doen.',
     'Liefs,',
     'Mariëlle Madern',
   ]
