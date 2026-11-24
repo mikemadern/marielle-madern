@@ -429,6 +429,10 @@ describe('versturen', () => {
     assert.equal(body.attachments[0].filename, 'bladmuziek-hart-van-glas.pdf')
     assert.equal(Buffer.from(body.attachments[0].content, 'base64').toString(), '%PDF-1.4\n')
     assert.match(body.text, /^Dag Proefpersoon Verzonnen,/)
+    // Mariëlle sluit haar mails af met 'Liefs,' (platte tekst en HTML)
+    assert.match(body.text, /\n\nLiefs,\n\nMariëlle Madern$/)
+    assert.match(body.html, /<p>Liefs,<\/p>\n<p>Mariëlle Madern<\/p>$/)
+    assert.doesNotMatch(body.text + body.html, /Hartelijke groet/)
   })
   test('Turnstile krijgt het geheim en het token, niet het adres van de bezoeker', async () => {
     await run(verzoek(GOED))

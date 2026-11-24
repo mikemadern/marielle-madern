@@ -27,7 +27,7 @@ export function mailBezoeker({ naam, titel, nieuwsbrief }) {
     `Fijn dat je de bladmuziek van ${titel} wilt hebben. Je vindt hem in de bijlage.`,
     'Ik hoop dat het nummer je iets brengt, wanneer je het speelt of zingt.',
     ...(extra ? [extra] : []),
-    'Hartelijke groet,',
+    'Liefs,',
     'Mariëlle Madern',
   ]
   return {
