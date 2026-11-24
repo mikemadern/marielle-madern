@@ -44,23 +44,9 @@ export const geconfigureerd = (env) =>
 const enkeleRegel = (tekst) => tekst.replace(/\p{C}/gu, ' ').replace(/\s+/g, ' ').trim()
 const aantalTekens = (tekst) => [...tekst].length
 
-// De datum van vandaag in Europe/Amsterdam (JJJJ-MM-DD)
-const vandaag = (nu) =>
-  new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Amsterdam' }).format(nu)
-
-function geldigeDatum(tekst, nu) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(tekst)) return false
-  const d = new Date(`${tekst}T00:00:00Z`)
-  if (Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== tekst) return false
-  const grens = new Date(`${vandaag(nu)}T00:00:00Z`)
-  const ver = new Date(grens)
-  ver.setUTCFullYear(ver.getUTCFullYear() + 3)
-  return d >= grens && d <= ver
-}
-
 // Controleert de velden. Geeft { fout, veld } bij een fout, anders de schone waarden. De velden voor een boeking
-// zijn allemaal optioneel en tellen alleen mee als het onderwerp 'boeking' is.
-export function controleer(invoer, nu = new Date()) {
+// zijn allemaal optioneel (gewone tekstvelden) en tellen alleen mee als het onderwerp 'boeking' is.
+export function controleer(invoer) {
   const naam = typeof invoer.naam === 'string' ? enkeleRegel(invoer.naam) : ''
   if (!naam || aantalTekens(naam) > 100) return { fout: 'ongeldig', veld: 'naam' }
   const email = typeof invoer.email === 'string' ? invoer.email.trim() : ''
@@ -88,14 +74,7 @@ export function controleer(invoer, nu = new Date()) {
       if (typeof tekst !== 'string') return { fout: 'ongeldig', veld }
       const schoon = enkeleRegel(tekst)
       if (!schoon) continue
-      if (veld === 'datum' && !geldigeDatum(schoon, nu)) return { fout: 'ongeldig', veld }
-      if (veld === 'tijd' && !/^([01]\d|2[0-3]):[0-5]\d$/.test(schoon))
-        return { fout: 'ongeldig', veld }
-      if (
-        veld === 'aantal' &&
-        !(/^\d{1,6}$/.test(schoon) && Number(schoon) >= 1 && Number(schoon) <= 100000)
-      )
-        return { fout: 'ongeldig', veld }
+      // Gewone tekstvelden ('een zondag in maart', 'ongeveer 200', 'nog niet bekend' zijn goede antwoorden)
       const max = veld === 'speeltijden' ? 200 : 100
       if (aantalTekens(schoon) > max) return { fout: 'ongeldig', veld }
       boeking[veld] = schoon
@@ -121,7 +100,7 @@ export async function behandel(request, env, deps) {
   if (typeof invoer.website === 'string' && invoer.website !== '')
     return antwoord(200, { ok: true })
 
-  const v = controleer(invoer, deps.nu?.() ?? new Date())
+  const v = controleer(invoer)
   if (v.fout) return antwoord(400, { fout: v.fout, ...(v.veld ? { veld: v.veld } : {}) })
 
   // Turnstile: het token moet voor onze hostname en voor de actie van dit formulier zijn uitgegeven (een token van
