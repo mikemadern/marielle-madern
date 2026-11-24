@@ -21,9 +21,15 @@ Contact: [hallo@mariellemadern.nl](mailto:hallo@mariellemadern.nl)
 
 **Als je de CD bestelt** verwerk ik je naam, adres en e-mailadres, en het bedrag en de datum van je betaling. Ik gebruik dat om je CD te versturen en voor mijn administratie. Bestelgegevens bewaar ik zolang de wet dat voor de administratie vraagt.
 
-**Als je bladmuziek van een nummer aanvraagt**, vul je je naam en je e-mailadres in op de nummerpagina. Ik gebruik die gegevens om de bladmuziek van dat nummer naar je te mailen. Vink je het vakje voor de nieuwsbrief aan, dan krijg ik je naam en je e-mailadres ook, zodat ik je kan aanmelden. Het vakje staat standaard uit.
+**Als je bladmuziek van een nummer aanvraagt**, vul je je naam en je e-mailadres in op de nummerpagina. Ik gebruik die gegevens om de bladmuziek van dat nummer naar je te mailen. Vink je het vakje voor de nieuwsbrief aan, dan meld ik je ook aan voor de nieuwsbrief (zie hieronder). Het vakje staat standaard uit.
 
-De bladmuziek gaat per e-mail. Een aanmelding voor de nieuwsbrief komt per e-mail in mijn postvak bij hallo@mariellemadern.nl, en blijft daar staan tot je je uitschrijft. Een aanvraag zonder nieuwsbrief komt niet in mijn postvak: jij krijgt alleen de e-mail met de pdf.
+De bladmuziek gaat per e-mail. Een aanvraag komt niet in mijn postvak: jij krijgt alleen de e-mail met de pdf.
+
+**Als je je aanmeldt voor de nieuwsbrief**, vul je je e-mailadres in, via het aanmeldformulier of via het vakje bij de bladmuziek. Je gegevens gaan direct naar Brevo, de dienst waarmee ik de nieuwsbrief verstuur. Brevo bewaart je e-mailadres tot je je uitschrijft. Lukt het aanmelden niet doordat Brevo even niet werkt, dan staat je adres hooguit 24 uur in mijn eigen database. Daarna wordt het gewist.
+
+In elke nieuwsbrief staat een link om je af te melden. Daarmee haalt Brevo je van de lijst. **TE BEVESTIGEN:** dat de link in elke nieuwsbrief zit en dat uitschrijven direct werkt.
+
+Je geeft toestemming door je aan te melden of het vakje bij de bladmuziek aan te vinken. Die toestemming kun je altijd intrekken door je af te melden, of door te mailen naar hallo@mariellemadern.nl.
 
 **Als je het contactformulier gebruikt**, vraag ik je naam, je e-mailadres en je bericht. Bij een boekingsverzoek vraag ik ook de datum en tijd, de plaats, de soort gelegenheid, het verwachte aantal bezoekers, de speeltijden en duur en het budget. Alle velden bij een boeking zijn optioneel. Ik gebruik die gegevens alleen om je vraag of je boekingsverzoek te beantwoorden. Je krijgt een bevestigingsmail naar je e-mailadres. Mariëlle bewaart je bericht in haar postvak tot het is afgehandeld. Daarna wordt het verwijderd.
 
@@ -52,7 +58,8 @@ Deze website plaatst geen cookies voor statistieken, volgen of advertenties. Ook
 ## Diensten van anderen
 
 - **Cloudflare** levert de website uit en beschermt hem tegen misbruik. Cloudflare verwerkt op netwerkniveau tijdelijk IP-gegevens. Hoe lang, noemt Cloudflare niet. De site bewaart aanvraaggegevens alleen in de database, zoals hierboven staat. Er worden geen logboeken met je gegevens bijgehouden.
-- **Resend** verstuurt de mail met de bladmuziek, de aanmelding voor de nieuwsbrief en de berichten van het contactformulier namens mij. Resend is hiervoor verwerker, en we hebben een verwerkersovereenkomst met de standaardclausules van de EU. Resend ziet je naam, je e-mailadres en de inhoud van de mail. Resend slaat die gegevens op in de Verenigde Staten en bewaart ze 30 dagen, ook als voor het verzenden de EU-regio is gekozen. De bijlage is een pdf van het nummer en bevat geen gegevens van jou.
+- **Resend** verstuurt de mail met de bladmuziek en de berichten van het contactformulier namens mij. Resend is hiervoor verwerker, en we hebben een verwerkersovereenkomst met de standaardclausules van de EU. Resend ziet je naam, je e-mailadres en de inhoud van de mail. Resend slaat die gegevens op in de Verenigde Staten en bewaart ze 30 dagen, ook als voor het verzenden de EU-regio is gekozen. De bijlage is een pdf van het nummer en bevat geen gegevens van jou.
+- **Brevo** is verwerker. Brevo heeft servers in Frankrijk (OVH) en België (Google Cloud). Gegevens kunnen onder de standaardcontractbepalingen van de Europese Unie ook buiten de Europese Economische Ruimte worden verwerkt. Meer over Brevo lees je in hun [privacyverklaring](https://www.brevo.com/legal/privacypolicy/). **TE BEVESTIGEN:** welke Brevo-entiteit voor het account geldt (Brevo SAS in Parijs, of Brevo GmbH in Berlijn); of er een verwerkersovereenkomst is die de eigenaar heeft getekend; wat Brevo na uitschrijving nog bewaart.
 - **Cloudflare Turnstile** controleert of het formulier door een mens wordt ingevuld en niet door een robot. Turnstile wordt geladen als je het formulier gebruikt. Het verwerkt je IP-adres, signalen van je browser en kenmerken van de verbinding, om bots te herkennen. Cloudflare is daarvoor verwerker.
 - **Adobe Fonts** levert het lettertype. Als je een pagina opent, haalt je browser dat lettertype bij Adobe op. Daarbij ziet Adobe je IP-adres.
 - **YouTube** laadt pas als je op een video klikt om hem af te spelen. Dan ziet YouTube (Google) dat je de video bekijkt. Zonder klik wordt er niets van YouTube geladen. Ik gebruik de privacyvriendelijke inbedding van YouTube.
