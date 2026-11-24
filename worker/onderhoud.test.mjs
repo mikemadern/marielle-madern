@@ -71,6 +71,8 @@ const rij = (d1, id) => ({ ...d1.db.prepare('SELECT * FROM berichten WHERE id = 
 function maakEnv({ d1 = maakD1(), pdf = true } = {}) {
   return {
     RESEND_API_KEY: 'proef-sleutel',
+    BREVO_API_KEY: 'proef-brevo-sleutel',
+    BREVO_LIJST_ID: '4',
     BLADMUZIEK: {
       get: async (sleutel) =>
         pdf && sleutel === 'bladmuziek/hart-van-glas.pdf'
@@ -81,22 +83,37 @@ function maakEnv({ d1 = maakD1(), pdf = true } = {}) {
   }
 }
 
-function maakFetch(resend = []) {
+// Nagebootste fetch voor Resend (een uitkomst per mail) en Brevo (een uitkomst per aanroep)
+function maakFetch(resend = [], brevo = []) {
   let n = 0
+  let b = 0
   return async (url, init) => {
     gesprekken.push({ url: String(url), init })
+    if (String(url).includes('brevo')) {
+      const uitB = brevo[b++] ?? 201
+      if (uitB === 'netwerk') throw new Error('geen verbinding')
+      return new Response(JSON.stringify(uitB === 400 ? { code: 'duplicate_parameter' } : {}), {
+        status: uitB,
+      })
+    }
     const uit = resend[n++] ?? 200
     if (uit === 'netwerk') throw new Error('geen verbinding')
     return new Response('{}', { status: uit })
   }
 }
-const draai = (env, resend = [], nu = NU) =>
-  onderhoud(env, { lijst: LIJST, fetch: maakFetch(resend) }, nu)
+const draai = (env, resend = [], nu = NU, brevo = []) =>
+  onderhoud(env, { lijst: LIJST, fetch: maakFetch(resend, brevo) }, nu)
 const mails = () =>
-  gesprekken.map((g) => ({
-    ...JSON.parse(g.init.body),
-    sleutel: g.init.headers['idempotency-key'],
-  }))
+  gesprekken
+    .filter((g) => g.url.includes('resend'))
+    .map((g) => ({
+      ...JSON.parse(g.init.body),
+      sleutel: g.init.headers['idempotency-key'],
+    }))
+const aanmeldingen = () =>
+  gesprekken
+    .filter((g) => g.url.includes('brevo'))
+    .map((g) => ({ methode: g.init.method, url: g.url, body: JSON.parse(g.init.body) }))
 
 beforeEach(() => {
   gesprekken = []
@@ -144,28 +161,128 @@ describe('opnieuw versturen', () => {
     assert.equal(gesprekken.length, 0)
   })
 
-  test('bladmuziek: de pdf wordt opnieuw uit de bucket gelezen, de mail gaat naar de bezoeker, de nieuwsbrief daarna', async () => {
+  test('bladmuziek: de pdf wordt opnieuw uit de bucket gelezen, de mail gaat naar de bezoeker, de aanmelding bij Brevo daarna', async () => {
     const env = maakEnv()
     const id = zet(env.BERICHTEN, {
       soort: 'bladmuziek',
       onderwerp: 'hart-van-glas',
       bericht: null,
+      dag: '2026-11-30',
       extra: JSON.stringify({ nieuwsbrief: true }),
     })
     await draai(env)
     const m = mails()
-    assert.equal(m.length, 2)
+    assert.equal(m.length, 1)
     assert.deepEqual(m[0].to, ['test@example.org'])
     assert.equal(m[0].subject, 'De bladmuziek van Hart van glas')
     assert.equal(m[0].attachments[0].filename, 'bladmuziek-hart-van-glas.pdf')
     assert.equal(Buffer.from(m[0].attachments[0].content, 'base64').toString(), '%PDF-1.4\n')
     assert.equal(m[0].sleutel, `${id}-hoofd`)
-    assert.deepEqual(m[1].to, ['hallo@mariellemadern.nl'])
-    assert.equal(m[1].reply_to, 'test@example.org')
+    // geen mail aan Mariëlle meer; wel één aanmelding bij Brevo, met de dag van de eerste aanvraag
+    assert.ok(m.every((x) => !x.to.includes('hallo@mariellemadern.nl')))
+    const b = aanmeldingen()
+    assert.equal(b.length, 1)
+    assert.deepEqual(b[0].body, {
+      email: 'test@example.org',
+      listIds: [4],
+      attributes: { BRON: 'bladmuziek:hart-van-glas', AANGEMELD_OP: '2026-11-30' },
+    })
     assert.deepEqual(
       [rij(env.BERICHTEN, id).status_hoofd, rij(env.BERICHTEN, id).status_tweede],
       ['verzonden', 'verzonden'],
     )
+  })
+
+  test('alleen de aanmelding bij Brevo is nog open: de pdf wordt niet opnieuw verstuurd (geen dubbele mail)', async () => {
+    const env = maakEnv()
+    const id = zet(env.BERICHTEN, {
+      soort: 'bladmuziek',
+      onderwerp: 'hart-van-glas',
+      bericht: null,
+      extra: '{"nieuwsbrief":true}',
+      status_hoofd: 'verzonden',
+      status_tweede: 'wacht',
+    })
+    await draai(env)
+    assert.equal(mails().length, 0)
+    assert.equal(aanmeldingen().length, 1)
+    assert.equal(rij(env.BERICHTEN, id).status_tweede, 'verzonden')
+  })
+
+  test('Brevo mislukt tijdelijk (500, 401, 429, geen verbinding): wacht blijft staan en de volgende keer wordt het opnieuw geprobeerd', async () => {
+    for (const uit of [500, 401, 429, 'netwerk']) {
+      const env = maakEnv()
+      const id = zet(env.BERICHTEN, {
+        soort: 'bladmuziek',
+        onderwerp: 'hart-van-glas',
+        bericht: null,
+        extra: '{"nieuwsbrief":true}',
+        status_hoofd: 'verzonden',
+        status_tweede: 'wacht',
+      })
+      gesprekken = []
+      await draai(env, [], NU, [uit])
+      assert.equal(rij(env.BERICHTEN, id).status_tweede, 'wacht', String(uit))
+      assert.equal(rij(env.BERICHTEN, id).pogingen, 2)
+      // de volgende keer lukt het
+      gesprekken = []
+      await draai(env, [], new Date(NU.getTime() + 300_000), [201])
+      assert.equal(rij(env.BERICHTEN, id).status_tweede, 'verzonden', String(uit))
+      assert.equal(aanmeldingen().length, 1)
+    }
+  })
+
+  test('Brevo keurt het adres voorgoed af: mislukt, en niet opnieuw proberen', async () => {
+    const env = maakEnv()
+    const id = zet(env.BERICHTEN, {
+      soort: 'bladmuziek',
+      onderwerp: 'hart-van-glas',
+      bericht: null,
+      extra: '{"nieuwsbrief":true}',
+      status_hoofd: 'verzonden',
+      status_tweede: 'wacht',
+    })
+    await draai(env, [], NU, [404])
+    assert.equal(rij(env.BERICHTEN, id).status_tweede, 'mislukt')
+    gesprekken = []
+    await draai(env)
+    assert.equal(gesprekken.length, 0)
+  })
+
+  test('Brevo blijft 24 uur weg: daarna mislukt, en er wordt niet meer geprobeerd', async () => {
+    const env = maakEnv()
+    const id = zet(env.BERICHTEN, {
+      soort: 'bladmuziek',
+      onderwerp: 'hart-van-glas',
+      bericht: null,
+      aangemaakt: uurGeleden(25),
+      extra: '{"nieuwsbrief":true}',
+      status_hoofd: 'verzonden',
+      status_tweede: 'wacht',
+    })
+    const uitkomst = await draai(env)
+    assert.equal(uitkomst.verlopen, 1)
+    assert.equal(gesprekken.length, 0)
+    assert.equal(rij(env.BERICHTEN, id).status_tweede, 'mislukt')
+  })
+
+  test('de nieuwsbrief is niet ingesteld (geen sleutel of lijstnummer): geen aanroep, de aanmelding wacht', async () => {
+    for (const weg of ['BREVO_API_KEY', 'BREVO_LIJST_ID']) {
+      const env = maakEnv()
+      delete env[weg]
+      const id = zet(env.BERICHTEN, {
+        soort: 'bladmuziek',
+        onderwerp: 'hart-van-glas',
+        bericht: null,
+        extra: '{"nieuwsbrief":true}',
+        status_hoofd: 'verzonden',
+        status_tweede: 'wacht',
+      })
+      gesprekken = []
+      await draai(env)
+      assert.equal(gesprekken.length, 0)
+      assert.equal(rij(env.BERICHTEN, id).status_tweede, 'wacht')
+    }
   })
 
   test('de pdf is weg of het nummer staat niet meer in de lijst: mislukt, geen mail', async () => {

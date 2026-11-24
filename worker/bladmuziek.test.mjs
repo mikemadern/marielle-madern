@@ -1,4 +1,4 @@
-// Tests van de Worker voor bladmuziek. Alles is nagebootst: Resend, Turnstile, de R2-bucket en de limieten.
+// Tests van de Worker voor bladmuziek. Alles is nagebootst: Resend, Brevo, Turnstile, de R2-bucket en de limieten.
 // Er gaat geen echte mail weg en er is geen sleutel nodig. Alle namen en adressen zijn verzonnen.
 // Draaien: pnpm test:worker
 import assert from 'node:assert/strict'
@@ -36,6 +36,8 @@ function maakOmgeving({ bestand = true, limiet = true, ipLimiet = true } = {}) {
   return {
     RESEND_API_KEY: 'proef-sleutel',
     TURNSTILE_SECRET: 'proef-geheim',
+    BREVO_API_KEY: 'proef-brevo-sleutel',
+    BREVO_LIJST_ID: '4',
     BLADMUZIEK: {
       sleutels: [],
       async get(sleutel) {
@@ -51,15 +53,24 @@ function maakOmgeving({ bestand = true, limiet = true, ipLimiet = true } = {}) {
   }
 }
 
-// Nagebootste fetch: Turnstile en Resend, met instelbare uitkomsten
+// Nagebootste fetch: Turnstile, Resend en Brevo, met instelbare uitkomsten (Brevo: een status per aanroep)
 function maakFetch({
   turnstile = { success: true, hostname: HOSTNAME, action: ACTIE },
   resend = [200, 200],
+  brevo = [201],
 } = {}) {
   let nummer = 0
+  let brevoNummer = 0
   return async (url, init) => {
     gesprekken.push({ url: String(url), init })
     if (String(url).includes('turnstile')) return new Response(JSON.stringify(turnstile))
+    if (String(url).includes('brevo')) {
+      const uit = brevo[brevoNummer++] ?? 201
+      if (uit === 'netwerk') throw new Error('geen verbinding')
+      return new Response(JSON.stringify(uit === 400 ? { code: 'invalid_parameter' } : { id: 1 }), {
+        status: uit,
+      })
+    }
     const status = resend[nummer++] ?? 200
     return new Response(JSON.stringify({ id: 'proef' }), { status })
   }
@@ -78,6 +89,7 @@ const verzoek = (
 const run = (request, env = maakOmgeving(), fetchFn = maakFetch()) =>
   behandel(request, env, { lijst: LIJST, fetch: fetchFn })
 const resendAanroepen = () => gesprekken.filter((g) => g.url.includes('resend'))
+const brevoAanroepen = () => gesprekken.filter((g) => g.url.includes('brevo'))
 const json = async (res) => res.json()
 
 beforeEach(() => {
@@ -346,8 +358,15 @@ describe('misbruik', () => {
     // Geen wildcard en geen geheimen in het bestand
     assert.ok(!String(config.vars.TOEGESTANE_HOSTS).includes('*'))
     // Alleen de twee gewone variabelen (het contactformulier staat aan: CONTACT_AAN is precies 'aan')
-    assert.deepEqual(Object.keys(config.vars), ['TOEGESTANE_HOSTS', 'CONTACT_AAN'])
+    assert.deepEqual(Object.keys(config.vars), [
+      'TOEGESTANE_HOSTS',
+      'CONTACT_AAN',
+      'BREVO_LIJST_ID',
+    ])
     assert.equal(config.vars.CONTACT_AAN, 'aan')
+    // Het lijstnummer van de nieuwsbrief (lijst 'Nieuwsbrief' in Brevo); de sleutel is een secret en staat hier niet
+    assert.equal(config.vars.BREVO_LIJST_ID, '4')
+    assert.ok(!JSON.stringify(config).includes('BREVO_API_KEY'))
   })
   test('niet-toegestaan adres zonder secrets: 403 (de hostcontrole komt vóór de 503)', async () => {
     const adres = 'https://mariellemadern.mmadern.workers.dev'
@@ -419,7 +438,7 @@ describe('versturen', () => {
     const env = maakOmgeving()
     const res = await run(verzoek(GOED), env)
     assert.equal(res.status, 200)
-    assert.deepEqual(await json(res), { ok: true, nieuwsbriefVerstuurd: false })
+    assert.deepEqual(await json(res), { ok: true, nieuwsbriefAangemeld: false })
     assert.deepEqual(env.BLADMUZIEK.sleutels, ['bladmuziek/hart-van-glas.pdf'])
     const mails = resendAanroepen()
     assert.equal(mails.length, 1)
@@ -443,25 +462,69 @@ describe('versturen', () => {
     const velden = Object.fromEntries(t.init.body)
     assert.deepEqual(Object.keys(velden).sort(), ['response', 'secret'])
   })
-  test('met nieuwsbrief: een tweede mail aan Mariëlle met naam en adres', async () => {
-    const res = await run(verzoek({ ...GOED, nieuwsbrief: true }))
-    assert.deepEqual(await json(res), { ok: true, nieuwsbriefVerstuurd: true })
+  test('met nieuwsbrief: alleen het adres gaat naar Brevo; er is geen tweede mail en geen mail aan Mariëlle meer', async () => {
+    const res = await run(verzoek({ ...GOED, nieuwsbrief: true }), maakOmgeving(), maakFetch())
+    assert.deepEqual(await json(res), { ok: true, nieuwsbriefAangemeld: true })
+    // precies één mail (de bladmuziek aan de bezoeker), niets aan hallo@
     const mails = resendAanroepen().map((g) => JSON.parse(g.init.body))
-    assert.equal(mails.length, 2)
-    assert.deepEqual(mails[1].to, ['hallo@mariellemadern.nl'])
-    assert.equal(mails[1].reply_to, 'test@example.org')
-    assert.equal(mails[1].subject, 'Bladmuziek aangevraagd: Hart van glas')
-    assert.match(mails[1].text, /Naam: Proefpersoon Verzonnen/)
-    assert.match(mails[1].text, /Nieuwsbrief aangevinkt: ja/)
-    assert.equal(mails[1].attachments, undefined)
+    assert.equal(mails.length, 1)
+    assert.deepEqual(mails[0].to, ['test@example.org'])
+    assert.ok(mails.every((m) => !m.to.includes('hallo@mariellemadern.nl')))
+    // en één aanroep naar Brevo: het adres, lijst 4 en de bron; de naam gaat niet mee
+    const b = brevoAanroepen()
+    assert.equal(b.length, 1)
+    assert.equal(b[0].url, 'https://api.brevo.com/v3/contacts')
+    assert.equal(b[0].init.headers['api-key'], 'proef-brevo-sleutel')
+    const body = JSON.parse(b[0].init.body)
+    assert.equal(body.email, 'test@example.org')
+    assert.deepEqual(body.listIds, [4])
+    assert.equal(body.attributes.BRON, 'bladmuziek:hart-van-glas')
+    assert.ok(!b[0].init.body.includes('Proefpersoon') && !b[0].init.body.includes('Verzonnen'))
   })
-  test('nieuwsbrief aangevinkt maar de tweede mail mislukt: de bezoeker krijgt de bladmuziek wel', async () => {
+  test('zonder het vakje: geen aanroep naar Brevo', async () => {
+    const res = await run(verzoek(GOED))
+    assert.deepEqual(await json(res), { ok: true, nieuwsbriefAangemeld: false })
+    assert.equal(brevoAanroepen().length, 0)
+  })
+  test('de aanmelding komt ná de mail met de pdf', async () => {
+    await run(verzoek({ ...GOED, nieuwsbrief: true }))
+    const volgorde = gesprekken
+      .filter((g) => !g.url.includes('turnstile'))
+      .map((g) => (g.url.includes('resend') ? 'mail' : 'brevo'))
+    assert.deepEqual(volgorde, ['mail', 'brevo'])
+  })
+  test('de mail met de pdf mislukt: geen aanmelding bij Brevo (de bezoeker krijgt een foutmelding en probeert het opnieuw)', async () => {
     const res = await run(
       verzoek({ ...GOED, nieuwsbrief: true }),
       maakOmgeving(),
-      maakFetch({ resend: [200, 500] }),
+      maakFetch({ resend: [500] }),
     )
-    assert.deepEqual(await json(res), { ok: true, nieuwsbriefVerstuurd: false })
+    assert.equal(res.status, 502)
+    assert.equal(brevoAanroepen().length, 0)
+  })
+  test('Brevo mislukt (500, 401, geen verbinding, ongeldig): de bezoeker krijgt de bladmuziek wel, zonder fout', async () => {
+    for (const brevo of [[500], [401], ['netwerk'], [400, 400]]) {
+      gesprekken = []
+      const res = await run(
+        verzoek({ ...GOED, nieuwsbrief: true }),
+        maakOmgeving(),
+        maakFetch({ brevo }),
+      )
+      assert.equal(res.status, 200, String(brevo))
+      assert.deepEqual(await json(res), { ok: true, nieuwsbriefAangemeld: false })
+      assert.equal(resendAanroepen().length, 1)
+    }
+  })
+  test('Brevo niet ingesteld (geen sleutel of lijstnummer): de bladmuziek gaat gewoon, geen aanroep naar Brevo', async () => {
+    for (const weg of ['BREVO_API_KEY', 'BREVO_LIJST_ID']) {
+      gesprekken = []
+      const env = maakOmgeving()
+      delete env[weg]
+      const res = await run(verzoek({ ...GOED, nieuwsbrief: true }), env)
+      assert.equal(res.status, 200)
+      assert.deepEqual(await json(res), { ok: true, nieuwsbriefAangemeld: false })
+      assert.equal(brevoAanroepen().length, 0)
+    }
   })
   test('een naam met HTML of regeleinden komt niet in de mail aan de bezoeker: alleen Dag,', async () => {
     await run(verzoek({ ...GOED, naam: '<b>Proef</b>\r\nBcc: x@example.org' }))

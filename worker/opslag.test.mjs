@@ -69,6 +69,8 @@ function maakOmgeving({ d1 = maakD1() } = {}) {
     CONTACT_AAN: 'aan',
     RESEND_API_KEY: 'proef-sleutel',
     TURNSTILE_SECRET: 'proef-geheim',
+    BREVO_API_KEY: 'proef-brevo-sleutel',
+    BREVO_LIJST_ID: '4',
     LIMIET_IP: limiter,
     LIMIET_ADRES: limiter,
     LIMIET_ALGEMEEN: limiter,
@@ -86,14 +88,20 @@ function maakOmgeving({ d1 = maakD1() } = {}) {
 }
 
 // Nagebootste fetch: Turnstile (met de actie van het eindpunt) en Resend (een uitkomst per mail; 'netwerk' gooit)
-function maakFetch({ actie, resend = [200, 200], turnstile } = {}) {
+function maakFetch({ actie, resend = [200, 200], turnstile, brevo = [201] } = {}) {
   let nummer = 0
+  let brevoNummer = 0
   return async (url, init) => {
     gesprekken.push({ url: String(url), init })
     if (String(url).includes('turnstile'))
       return new Response(
         JSON.stringify(turnstile ?? { success: true, hostname: HOSTNAME, action: actie }),
       )
+    if (String(url).includes('brevo')) {
+      const uit = brevo[brevoNummer++] ?? 201
+      if (uit === 'netwerk') throw new Error('geen verbinding')
+      return new Response(JSON.stringify({ id: 1 }), { status: uit })
+    }
     const uit = resend[nummer++] ?? 200
     if (uit === 'netwerk') throw new Error('geen verbinding')
     return new Response(JSON.stringify({ id: 'proef' }), { status: uit })
@@ -119,6 +127,7 @@ const bladmuziek = (body = BLADMUZIEK, env = maakOmgeving(), opties = {}, extra 
     ...extra,
   })
 const resend = () => gesprekken.filter((g) => g.url.includes('resend'))
+const brevoGesprekken = () => gesprekken.filter((g) => g.url.includes('brevo'))
 const json = async (res) => res.json()
 
 beforeEach(() => {
@@ -195,21 +204,29 @@ describe('opslaan bij gelukt versturen', () => {
     assert.equal(resend().length, 1)
   })
 
-  test('bladmuziek met nieuwsbrief: de tweede mail (aan hallo@) heeft zijn eigen status', async () => {
+  test('bladmuziek met nieuwsbrief: de aanmelding bij Brevo heeft zijn eigen status (tweede)', async () => {
     const env = maakOmgeving()
     const res = await bladmuziek({ ...BLADMUZIEK, nieuwsbrief: true }, env)
-    assert.deepEqual(await json(res), { ok: true, nieuwsbriefVerstuurd: true })
+    assert.deepEqual(await json(res), { ok: true, nieuwsbriefAangemeld: true })
     const [r] = rijen(env.BERICHTEN)
     assert.deepEqual(JSON.parse(r.extra), { nieuwsbrief: true })
     assert.deepEqual([r.status_hoofd, r.status_tweede, r.pogingen], ['verzonden', 'verzonden', 2])
-    // De tweede mail mislukt: de bezoeker heeft de pdf, de tweede status blijft op wacht (voor een nieuwe poging)
-    const env2 = maakOmgeving()
-    const res2 = await bladmuziek({ ...BLADMUZIEK, nieuwsbrief: true }, env2, {
-      resend: [200, 500],
-    })
-    assert.deepEqual(await json(res2), { ok: true, nieuwsbriefVerstuurd: false })
-    const [r2] = rijen(env2.BERICHTEN)
-    assert.deepEqual([r2.status_hoofd, r2.status_tweede], ['verzonden', 'wacht'])
+    // één mail (de pdf), één aanroep naar Brevo, geen mail aan Mariëlle
+    assert.equal(resend().length, 1)
+    assert.equal(brevoGesprekken().length, 1)
+    // Brevo mislukt tijdelijk: de bezoeker heeft de pdf, de tweede status blijft op wacht (voor een nieuwe poging)
+    for (const brevo of [[500], [401], ['netwerk']]) {
+      const env2 = maakOmgeving()
+      const res2 = await bladmuziek({ ...BLADMUZIEK, nieuwsbrief: true }, env2, { brevo })
+      assert.deepEqual(await json(res2), { ok: true, nieuwsbriefAangemeld: false })
+      const [r2] = rijen(env2.BERICHTEN)
+      assert.deepEqual([r2.status_hoofd, r2.status_tweede], ['verzonden', 'wacht'], String(brevo))
+      assert.equal(r2.email, 'test@example.org')
+    }
+    // Brevo keurt het adres voorgoed af (een andere 400): mislukt, geen nieuwe poging
+    const env3 = maakOmgeving()
+    await bladmuziek({ ...BLADMUZIEK, nieuwsbrief: true }, env3, { brevo: [400, 400] })
+    assert.equal(rijen(env3.BERICHTEN)[0].status_tweede, 'mislukt')
   })
 
   test('elke mail krijgt een Idempotency-Key met het id van het bericht', async () => {
@@ -276,7 +293,7 @@ describe('de mail mislukt', () => {
     for (const uit of [500, 503, 429, 'netwerk']) {
       for (const [aanroep, body, extra] of [
         [contact, CONTACT, { bevestigingVerstuurd: false }],
-        [bladmuziek, BLADMUZIEK, { nieuwsbriefVerstuurd: false }],
+        [bladmuziek, BLADMUZIEK, { nieuwsbriefAangemeld: false }],
       ]) {
         const env = maakOmgeving()
         const res = await aanroep(body, env, { resend: [uit] })

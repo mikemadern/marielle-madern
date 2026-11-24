@@ -51,22 +51,6 @@ export function mailBezoeker({ naam, titel, nieuwsbrief }) {
   }
 }
 
-export function mailMarielle({ naam, email, titel, nieuwsbrief }) {
-  return {
-    subject: `Bladmuziek aangevraagd: ${titel}`,
-    text: [
-      'Aanvraag bladmuziek.',
-      '',
-      `Nummer: ${titel}`,
-      `Naam: ${regel(naam)}`,
-      `E-mailadres: ${email}`,
-      `Nieuwsbrief aangevinkt: ${nieuwsbrief ? 'ja' : 'nee'}`,
-      '',
-      'De bladmuziek is naar het e-mailadres gestuurd.',
-    ].join('\n'),
-  }
-}
-
 // ---------- Contactformulier ----------
 // De teksten van de Tekstschrijver (design/teksten-contactformulier.md, 2026-11-24). De sleutels van het onderwerp en
 // de velden zijn vast; de labels komen uit het ontwerp.

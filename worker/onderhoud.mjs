@@ -3,7 +3,8 @@
 // heeft zijn eigen try/catch, zodat een fout in één bericht de rest niet tegenhoudt. Niets wordt gelogd en er komen
 // geen gegevens in een foutmelding: een fout laat de rij gewoon op `wacht` staan voor de volgende keer.
 // Zonder binding BERICHTEN doet dit niets.
-import { bladmuziekMail, leesPdf, nieuwsbriefMail } from './bladmuziek.mjs'
+import { bladmuziekMail, leesPdf } from './bladmuziek.mjs'
+import { meldAanEnMarkeer } from './brevo.mjs'
 import { dagAmsterdam, verstuurEnMarkeer } from './opslag.mjs'
 import {
   ADRES_MARIELLE,
@@ -86,14 +87,28 @@ async function herhaalRij(env, deps, r, nu) {
     if (uitslag !== 'ok') return
   }
   if (r.status_tweede === 'wacht') {
-    const mail =
-      r.soort === 'contact'
-        ? { to: [r.email], ...mailContactBevestiging() }
-        : extra.nieuwsbrief === true && titel
-          ? nieuwsbriefMail({ naam: r.naam, email: r.email, titel })
-          : null
-    if (!mail) return markeerMislukt(env, r.id, ['status_tweede'])
-    await verstuurEnMarkeer(env, deps, { id: r.id, welke: 'tweede', afzender: AFZENDER, mail }, nu)
+    // Bij een contactbericht is de tweede stap de bevestiging aan de bezoeker; bij de bladmuziek de aanmelding voor de
+    // nieuwsbrief bij Brevo (alleen het adres; de bron en de dag zijn die van de eerste aanvraag)
+    if (r.soort === 'contact') {
+      await verstuurEnMarkeer(
+        env,
+        deps,
+        {
+          id: r.id,
+          welke: 'tweede',
+          afzender: AFZENDER,
+          mail: { to: [r.email], ...mailContactBevestiging() },
+        },
+        nu,
+      )
+    } else if (extra.nieuwsbrief === true && r.email) {
+      await meldAanEnMarkeer(
+        env,
+        deps,
+        { id: r.id, email: r.email, bron: `bladmuziek:${r.onderwerp}`, dag: r.dag },
+        nu,
+      )
+    } else return markeerMislukt(env, r.id, ['status_tweede'])
   }
 }
 
@@ -101,7 +116,7 @@ async function herhaalRij(env, deps, r, nu) {
 async function herhaal(env, deps, nu) {
   const grens = new Date(nu.getTime() - HERHAAL_UREN * UUR).toISOString()
   const { results } = await env.BERICHTEN.prepare(
-    `SELECT id, soort, onderwerp, naam, email, bericht, extra, status_hoofd, status_tweede FROM berichten
+    `SELECT id, soort, dag, onderwerp, naam, email, bericht, extra, status_hoofd, status_tweede FROM berichten
      WHERE geanonimiseerd_op IS NULL AND aangemaakt >= ?1
        AND (status_hoofd = 'wacht' OR (status_hoofd = 'verzonden' AND status_tweede = 'wacht'))
      ORDER BY aangemaakt LIMIT ${PER_RUN}`,
