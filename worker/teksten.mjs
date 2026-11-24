@@ -26,11 +26,14 @@ const regel = (tekst) =>
 // Alles anders (een adres, een link, haakjes, cijfers, regeleinden, te lang, leeg) geeft null: dan staat er 'Dag,'.
 // Besluit van de eigenaar, 2026-11-24.
 const GEWONE_NAAM = /^[\p{L}\p{M}][\p{L}\p{M} '’-]*$/u
-export function veiligeNaam(naam) {
+// `max` is het maximum aantal tekens: 40 voor de aanhef in een mail, 60 voor een voor- of achternaam bij Brevo en 80
+// voor een volledige naam bij Brevo (worker/brevo.mjs). Een naam die er niet door komt geeft null en wordt dan gewoon
+// weggelaten: het weigert nooit een aanvraag of aanmelding.
+export function veiligeNaam(naam, max = 40) {
   const schoon = String(naam ?? '')
     .trim()
     .replace(/ {2,}/g, ' ')
-  if ([...schoon].length > 40 || !GEWONE_NAAM.test(schoon) || !/\p{L}/u.test(schoon)) return null
+  if ([...schoon].length > max || !GEWONE_NAAM.test(schoon) || !/\p{L}/u.test(schoon)) return null
   return schoon
 }
 

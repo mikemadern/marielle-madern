@@ -579,6 +579,27 @@ describe('privacy', () => {
   })
 })
 
+describe('veiligeNaam met een eigen maximum (voor Brevo)', () => {
+  test('standaard 40 tekens (de aanhef); met een maximum van 60 of 80 mogen langere namen', () => {
+    const lang = 'Anna Maria van der Berg-Jansen Wilhelmina Oranje'.slice(0, 48)
+    assert.equal(veiligeNaam(lang), null)
+    assert.equal(veiligeNaam(lang, 60), lang)
+    assert.equal(veiligeNaam('a'.repeat(60), 60)?.length, 60)
+    assert.equal(veiligeNaam('a'.repeat(61), 60), null)
+    assert.equal(veiligeNaam('a'.repeat(80), 80)?.length, 80)
+    assert.equal(veiligeNaam('a'.repeat(81), 80), null)
+  })
+  test("Marie-Louise, D’Hondt en D'Hondt blijven, een punt of cijfer niet, op elk maximum", () => {
+    for (const max of [40, 60, 80]) {
+      assert.equal(veiligeNaam('Marie-Louise', max), 'Marie-Louise')
+      assert.equal(veiligeNaam("D'Hondt", max), "D'Hondt")
+      assert.equal(veiligeNaam('D’Hondt', max), 'D’Hondt')
+      assert.equal(veiligeNaam('J.P. Jansen', max), null)
+      assert.equal(veiligeNaam('Anna 2', max), null)
+    }
+  })
+})
+
 describe('aanhef van de mail met de bladmuziek', () => {
   test("gewone namen staan in de aanhef: 'Dag <naam>,'", () => {
     for (const naam of [

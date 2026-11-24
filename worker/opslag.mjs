@@ -96,3 +96,20 @@ export async function markeer(env, id, welke, uitslag, nu = new Date()) {
     // een fout in de database verandert niets aan het versturen
   }
 }
+
+// Maakt de persoonsgegevens van één bericht meteen leeg (naam, e-mailadres, extra gegevens), zonder de rij te
+// verwijderen: dag, soort, onderwerp en status blijven (de statistiek). Voor de aanmelding voor de nieuwsbrief via het
+// losse formulier: het adres staat alleen in de database voor een nieuwe poging bij Brevo en moet weg zodra die
+// afgelopen is (gelukt, afgekeurd of na 24 uur). Een fout in de database verandert niets aan de aanmelding.
+export async function wis(env, id) {
+  if (!id) return
+  try {
+    await env.BERICHTEN.prepare(
+      'UPDATE berichten SET naam = NULL, email = NULL, bericht = NULL, extra = NULL WHERE id = ?1',
+    )
+      .bind(id)
+      .run()
+  } catch {
+    // de Cron wist het bij de volgende keer (wisAfgehandeld)
+  }
+}

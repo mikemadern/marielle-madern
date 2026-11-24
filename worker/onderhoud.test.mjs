@@ -132,7 +132,7 @@ describe('opnieuw versturen', () => {
       onderwerp: 'boeking',
     })
     const uitkomst = await draai(env)
-    assert.deepEqual(uitkomst, { verlopen: 0, herhaald: 1, geanonimiseerd: 0 })
+    assert.deepEqual(uitkomst, { verlopen: 0, herhaald: 1, gewist: 0, geanonimiseerd: 0 })
     const m = mails()
     assert.equal(m.length, 2)
     assert.deepEqual(m[0].to, ['hallo@mariellemadern.nl'])
@@ -508,11 +508,168 @@ describe('anonimiseren na 30 dagen', () => {
   })
 })
 
+describe('aanmeldingen voor de nieuwsbrief via het losse formulier', () => {
+  const nieuwsbrief = (env, r = {}) =>
+    zet(env.BERICHTEN, {
+      soort: 'nieuwsbrief',
+      onderwerp: 'formulier',
+      naam: 'Anna',
+      bericht: null,
+      extra: JSON.stringify({ achternaam: 'Jansen' }),
+      status_hoofd: 'wacht',
+      status_tweede: 'nvt',
+      dag: '2026-11-30',
+      ...r,
+    })
+  const leeg = (d1, id) => {
+    const x = rij(d1, id)
+    return [x.naam, x.email, x.bericht, x.extra]
+  }
+
+  test('opnieuw proberen: één aanroep naar Brevo met adres, voornaam (naam) en achternaam (extra) en de dag van de eerste keer; daarna gewist', async () => {
+    const env = maakEnv()
+    const id = nieuwsbrief(env)
+    await draai(env)
+    assert.equal(mails().length, 0)
+    const b = aanmeldingen()
+    assert.equal(b.length, 1)
+    assert.deepEqual(b[0].body, {
+      email: 'test@example.org',
+      listIds: [4],
+      attributes: {
+        FIRSTNAME: 'Anna',
+        LASTNAME: 'Jansen',
+        BRON: 'formulier',
+        AANGEMELD_OP: '2026-11-30',
+      },
+    })
+    const r = rij(env.BERICHTEN, id)
+    assert.equal(r.status_hoofd, 'verzonden')
+    assert.deepEqual(leeg(env.BERICHTEN, id), [null, null, null, null])
+  })
+
+  test('alleen het adres: geen namen in de aanroep', async () => {
+    const env = maakEnv()
+    nieuwsbrief(env, { naam: null, extra: null })
+    await draai(env)
+    assert.deepEqual(aanmeldingen()[0].body.attributes, {
+      BRON: 'formulier',
+      AANGEMELD_OP: '2026-11-30',
+    })
+  })
+
+  test('Brevo weer tijdelijk weg: de rij wacht met adres en namen; de volgende keer lukt het en dan zijn ze gewist', async () => {
+    for (const uit of [500, 401, 429, 'netwerk']) {
+      const env = maakEnv()
+      const id = nieuwsbrief(env)
+      gesprekken = []
+      await draai(env, [], NU, [uit])
+      let r = rij(env.BERICHTEN, id)
+      assert.equal(r.status_hoofd, 'wacht', String(uit))
+      assert.equal(r.email, 'test@example.org')
+      assert.equal(r.naam, 'Anna')
+      assert.equal(r.pogingen, 2)
+      gesprekken = []
+      await draai(env, [], new Date(NU.getTime() + 300_000), [201])
+      r = rij(env.BERICHTEN, id)
+      assert.equal(r.status_hoofd, 'verzonden', String(uit))
+      assert.deepEqual(leeg(env.BERICHTEN, id), [null, null, null, null])
+    }
+  })
+
+  test('Brevo keurt het adres voorgoed af: mislukt, meteen gewist, niet opnieuw proberen', async () => {
+    const env = maakEnv()
+    const id = nieuwsbrief(env)
+    await draai(env, [], NU, [404])
+    assert.equal(rij(env.BERICHTEN, id).status_hoofd, 'mislukt')
+    assert.deepEqual(leeg(env.BERICHTEN, id), [null, null, null, null])
+    gesprekken = []
+    await draai(env)
+    assert.equal(gesprekken.length, 0)
+  })
+
+  test('na 24 uur: mislukt en in dezelfde run gewist, zonder nog een aanroep', async () => {
+    const env = maakEnv()
+    const id = nieuwsbrief(env, { aangemaakt: uurGeleden(25) })
+    const uitkomst = await draai(env)
+    assert.equal(uitkomst.verlopen, 1)
+    assert.equal(uitkomst.gewist, 1)
+    assert.equal(gesprekken.length, 0)
+    assert.equal(rij(env.BERICHTEN, id).status_hoofd, 'mislukt')
+    assert.deepEqual(leeg(env.BERICHTEN, id), [null, null, null, null])
+  })
+
+  test('vangnet: een klaar bericht waar het wissen niet lukte, wordt door de Cron alsnog gewist', async () => {
+    const env = maakEnv()
+    const id = nieuwsbrief(env, { status_hoofd: 'verzonden' })
+    const uitkomst = await draai(env)
+    assert.equal(uitkomst.gewist, 1)
+    assert.equal(gesprekken.length, 0)
+    assert.deepEqual(leeg(env.BERICHTEN, id), [null, null, null, null])
+    // en een volgende keer is er niets meer te doen
+    assert.equal((await draai(env)).gewist, 0)
+  })
+
+  test('het wissen raakt alleen nieuwsbrief-rijen die klaar zijn: een bladmuziekaanvraag en een rij die wacht blijven', async () => {
+    const env = maakEnv()
+    const blad = zet(env.BERICHTEN, {
+      soort: 'bladmuziek',
+      onderwerp: 'hart-van-glas',
+      bericht: null,
+      extra: '{"nieuwsbrief":true}',
+      status_hoofd: 'verzonden',
+      status_tweede: 'verzonden',
+    })
+    const contact = zet(env.BERICHTEN, { status_hoofd: 'verzonden', status_tweede: 'verzonden' })
+    const wacht = nieuwsbrief(env)
+    await draai(env, [], NU, [500])
+    assert.equal(rij(env.BERICHTEN, blad).email, 'test@example.org')
+    assert.equal(rij(env.BERICHTEN, contact).email, 'test@example.org')
+    assert.equal(rij(env.BERICHTEN, wacht).email, 'test@example.org')
+  })
+
+  test('de contact- en bladmuziekstappen werken nog (geen invloed op andere soorten)', async () => {
+    const env = maakEnv()
+    const id = zet(env.BERICHTEN, {})
+    await draai(env)
+    assert.equal(mails().length, 2)
+    assert.equal(rij(env.BERICHTEN, id).status_tweede, 'verzonden')
+    assert.equal(aanmeldingen().length, 0)
+  })
+
+  test('niet ingesteld (geen sleutel of lijstnummer): geen aanroep, de rij wacht met zijn gegevens', async () => {
+    for (const weg of ['BREVO_API_KEY', 'BREVO_LIJST_ID']) {
+      const env = maakEnv()
+      delete env[weg]
+      const id = nieuwsbrief(env)
+      gesprekken = []
+      await draai(env)
+      assert.equal(gesprekken.length, 0)
+      assert.equal(rij(env.BERICHTEN, id).status_hoofd, 'wacht')
+      assert.equal(rij(env.BERICHTEN, id).email, 'test@example.org')
+    }
+  })
+
+  test('na 30 dagen is er van een klaar bericht alleen dag, soort, bron en status over', async () => {
+    const env = maakEnv()
+    const id = nieuwsbrief(env, { dag: '2026-10-01', status_hoofd: 'verzonden' })
+    await draai(env)
+    const r = rij(env.BERICHTEN, id)
+    assert.deepEqual(
+      [r.soort, r.onderwerp, r.status_hoofd],
+      ['nieuwsbrief', 'formulier', 'verzonden'],
+    )
+    assert.ok(r.geanonimiseerd_op)
+    assert.deepEqual(leeg(env.BERICHTEN, id), [null, null, null, null])
+  })
+})
+
 describe('veilig', () => {
   test('zonder binding: niets doen', async () => {
     assert.deepEqual(await draai(maakEnv({ d1: null })), {
       verlopen: 0,
       herhaald: 0,
+      gewist: 0,
       geanonimiseerd: 0,
     })
     assert.equal(gesprekken.length, 0)
@@ -523,7 +680,7 @@ describe('veilig', () => {
     const env = maakEnv({ d1 })
     zet(d1, { dag: '2026-10-01', status_hoofd: 'verzonden', status_tweede: 'verzonden' })
     const uitkomst = await draai(env)
-    assert.deepEqual(uitkomst, { verlopen: 0, herhaald: 0, geanonimiseerd: 1 })
+    assert.deepEqual(uitkomst, { verlopen: 0, herhaald: 0, gewist: 0, geanonimiseerd: 1 })
     assert.deepEqual(logregels, [])
     for (const v of Object.values(uitkomst)) assert.equal(typeof v, 'number')
   })
