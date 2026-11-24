@@ -25,9 +25,9 @@ Contact: [hallo@mariellemadern.nl](mailto:hallo@mariellemadern.nl)
 
 De bladmuziek gaat per e-mail. Een aanvraag komt niet in mijn postvak: jij krijgt alleen de e-mail met de pdf.
 
-**Als je je aanmeldt voor de nieuwsbrief**, vul je je e-mailadres in, via het aanmeldformulier of via het vakje bij de bladmuziek. Je gegevens gaan direct naar Brevo, de dienst waarmee ik de nieuwsbrief verstuur. Brevo bewaart je e-mailadres tot je je uitschrijft. Lukt het aanmelden niet doordat Brevo even niet werkt, dan staat je adres hooguit 24 uur in mijn eigen database. Daarna wordt het gewist.
+**Als je je aanmeldt voor de nieuwsbrief**, vul je je e-mailadres in, via het aanmeldformulier of via het vakje bij de bladmuziek. Je gegevens gaan direct naar Brevo, de dienst waarmee ik de nieuwsbrief verstuur. Brevo bewaart je e-mailadres zolang je ingeschreven bent. Lukt het aanmelden niet doordat Brevo even niet werkt, dan staat je adres hooguit 24 uur in mijn eigen database. Daarna wordt het gewist.
 
-In elke nieuwsbrief staat een link om je af te melden. Daarmee haalt Brevo je van de lijst. **TE BEVESTIGEN:** dat de link in elke nieuwsbrief zit en dat uitschrijven direct werkt.
+In elke nieuwsbrief staat een link om je af te melden. Daarmee zet Brevo je adres op een lijst van afgemelde adressen, zodat je geen nieuwsbrief meer krijgt. Je adres blijft daar als afgemeld staan. Wil je dat je adres helemaal wordt verwijderd, mail dan naar hallo@mariellemadern.nl. Dan verwijder ik het binnen vier weken.
 
 Je geeft toestemming door je aan te melden of het vakje bij de bladmuziek aan te vinken. Die toestemming kun je altijd intrekken door je af te melden, of door te mailen naar hallo@mariellemadern.nl.
 
@@ -59,7 +59,7 @@ Deze website plaatst geen cookies voor statistieken, volgen of advertenties. Ook
 
 - **Cloudflare** levert de website uit en beschermt hem tegen misbruik. Cloudflare verwerkt op netwerkniveau tijdelijk IP-gegevens. Hoe lang, noemt Cloudflare niet. De site bewaart aanvraaggegevens alleen in de database, zoals hierboven staat. Er worden geen logboeken met je gegevens bijgehouden.
 - **Resend** verstuurt de mail met de bladmuziek en de berichten van het contactformulier namens mij. Resend is hiervoor verwerker, en we hebben een verwerkersovereenkomst met de standaardclausules van de EU. Resend ziet je naam, je e-mailadres en de inhoud van de mail. Resend slaat die gegevens op in de Verenigde Staten en bewaart ze 30 dagen, ook als voor het verzenden de EU-regio is gekozen. De bijlage is een pdf van het nummer en bevat geen gegevens van jou.
-- **Brevo** is verwerker. Brevo heeft servers in Frankrijk (OVH) en België (Google Cloud). Gegevens kunnen onder de standaardcontractbepalingen van de Europese Unie ook buiten de Europese Economische Ruimte worden verwerkt. Meer over Brevo lees je in hun [privacyverklaring](https://www.brevo.com/legal/privacypolicy/). **TE BEVESTIGEN:** welke Brevo-entiteit voor het account geldt (Brevo SAS in Parijs, of Brevo GmbH in Berlijn); of er een verwerkersovereenkomst is die de eigenaar heeft getekend; wat Brevo na uitschrijving nog bewaart.
+- **Brevo**, met hoofdkantoor in Parijs, is verwerker. De hosting is binnen de EU: OVH in Frankrijk en Duitsland, en opslag bij Google Cloud in België. Het verwerkersbeding is onderdeel van de voorwaarden van Brevo. Verwerking buiten de Europese Economische Ruimte kan voorkomen; daarvoor gelden standaardcontractbepalingen, en voor de Verenigde Staten het EU-US Data Privacy Framework. Meer over Brevo lees je in hun [privacyverklaring](https://www.brevo.com/legal/privacypolicy/).
 - **Cloudflare Turnstile** controleert of het formulier door een mens wordt ingevuld en niet door een robot. Turnstile wordt geladen als je het formulier gebruikt. Het verwerkt je IP-adres, signalen van je browser en kenmerken van de verbinding, om bots te herkennen. Cloudflare is daarvoor verwerker.
 - **Adobe Fonts** levert het lettertype. Als je een pagina opent, haalt je browser dat lettertype bij Adobe op. Daarbij ziet Adobe je IP-adres.
 - **YouTube** laadt pas als je op een video klikt om hem af te spelen. Dan ziet YouTube (Google) dat je de video bekijkt. Zonder klik wordt er niets van YouTube geladen. Ik gebruik de privacyvriendelijke inbedding van YouTube.
@@ -76,7 +76,7 @@ Deze website is niet bedoeld om gegevens van kinderen onder de 16 jaar te verzam
 
 Je mag je persoonsgegevens inzien, laten verbeteren of laten verwijderen. Je mag ook bezwaar maken tegen de verwerking, je toestemming intrekken en vragen om je gegevens over te dragen aan jou of aan een ander. Je kunt je toestemming voor de nieuwsbrief altijd intrekken door te mailen naar hallo@mariellemadern.nl.
 
-Uitschrijven via een link in de nieuwsbrief kan pas als de nieuwsbriefsoftware er is. Die is nog niet gekozen, en er wordt nog geen nieuwsbrief verstuurd. Ik stuur pas een nieuwsbrief als ik een programma heb gekozen waarmee je je met één klik kunt uitschrijven, en ik laat je dat weten.
+Er is nog geen nieuwsbrief verstuurd. Aanmelden kan al, en afmelden kan altijd via de link onderaan elke nieuwsbrief.
 
 **Verwijderen op verzoek.** Vraag je mij om je gegevens te verwijderen, dan haal ik ze uit de database en uit het postvak, binnen vier weken. Daarna blijft alleen de datum en het onderwerp of nummer over, zonder persoonsgegevens.
 
