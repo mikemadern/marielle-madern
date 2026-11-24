@@ -23,7 +23,7 @@ import {
 
 import { AFZENDER, mailBezoeker } from './teksten.mjs'
 import { bewaar, dagAmsterdam, verstuurEnMarkeer } from './opslag.mjs'
-import { meldAanEnMarkeer } from './brevo.mjs'
+import { meldAanEnMarkeer, VOLLEDIGE_NAAM_MAX } from './brevo.mjs'
 
 export const PAD = '/api/bladmuziek'
 const MAX_VERZOEK = 4096
@@ -163,7 +163,8 @@ export async function behandel(request, env, deps) {
     return antwoord(502, { fout: 'verzenden_mislukt' })
   }
 
-  // Nieuwsbrief: het adres (alleen het adres, niet de naam) gaat naar Brevo, nadat de mail met de pdf is gelukt. Mislukt
+  // Nieuwsbrief: het adres en de ingevulde naam gaan naar Brevo (de hele naam in FIRSTNAME, LASTNAME blijft leeg; een naam
+  // die er niet gewoon uitziet wordt weggelaten en blokkeert de aanmelding nooit), nadat de mail met de pdf is gelukt. Mislukt
   // dat tijdelijk, dan blijft het op `wacht` staan en probeert de Cron het opnieuw (tot 24 uur); de bezoeker heeft de
   // bladmuziek en merkt niets. Er gaat geen mail meer naar Mariëlle: Brevo is de enige plek.
   let nieuwsbriefAangemeld = false
@@ -172,7 +173,14 @@ export async function behandel(request, env, deps) {
       (await meldAanEnMarkeer(
         env,
         deps,
-        { id, email: v.email, bron: `bladmuziek:${v.nummer}`, dag: dagAmsterdam(nu) },
+        {
+          id,
+          email: v.email,
+          bron: `bladmuziek:${v.nummer}`,
+          dag: dagAmsterdam(nu),
+          voornaam: v.naam,
+          voornaamMax: VOLLEDIGE_NAAM_MAX,
+        },
         nu,
       )) === 'ok'
   }

@@ -4,7 +4,7 @@
 // geen gegevens in een foutmelding: een fout laat de rij gewoon op `wacht` staan voor de volgende keer.
 // Zonder binding BERICHTEN doet dit niets.
 import { bladmuziekMail, leesPdf } from './bladmuziek.mjs'
-import { meldAanEnMarkeer } from './brevo.mjs'
+import { meldAanEnMarkeer, VOLLEDIGE_NAAM_MAX } from './brevo.mjs'
 import { dagAmsterdam, verstuurEnMarkeer, wis } from './opslag.mjs'
 import {
   ADRES_MARIELLE,
@@ -126,7 +126,14 @@ async function herhaalRij(env, deps, r, nu) {
       await meldAanEnMarkeer(
         env,
         deps,
-        { id: r.id, email: r.email, bron: `bladmuziek:${r.onderwerp}`, dag: r.dag },
+        {
+          id: r.id,
+          email: r.email,
+          bron: `bladmuziek:${r.onderwerp}`,
+          dag: r.dag,
+          voornaam: r.naam ?? undefined,
+          voornaamMax: VOLLEDIGE_NAAM_MAX,
+        },
         nu,
       )
     } else return markeerMislukt(env, r.id, ['status_tweede'])

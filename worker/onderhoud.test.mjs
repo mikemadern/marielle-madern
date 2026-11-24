@@ -185,7 +185,11 @@ describe('opnieuw versturen', () => {
     assert.deepEqual(b[0].body, {
       email: 'test@example.org',
       listIds: [4],
-      attributes: { BRON: 'bladmuziek:hart-van-glas', AANGEMELD_OP: '2026-11-30' },
+      attributes: {
+        FIRSTNAME: 'Proefpersoon Verzonnen',
+        BRON: 'bladmuziek:hart-van-glas',
+        AANGEMELD_OP: '2026-11-30',
+      },
     })
     assert.deepEqual(
       [rij(env.BERICHTEN, id).status_hoofd, rij(env.BERICHTEN, id).status_tweede],
@@ -505,6 +509,52 @@ describe('anonimiseren na 30 dagen', () => {
         .n,
       0,
     )
+  })
+})
+
+describe('de naam bij het vakje bij de bladmuziek (opnieuw proberen)', () => {
+  const rijMetVakje = (env, r = {}) =>
+    zet(env.BERICHTEN, {
+      soort: 'bladmuziek',
+      onderwerp: 'hart-van-glas',
+      bericht: null,
+      extra: '{"nieuwsbrief":true}',
+      status_hoofd: 'verzonden',
+      status_tweede: 'wacht',
+      ...r,
+    })
+  const attributen = () => aanmeldingen()[0].body.attributes
+
+  test('de hele naam uit de rij gaat in FIRSTNAME, LASTNAME blijft leeg', async () => {
+    const env = maakEnv()
+    rijMetVakje(env, { naam: "Marie-Louise D'Hondt" })
+    await draai(env)
+    assert.equal(attributen().FIRSTNAME, "Marie-Louise D'Hondt")
+    assert.ok(!('LASTNAME' in attributen()))
+  })
+  test('een naam tot 80 tekens mag, een langere of ongewone naam wordt weggelaten en de aanmelding gaat door', async () => {
+    for (const [naam, mee] of [
+      ['a'.repeat(80), true],
+      ['a'.repeat(81), false],
+      ['http://kwaad.example', false],
+      ['Anna 2', false],
+      [null, false],
+    ]) {
+      const env = maakEnv()
+      const id = rijMetVakje(env, { naam })
+      gesprekken = []
+      await draai(env)
+      assert.equal('FIRSTNAME' in attributen(), mee, String(naam))
+      assert.equal(rij(env.BERICHTEN, id).status_tweede, 'verzonden', String(naam))
+    }
+  })
+  test('de naam blijft in de rij zolang de aanvraag (30 dagen), ook na een gelukte aanmelding: alleen het losse formulier wist meteen', async () => {
+    const env = maakEnv()
+    const id = rijMetVakje(env, { naam: 'Anna Jansen' })
+    await draai(env)
+    const r = rij(env.BERICHTEN, id)
+    assert.equal(r.naam, 'Anna Jansen')
+    assert.equal(r.email, 'test@example.org')
   })
 })
 

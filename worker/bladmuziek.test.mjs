@@ -462,7 +462,7 @@ describe('versturen', () => {
     const velden = Object.fromEntries(t.init.body)
     assert.deepEqual(Object.keys(velden).sort(), ['response', 'secret'])
   })
-  test('met nieuwsbrief: alleen het adres gaat naar Brevo; er is geen tweede mail en geen mail aan Mariëlle meer', async () => {
+  test('met nieuwsbrief: het adres en de naam gaan naar Brevo; er is geen tweede mail en geen mail aan Mariëlle meer', async () => {
     const res = await run(verzoek({ ...GOED, nieuwsbrief: true }), maakOmgeving(), maakFetch())
     assert.deepEqual(await json(res), { ok: true, nieuwsbriefAangemeld: true })
     // precies één mail (de bladmuziek aan de bezoeker), niets aan hallo@
@@ -470,7 +470,7 @@ describe('versturen', () => {
     assert.equal(mails.length, 1)
     assert.deepEqual(mails[0].to, ['test@example.org'])
     assert.ok(mails.every((m) => !m.to.includes('hallo@mariellemadern.nl')))
-    // en één aanroep naar Brevo: het adres, lijst 4 en de bron; de naam gaat niet mee
+    // en één aanroep naar Brevo: het adres, lijst 4, de bron en de hele naam in FIRSTNAME (LASTNAME blijft leeg)
     const b = brevoAanroepen()
     assert.equal(b.length, 1)
     assert.equal(b[0].url, 'https://api.brevo.com/v3/contacts')
@@ -479,7 +479,80 @@ describe('versturen', () => {
     assert.equal(body.email, 'test@example.org')
     assert.deepEqual(body.listIds, [4])
     assert.equal(body.attributes.BRON, 'bladmuziek:hart-van-glas')
-    assert.ok(!b[0].init.body.includes('Proefpersoon') && !b[0].init.body.includes('Verzonnen'))
+    assert.equal(body.attributes.FIRSTNAME, 'Proefpersoon Verzonnen')
+    assert.ok(!('LASTNAME' in body.attributes))
+  })
+  test('de hele ingevulde naam gaat in FIRSTNAME en wordt nooit gesplitst; gewone namen blijven zoals getypt', async () => {
+    for (const naam of [
+      "Marie-Louise D'Hondt",
+      'Jan de Vries',
+      'Mariëlle',
+      'Şebnem Çelik',
+      'Anna van der Berg-Jansen',
+      'Zoë',
+    ]) {
+      gesprekken = []
+      await run(verzoek({ ...GOED, naam, nieuwsbrief: true }))
+      const a = JSON.parse(brevoAanroepen()[0].init.body).attributes
+      assert.equal(a.FIRSTNAME, naam)
+      assert.ok(!('LASTNAME' in a), naam)
+    }
+  })
+  test('een naam van precies 80 tekens gaat mee, 81 niet (de aanmelding gaat in beide gevallen door)', async () => {
+    let res = await run(verzoek({ ...GOED, naam: 'a'.repeat(80), nieuwsbrief: true }))
+    assert.deepEqual(await json(res), { ok: true, nieuwsbriefAangemeld: true })
+    assert.equal(JSON.parse(brevoAanroepen()[0].init.body).attributes.FIRSTNAME.length, 80)
+    gesprekken = []
+    res = await run(verzoek({ ...GOED, naam: 'a'.repeat(81), nieuwsbrief: true }))
+    assert.deepEqual(await json(res), { ok: true, nieuwsbriefAangemeld: true })
+    assert.ok(!('FIRSTNAME' in JSON.parse(brevoAanroepen()[0].init.body).attributes))
+  })
+  test('een naam die er niet gewoon uitziet wordt weggelaten bij Brevo en blokkeert niets: de bladmuziek en de aanmelding gaan door', async () => {
+    const slecht = [
+      'http://kwaad.example',
+      'www.kwaad.example',
+      'anna@voorbeeld.nl',
+      'Anna <b>',
+      'Anna (Jansen)',
+      'Anna 2',
+      'J.P. Jansen',
+      '1234',
+      'Anna Bcc: x@example.org',
+    ]
+    for (const naam of slecht) {
+      gesprekken = []
+      const res = await run(verzoek({ ...GOED, naam, nieuwsbrief: true }))
+      assert.deepEqual(await json(res), { ok: true, nieuwsbriefAangemeld: true }, naam)
+      assert.equal(resendAanroepen().length, 1, naam)
+      const a = JSON.parse(brevoAanroepen()[0].init.body).attributes
+      assert.ok(!('FIRSTNAME' in a) && !('LASTNAME' in a), naam)
+      assert.equal(a.BRON, 'bladmuziek:hart-van-glas')
+    }
+  })
+  test('regeleinden en stuurtekens in de naam komen niet bij Brevo (de naam wordt eerst schoongemaakt)', async () => {
+    await run(verzoek({ ...GOED, naam: 'Anna\r\nJansen', nieuwsbrief: true }))
+    const a = JSON.parse(brevoAanroepen()[0].init.body).attributes
+    assert.equal(a.FIRSTNAME, 'Anna Jansen')
+  })
+  test('zonder het vakje gaat de naam nergens heen: geen aanroep naar Brevo', async () => {
+    await run(verzoek({ ...GOED, naam: 'Marie-Louise', nieuwsbrief: false }))
+    assert.equal(brevoAanroepen().length, 0)
+  })
+  test('een ontbrekend eigen attribuut kost de naam niet: eerst zonder BRON en AANGEMELD_OP, de naam blijft', async () => {
+    const res = await run(
+      verzoek({ ...GOED, nieuwsbrief: true }),
+      maakOmgeving(),
+      maakFetch({ brevo: [400, 201] }),
+    )
+    assert.deepEqual(await json(res), { ok: true, nieuwsbriefAangemeld: true })
+    const body = brevoAanroepen().map((g) => JSON.parse(g.init.body))
+    assert.equal(body.length, 2)
+    assert.deepEqual(body[1].attributes, { FIRSTNAME: 'Proefpersoon Verzonnen' })
+  })
+  test('de naam staat nooit in een antwoord of een log', async () => {
+    const res = await run(verzoek({ ...GOED, nieuwsbrief: true }))
+    assert.ok(!(await res.clone().text()).includes('Proefpersoon'))
+    assert.deepEqual(logregels, [])
   })
   test('zonder het vakje: geen aanroep naar Brevo', async () => {
     const res = await run(verzoek(GOED))
@@ -503,7 +576,7 @@ describe('versturen', () => {
     assert.equal(brevoAanroepen().length, 0)
   })
   test('Brevo mislukt (500, 401, geen verbinding, ongeldig): de bezoeker krijgt de bladmuziek wel, zonder fout', async () => {
-    for (const brevo of [[500], [401], ['netwerk'], [400, 400]]) {
+    for (const brevo of [[500], [401], ['netwerk'], [400, 400, 400]]) {
       gesprekken = []
       const res = await run(
         verzoek({ ...GOED, nieuwsbrief: true }),
