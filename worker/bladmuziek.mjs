@@ -21,7 +21,6 @@ import {
   TOEGESTANE_HOSTS,
 } from './gedeeld.mjs'
 
-export { hostToegestaan, TOEGESTANE_HOSTS }
 import { ADRES_MARIELLE, AFZENDER, mailBezoeker, mailMarielle } from './teksten.mjs'
 
 export const PAD = '/api/bladmuziek'
@@ -134,3 +133,6 @@ export async function behandel(request, env, deps) {
   }
   return antwoord(200, { ok: true, nieuwsbriefVerstuurd })
 }
+
+// De hostcontrole is gedeeld met het contactformulier (gedeeld.mjs); de tests van de bladmuziek importeren haar hier
+export { hostToegestaan, TOEGESTANE_HOSTS }
