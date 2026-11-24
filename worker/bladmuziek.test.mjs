@@ -5,6 +5,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { afterEach, beforeEach, describe, test } from 'node:test'
 import { behandel, geconfigureerd, hostToegestaan, TOEGESTANE_HOSTS } from './bladmuziek.mjs'
+import { mailBezoeker, veiligeNaam } from './teksten.mjs'
 
 const SITE = 'https://mariellemadern.nl'
 const HOSTNAME = 'mariellemadern.nl'
@@ -460,11 +461,14 @@ describe('versturen', () => {
     )
     assert.deepEqual(await json(res), { ok: true, nieuwsbriefVerstuurd: false })
   })
-  test('een naam met HTML wordt veilig gemaakt in de mail', async () => {
+  test('een naam met HTML of regeleinden komt niet in de mail aan de bezoeker: alleen Dag,', async () => {
     await run(verzoek({ ...GOED, naam: '<b>Proef</b>\r\nBcc: x@example.org' }))
     const body = JSON.parse(resendAanroepen()[0].init.body)
-    assert.ok(!body.html.includes('<b>Proef'))
-    assert.match(body.html, /&lt;b&gt;Proef&lt;\/b&gt;/)
+    assert.match(body.text, /^Dag,\n\n/)
+    assert.match(body.html, /^<p>Dag,<\/p>/)
+    assert.ok(
+      !body.html.includes('<b>') && !body.html.includes('Proef') && !body.html.includes('Bcc'),
+    )
     assert.ok(!body.text.includes('\r'))
   })
   test('Resend: daglimiet of maandlimiet geeft 503, een andere fout 502', async () => {
@@ -507,5 +511,87 @@ describe('privacy', () => {
     assert.equal(res.headers.get('cache-control'), 'no-store')
     assert.equal(res.headers.get('x-robots-tag'), 'noindex')
     assert.equal(res.headers.get('x-content-type-options'), 'nosniff')
+  })
+})
+
+describe('aanhef van de mail met de bladmuziek', () => {
+  test("gewone namen staan in de aanhef: 'Dag <naam>,'", () => {
+    for (const naam of [
+      'Anna',
+      'Anna-Marie',
+      'Zoë',
+      "O'Neil",
+      'O’Neil',
+      'Jan de Vries',
+      'Şebnem Çelik',
+      'Łukasz',
+      'José  Maria',
+      '  Anna  ',
+    ]) {
+      const verwacht = naam.trim().replace(/ {2,}/g, ' ')
+      assert.equal(veiligeNaam(naam), verwacht, naam)
+      const mail = mailBezoeker({ naam, titel: 'Spiegel', nieuwsbrief: false })
+      assert.match(
+        mail.text,
+        new RegExp(`^Dag ${verwacht.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')},\n\n`),
+        naam,
+      )
+    }
+    // een naam met een los accent (e + combinerend teken) telt ook als letters
+    assert.equal(veiligeNaam('Zoe\u0308'), 'Zoe\u0308')
+  })
+
+  test("al het andere geeft 'Dag,' zonder naam", () => {
+    for (const naam of [
+      'anna@voorbeeld.nl',
+      'http://x.nl',
+      'www.x.nl',
+      'Anna <b>',
+      '<script>alert(1)</script>',
+      'Anna\nBcc: x',
+      'Anna\r\nSubject: x',
+      'Anna\tJansen',
+      'Anna 2',
+      '2Pac',
+      'Anna (Jansen)',
+      'Anna, Jansen',
+      'Anna: Jansen',
+      'x'.repeat(41),
+      'Jan ' + 'x'.repeat(37),
+      '',
+      '   ',
+      '-',
+      "'",
+      '- -',
+      '1234',
+      'Anna\u00a0Jansen',
+      'Anna\u0000',
+      null,
+      undefined,
+    ]) {
+      assert.equal(veiligeNaam(naam), null, JSON.stringify(naam))
+      const mail = mailBezoeker({ naam, titel: 'Spiegel', nieuwsbrief: false })
+      assert.match(mail.text, /^Dag,\n\n/, JSON.stringify(naam))
+      assert.match(mail.html, /^<p>Dag,<\/p>/, JSON.stringify(naam))
+    }
+  })
+
+  test('de grens ligt op 40 tekens (na trimmen en dubbele spaties samenvoegen)', () => {
+    assert.equal(veiligeNaam('x'.repeat(40)), 'x'.repeat(40))
+    assert.equal(veiligeNaam('x'.repeat(41)), null)
+    assert.equal(veiligeNaam('  ' + 'x'.repeat(40) + '  '), 'x'.repeat(40))
+    assert.equal(
+      veiligeNaam('x'.repeat(19) + '     ' + 'x'.repeat(20)),
+      'x'.repeat(19) + ' ' + 'x'.repeat(20),
+    ) // 40 na samenvoegen
+    // tekens tellen, geen bytes: 40 letters met accenten en 40 emoji-letters
+    assert.equal(veiligeNaam('é'.repeat(40)), 'é'.repeat(40))
+    assert.equal(veiligeNaam('😀'.repeat(3)), null)
+  })
+
+  test('platte tekst en HTML hebben dezelfde aanhef; een apostrof wordt in de HTML veilig gemaakt', () => {
+    const mail = mailBezoeker({ naam: "O'Neil", titel: 'Spiegel', nieuwsbrief: false })
+    assert.match(mail.text, /^Dag O'Neil,\n\n/)
+    assert.match(mail.html, /^<p>Dag O&#39;Neil,<\/p>/)
   })
 })

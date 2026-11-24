@@ -20,10 +20,24 @@ const regel = (tekst) =>
     .replace(/[\p{Zl}\p{Zp}\r\n]+/gu, ' ')
     .trim()
 
+// De naam van de bezoeker voor in de aanhef 'Dag <naam>,'. Iedereen kan op een formulier elk adres en elke naam invullen,
+// dus de mail aan dat adres bevat alleen een 'gewone' naam: uitsluitend letters (ook met accenten, alle Unicode-letters),
+// spaties, een koppelteken en een apostrof, na het trimmen en het samenvoegen van dubbele spaties maximaal 40 tekens.
+// Alles anders (een adres, een link, haakjes, cijfers, regeleinden, te lang, leeg) geeft null: dan staat er 'Dag,'.
+// Besluit van de eigenaar, 2026-11-24.
+const GEWONE_NAAM = /^[\p{L}\p{M}][\p{L}\p{M} '’-]*$/u
+export function veiligeNaam(naam) {
+  const schoon = String(naam ?? '')
+    .trim()
+    .replace(/ {2,}/g, ' ')
+  if ([...schoon].length > 40 || !GEWONE_NAAM.test(schoon) || !/\p{L}/u.test(schoon)) return null
+  return schoon
+}
+
 export function mailBezoeker({ naam, titel, nieuwsbrief }) {
   const extra = nieuwsbrief && NIEUWSBRIEF_ALINEA ? NIEUWSBRIEF_ALINEA : null
   const alineas = [
-    `Dag ${regel(naam)},`,
+    veiligeNaam(naam) ? `Dag ${veiligeNaam(naam)},` : 'Dag,',
     `Fijn dat je de bladmuziek van ${titel} wilt hebben. Je vindt hem in de bijlage.`,
     'Ik hoop dat het nummer je iets brengt, wanneer je het speelt of zingt.',
     ...(extra ? [extra] : []),
