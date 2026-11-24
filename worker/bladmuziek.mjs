@@ -10,44 +10,25 @@
 // Wat echt beschermt: Turnstile, met controle van de hostname en de actie in het antwoord, en de limieten.
 // De Origin-controle is alleen een eenvoudig filter tegen verkeerd gebruik door een browser: elk script kan
 // die kop zelf zetten, het is geen verificatie.
+import {
+  antwoord,
+  controleerTurnstile,
+  EMAIL,
+  hostToegestaan,
+  leesJson,
+  stuurMail as stuurMailVan,
+  teVaak,
+  TOEGESTANE_HOSTS,
+} from './gedeeld.mjs'
+
+export { hostToegestaan, TOEGESTANE_HOSTS }
 import { ADRES_MARIELLE, AFZENDER, mailBezoeker, mailMarielle } from './teksten.mjs'
 
 export const PAD = '/api/bladmuziek'
 const MAX_VERZOEK = 4096
-// Alleen op deze adressen doet de Worker iets. Een preview-adres en het gewone workers.dev-adres krijgen 403,
-// ook als de Turnstile-widget ze toestaat (dat hangt dus niet af van een instelling van de eigenaar). Een
-// code-constante: het echte domein en www kunnen niet per ongeluk uit een instelling verdwijnen. Bewust uitbreiden
-// kan met de optionele, niet-geheime variabele TOEGESTANE_HOSTS (komma-gescheiden hostnamen, exact, geen wildcard):
-// die staat in wrangler.jsonc ("vars"), want de Worker wordt vanuit dat bestand beheerd en Cloudflare staat
-// variabelen in het dashboard dan niet toe; zie de README.
-export const TOEGESTANE_HOSTS = ['mariellemadern.nl', 'www.mariellemadern.nl']
 // De actie die het Turnstile-widget in het formulier moet meegeven (data-action); Turnstile geeft hem terug
 const TURNSTILE_ACTIE = 'bladmuziek'
 const MAX_PDF = 15 * 1024 * 1024
-const RESEND = 'https://api.resend.com/emails'
-const TURNSTILE = 'https://challenges.cloudflare.com/turnstile/v0/siteverify'
-const EMAIL = /^[^\s@<>(),;:"\\]+@[^\s@<>(),;:"\\]+\.[^\s@<>(),;:"\\]+$/
-
-const antwoord = (status, body = {}, extra = {}) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      'content-type': 'application/json; charset=utf-8',
-      'cache-control': 'no-store',
-      'x-robots-tag': 'noindex',
-      'x-content-type-options': 'nosniff',
-      ...extra,
-    },
-  })
-
-export const hostToegestaan = (env, hostname) =>
-  [
-    ...TOEGESTANE_HOSTS,
-    ...String(env.TOEGESTANE_HOSTS ?? '')
-      .split(',')
-      .map((h) => h.trim().toLowerCase())
-      .filter(Boolean),
-  ].includes(hostname.toLowerCase())
 
 export const geconfigureerd = (env) =>
   Boolean(
@@ -58,40 +39,6 @@ export const geconfigureerd = (env) =>
     env.LIMIET_ADRES &&
     env.LIMIET_ALGEMEEN,
   )
-
-// Sleutel voor een limiet: een HMAC (met het Turnstile-geheim als sleutel) van het adres of het IP-adres, in hex.
-// Zo staat het adres zelf nergens en is de sleutel niet terug te rekenen door iemand zonder het geheim.
-// De limiet-binding houdt alleen een teller in het geheugen bij; er wordt niets bewaard of gelogd.
-async function limietSleutel(env, tekst) {
-  const sleutel = await crypto.subtle.importKey(
-    'raw',
-    new TextEncoder().encode(env.TURNSTILE_SECRET),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  )
-  const hash = await crypto.subtle.sign('HMAC', sleutel, new TextEncoder().encode(tekst))
-  return [...new Uint8Array(hash)].map((b) => b.toString(16).padStart(2, '0')).join('')
-}
-
-// Leest de body gestreamd en stopt zodra hij groter is dan het maximum (geeft dan null)
-async function leesBeperkt(request, max) {
-  if (!request.body) return ''
-  const lezer = request.body.getReader()
-  const stukken = []
-  let totaal = 0
-  for (;;) {
-    const { done, value } = await lezer.read()
-    if (done) break
-    totaal += value.byteLength
-    if (totaal > max) {
-      await lezer.cancel()
-      return null
-    }
-    stukken.push(value)
-  }
-  return new TextDecoder().decode(await new Blob(stukken).arrayBuffer())
-}
 
 function naarBase64(buffer) {
   const bytes = new Uint8Array(buffer)
@@ -118,16 +65,7 @@ function controleer(invoer, lijst) {
   return { naam, email, nummer, token, nieuwsbrief: invoer.nieuwsbrief === true }
 }
 
-async function stuurMail(env, deps, mail) {
-  const res = await deps.fetch(RESEND, {
-    method: 'POST',
-    headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
-    body: JSON.stringify({ from: AFZENDER, ...mail }),
-  })
-  if (res.ok) return 'ok'
-  // Daglimiet of maandlimiet van Resend: tijdelijk niet beschikbaar, niet een fout van de bezoeker
-  return res.status === 429 ? 'limiet' : 'mislukt'
-}
+const stuurMail = (env, deps, mail) => stuurMailVan(env, deps, mail, AFZENDER)
 
 // Geeft een Response voor elk verzoek aan /api/..., en null voor al het andere.
 export async function behandel(request, env, deps) {
@@ -138,23 +76,9 @@ export async function behandel(request, env, deps) {
   if (!hostToegestaan(env, url.hostname)) return antwoord(403, { fout: 'adres_niet_toegestaan' })
   if (!geconfigureerd(env)) return antwoord(503, { fout: 'uitgeschakeld' })
 
-  // Eenvoudig filter tegen gebruik vanaf andere pagina's in een browser (geen verificatie, zie boven)
-  if (request.headers.get('origin') !== url.origin) return antwoord(403, { fout: 'verboden' })
-  if (!(request.headers.get('content-type') ?? '').startsWith('application/json'))
-    return antwoord(415, { fout: 'inhoudstype' })
-  if (Number(request.headers.get('content-length') ?? 0) > MAX_VERZOEK)
-    return antwoord(413, { fout: 'te_groot' })
-
-  let invoer
-  try {
-    // Gestreamd en met een maximum, ook als er geen content-length is
-    const tekst = await leesBeperkt(request, MAX_VERZOEK)
-    if (tekst === null) return antwoord(413, { fout: 'te_groot' })
-    invoer = JSON.parse(tekst)
-  } catch {
-    return antwoord(400, { fout: 'ongeldig' })
-  }
-  if (invoer === null || typeof invoer !== 'object') return antwoord(400, { fout: 'ongeldig' })
+  const gelezen = await leesJson(request, url, MAX_VERZOEK)
+  if (gelezen.antwoord) return gelezen.antwoord
+  const invoer = gelezen.invoer
 
   // Honeypot: een veld dat een mens niet ziet. Is het gevuld, dan doen we alsof het gelukt is en sturen niets.
   if (typeof invoer.website === 'string' && invoer.website !== '')
@@ -167,37 +91,20 @@ export async function behandel(request, env, deps) {
       ...(v.veld ? { veld: v.veld } : {}),
     })
 
-  // Turnstile (zonder het adres van de bezoeker door te geven)
-  let controle
-  try {
-    const res = await deps.fetch(TURNSTILE, {
-      method: 'POST',
-      body: new URLSearchParams({ secret: env.TURNSTILE_SECRET, response: v.token }),
-    })
-    controle = await res.json()
-  } catch {
-    return antwoord(503, { fout: 'tijdelijk_niet_beschikbaar' })
-  }
-  // Het token moet voor onze eigen hostname en voor deze actie zijn uitgegeven (anders kan een token van een
-  // andere site, met een eigen widget, hier worden gebruikt). Ontbreekt een van de twee in het antwoord: weigeren.
-  if (
-    !controle?.success ||
-    controle.hostname !== url.hostname ||
-    controle.action !== TURNSTILE_ACTIE
-  )
-    return antwoord(400, { fout: 'controle_mislukt' })
+  // Turnstile: het token moet voor onze hostname en voor de actie van dit formulier zijn uitgegeven
+  const geweigerd = await controleerTurnstile(env, deps, v.token, url, TURNSTILE_ACTIE)
+  if (geweigerd) return geweigerd
 
   // Limieten per minuut, in deze volgorde en met een vroege stop (een geblokkeerd verzoek telt niet mee voor de
   // volgende limiet): per IP-adres van de bezoeker (alleen voor de beveiliging, als HMAC-sleutel, nooit
   // bewaard of gelogd), per e-mailadres, en voor de hele site.
   const ip = request.headers.get('cf-connecting-ip') ?? 'geen-ip'
-  const teVaak = async (limiet, tekst) =>
-    !(await limiet.limit({ key: tekst === null ? 'algemeen' : await limietSleutel(env, tekst) }))
-      .success
   if (
-    (await teVaak(env.LIMIET_IP, `ip:${ip}`)) ||
-    (await teVaak(env.LIMIET_ADRES, `adres:${v.email.toLowerCase()}`)) ||
-    (await teVaak(env.LIMIET_ALGEMEEN, null))
+    await teVaak(env, [
+      [env.LIMIET_IP, `ip:${ip}`],
+      [env.LIMIET_ADRES, `adres:${v.email.toLowerCase()}`],
+      [env.LIMIET_ALGEMEEN, null],
+    ])
   )
     return antwoord(429, { fout: 'te_vaak' }, { 'retry-after': '60' })
 

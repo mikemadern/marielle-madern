@@ -41,7 +41,7 @@ public/               bestanden die ongewijzigd worden uitgerold
                       video krijgt daarom altijd een nieuwe bestandsnaam. Logo's, icoon, favicon en illustraties: een dag.
   _redirects          redirects van de oude WordPress-site
   afbeeldingen/       wordt gemaakt door pnpm afbeeldingen (niet in git)
-worker/                     de kleine Worker voor /api/* (bladmuziek per e-mail), met tests (pnpm test:worker)
+worker/                     de kleine Worker voor /api/* (bladmuziek per e-mail en het contactformulier), met tests (pnpm test:worker)
 scripts/bladmuziek-lijst.mjs  maakt worker/bladmuziek.json: de nummers met `bladmuziek: true`
 scripts/afbeeldingen.mjs   maakt de WebP-formaten van app/bronafbeeldingen
 scripts/og/  maakt (pnpm og) en controleert (pnpm og:check) de deelafbeeldingen (og:image, 1200 x 630) in public/afbeeldingen/og; welke hoezen erop mogen staat in scripts/deelafbeeldingen-toegestaan.json
@@ -110,6 +110,16 @@ Testen zonder sleutels en zonder echte mail: `pnpm test:worker` (alles nageboots
 ### Het formulier op de nummerpagina
 
 `app/components/BladmuziekFormulier.vue` (teksten in `app/bladmuziek-teksten.ts`) staat onderaan de nummerpagina, na de liedtekst, met een koppeling 'Bladmuziek van dit nummer' bij de luisterbalk. Het verschijnt **alleen** bij een nummer met `bladmuziek: true` (nu de acht nummers waarvoor een pdf in R2 staat: In het licht, Kijk eens waar je nu staat, Noem mijn naam, Spiegel, U geeft leven, U ziet mij, Voor nu en voor altijd en Wat een liefde; 'Hart van glas' volgt zodra zijn pdf er staat). Het Turnstile-script van Cloudflare laadt pas als iemand het formulier gebruikt (focus in een veld of een klik op de koppeling). De **Site key** van de Turnstile-widget staat als vaste waarde `runtimeConfig.public.turnstileSitekey` in `nuxt.config.ts`: hij is publiek en hoort bij de widget van de eigenaar (maakt de eigenaar een andere widget, dan moet die waarde mee veranderen); de geheime sleutel staat alleen als secret `TURNSTILE_SECRET` in Cloudflare. Een proefbouw met de testsleutel van Cloudflare, waarmee Turnstile altijd slaagt: `NUXT_PUBLIC_TURNSTILE_SITEKEY=1x00000000000000000000AA pnpm generate`.
+
+## Contactformulier: het eindpunt (staat uit)
+
+`POST /api/contact` (`worker/contact.mjs`) is het eindpunt voor een contactformulier (algemene vragen en boekingen), op dezelfde manier gebouwd als de bladmuziek: dezelfde Worker, Turnstile (actie `contact`, het formulier moet `data-action="contact"` meegeven), Resend, niets opgeslagen en niets gelogd. De stappen die beide eindpunten delen staan in `worker/gedeeld.mjs`; `worker/api.mjs` verdeelt de verzoeken. Er is **nog geen formulier op de pagina**: dit is alleen het eindpunt.
+
+- **Uit tot `CONTACT_AAN` op `aan` staat:** een gewone variabele in `wrangler.jsonc` (`"vars"`, naast `TOEGESTANE_HOSTS`). Zonder die variabele geeft het eindpunt `503`. Zet hem pas aan als het formulier er is en de teksten klaar zijn.
+- **Zelfde secrets en hostcontrole als de bladmuziek:** `RESEND_API_KEY` en `TURNSTILE_SECRET` (al gezet) en `TOEGESTANE_HOSTS`; een andere hostnaam krijgt `403`. Er is geen R2-bucket voor nodig.
+- **Eigen limieten per minuut**, los van de bladmuziek (`LIMIET_CONTACT_IP` 3, `LIMIET_CONTACT_ADRES` 1, `LIMIET_CONTACT_ALGEMEEN` 5): het ene formulier blokkeert het andere niet.
+- **Twee mails per bericht:** eerst de mail aan Mariëlle (met het adres van de bezoeker als `reply_to`), dan een bevestiging aan de bezoeker met **alleen vaste tekst** (geen naam, bericht of link van de bezoeker). Het Resend-plafond is 100 mails per dag en 3.000 per maand, gedeeld met de bladmuziek: een contactbericht kost er twee, dus hooguit 50 berichten per dag. Lukt de bevestiging niet, dan is het bericht toch aangekomen.
+- **Invoer:** naam, e-mailadres, onderwerp (vaste lijst), bericht tot 5.000 tekens; bij onderwerp `boeking` extra velden die allemaal optioneel zijn (datum, tijd, plaats, soort gelegenheid, verwacht aantal bezoekers, speeltijden en duur, budget). Het maximum van een verzoek is 24 KB.
 
 ## Let op
 
