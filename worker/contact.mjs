@@ -1,6 +1,6 @@
 // POST /api/contact: het contactformulier (algemene vragen en boekingen). Stuurt een mail aan Mariëlle (met het
 // adres van de bezoeker als reply_to) en een bevestiging met alleen vaste tekst aan de bezoeker (Resend).
-// Zelfde aanpak als de bladmuziek: Turnstile (actie 'contact'), eigen limieten, niets opgeslagen en niets gelogd.
+// Zelfde aanpak als de bladmuziek: Turnstile (actie 'contact'), eigen limieten, niets gelogd, en (als er een database is) 30 dagen bewaard als back-up (opslag.mjs).
 //
 // UIT tot de eigenaar de variabele CONTACT_AAN op 'aan' zet in wrangler.jsonc ("vars"): zonder die variabele geeft het
 // eindpunt 503. Benodigd: de secrets RESEND_API_KEY en TURNSTILE_SECRET (dezelfde als bij de bladmuziek) en de drie

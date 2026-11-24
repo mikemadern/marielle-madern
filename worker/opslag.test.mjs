@@ -3,6 +3,7 @@
 // en adressen zijn verzonnen.
 // Draaien: pnpm test:worker
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import { DatabaseSync } from 'node:sqlite'
 import { afterEach, beforeEach, describe, test } from 'node:test'
 import { behandel } from './api.mjs'
@@ -413,5 +414,38 @@ describe('privacy', () => {
         'geanonimiseerd_op',
       ],
     )
+  })
+
+  test('de README bevat precies de CREATE TABLE-opdracht uit de code, en wrangler.jsonc de binding met de database van de eigenaar', () => {
+    const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf-8')
+    assert.ok(readme.includes(SCHEMA), 'het schema in de README wijkt af van worker/opslag.mjs')
+    const config = JSON.parse(
+      readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf-8')
+        .split('\n')
+        .filter((regel) => !/^\s*\/\//.test(regel))
+        .join('\n'),
+    )
+    assert.deepEqual(config.d1_databases, [
+      {
+        binding: 'BERICHTEN',
+        database_name: 'marielle-madern',
+        database_id: '74756d1e-94a8-4909-9165-14e6190d95d4',
+      },
+    ])
+    // de SQL-voorbeelden in de README werken op het schema
+    const d1 = maakD1()
+    const voorbeelden = [...readme.matchAll(/```sql\n([\s\S]*?)```/g)]
+      .map((m) => m[1])
+      .filter((t) => t.includes('-- De laatste 20'))[0]
+    assert.ok(voorbeelden)
+    const opdrachten = voorbeelden
+      .split('\n')
+      .filter((r) => !r.startsWith('--'))
+      .join('\n')
+      .split(';')
+      .map((t) => t.trim())
+      .filter(Boolean)
+    assert.equal(opdrachten.length, 7)
+    for (const sql of opdrachten) d1.db.prepare(sql).all()
   })
 })

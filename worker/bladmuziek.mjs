@@ -1,5 +1,6 @@
 // POST /api/bladmuziek: stuurt de bladmuziek van een nummer per e-mail (Resend) naar de bezoeker.
-// Geen opslag en geen logging van naam of e-mailadres: ze bestaan alleen in dit verzoek en in de mails.
+// Geen logging van naam of e-mailadres. Als er een database is (opslag.mjs) staat het bericht daar 30 dagen, daarna
+// is het anoniem; zonder database bestaan ze alleen in dit verzoek en in de mails.
 // Alles wat van buiten komt (fetch, de lijst met nummers) wordt meegegeven, zodat de tests het kunnen nabootsen.
 //
 // Benodigd (Cloudflare, door de eigenaar ingesteld): secrets RESEND_API_KEY en TURNSTILE_SECRET, de R2-bucket

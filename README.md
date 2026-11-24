@@ -87,7 +87,7 @@ Elke pagina en elk nummer heeft een eigen afbeelding voor het delen van een link
 
 ## Bladmuziek per e-mail (staat uit)
 
-Een nummer met `bladmuziek: true` in zijn bestand in `content/nummers/` krijgt (vanaf deel 2) een formulier om de bladmuziek per e-mail te vragen; `POST /api/bladmuziek` (`worker/`) stuurt de pdf via Resend. De pdf's staan **niet in deze repo** maar privé in Cloudflare R2, als `bladmuziek/<bestandsnaam van het nummer>.pdf` (bijvoorbeeld `bladmuziek/hart-van-glas.pdf`). De Worker bewaart en logt naam en adres niet.
+Een nummer met `bladmuziek: true` in zijn bestand in `content/nummers/` krijgt (vanaf deel 2) een formulier om de bladmuziek per e-mail te vragen; `POST /api/bladmuziek` (`worker/`) stuurt de pdf via Resend. De pdf's staan **niet in deze repo** maar privé in Cloudflare R2, als `bladmuziek/<bestandsnaam van het nummer>.pdf` (bijvoorbeeld `bladmuziek/hart-van-glas.pdf`). Naam en adres worden niet gelogd; als back-up staan ze 30 dagen in een database en daarna zijn ze anoniem (zie "Opslag van berichten (D1)").
 
 De feature werkt pas als de eigenaar dit in Cloudflare heeft ingesteld (het team doet dat niet en zet nooit een sleutel in de repo, een PR of een chat); zolang een van deze ontbreekt, geeft `/api/bladmuziek` `503` en doet niets:
 
@@ -120,6 +120,72 @@ Testen zonder sleutels en zonder echte mail: `pnpm test:worker` (alles nageboots
 - **Eigen limieten per minuut**, los van de bladmuziek (`LIMIET_CONTACT_IP` 3, `LIMIET_CONTACT_ADRES` 1, `LIMIET_CONTACT_ALGEMEEN` 5): het ene formulier blokkeert het andere niet.
 - **Twee mails per bericht:** eerst de mail aan Mariëlle (met het adres van de bezoeker als `reply_to`), dan een bevestiging aan de bezoeker met **alleen vaste tekst** (geen naam, bericht, samenvatting of link van de bezoeker, zodat het formulier niet kan worden gebruikt om met onze afzender een eigen tekst naar iemand anders te sturen; besluit van 2026-11-24). Het Resend-plafond is op het gratis plan 100 mails per dag en 3.000 per maand, gedeeld met de bladmuziek: een contactbericht kost er twee, dus hooguit 50 berichten per dag. Lukt de bevestiging niet, dan is het bericht toch aangekomen.
 - **Invoer:** naam, e-mailadres, onderwerp (`vraag` of `boeking`), bericht tot 5.000 tekens; bij `boeking` zes extra gewone tekstvelden die allemaal optioneel zijn (`datumtijd`, `plaats`, `gelegenheid`, `aantal`, `speeltijden`, `budget`; elk tot 100 tekens, `speeltijden` tot 200). Het maximum van een verzoek is 24 KB.
+
+## Opslag van berichten (D1)
+
+De ingevulde formulieren (het contactformulier en de bladmuziekaanvragen) worden in een Cloudflare **D1**-database bewaard, als back-up voor als Resend even niet bereikbaar is. **De database `marielle-madern`** (binding `BERICHTEN` in `wrangler.jsonc`, `database_id` `74756d1e-94a8-4909-9165-14e6190d95d4`: een ID is geen geheim) is door de eigenaar aangemaakt met **jurisdictie EU** (volgens het dashboard 'The European Union', regio Eastern Europe binnen die jurisdictie). Dat betekent dat de database zelf alleen in de EU draait en opslaat; de Worker draait wel bij het dichtstbijzijnde datacenter van de bezoeker, dus de gegevens van een verzoek gaan daar kortstondig langs (bron: developers.cloudflare.com/d1/configuration/data-location).
+
+- **Wat gebeurt er:** `POST /api/contact` en `POST /api/bladmuziek` valideren, controleren Turnstile en de limieten, slaan het bericht **eerst** op (status `wacht`), sturen dan de mail(s) en werken de status bij (`verzonden` of `mislukt`). Lukt het opslaan niet, dan wordt de mail toch verstuurd. Lukt een mail tijdelijk niet, dan hoort de bezoeker dat het bericht is aangekomen en probeert de Worker het later opnieuw. Zonder de binding werkt alles als zonder opslag.
+- **Herhalen:** een Cron Trigger (elke 5 minuten, `worker/onderhoud.mjs`) probeert mails die niet zijn gelukt opnieuw, tot 24 uur; daarna wordt de status `mislukt`. Elke mail heeft een Idempotency-Key (`<id>-hoofd`, `<id>-tweede`), zodat Resend nooit twee keer dezelfde mail verstuurt. De pdf van de bladmuziek wordt bij een herhaling opnieuw uit R2 gelezen (nooit in de database bewaard).
+- **Anonimiseren:** na 30 dagen worden naam, e-mailadres, bericht en extra gegevens (de boekingsvelden, de nieuwsbriefvlag) leeggemaakt. **Blijft:** `id`, `soort` (`contact` of `bladmuziek`), de `dag` (in Europe/Amsterdam), `onderwerp` (`vraag`, `boeking` of het nummer) en de statussen: dat zijn de statistieken. De nieuwsbriefaanmelding blijft een mail aan hallo@mariellemadern.nl en wordt niet apart bewaard.
+- **Time Travel:** D1 maakt automatisch herstelpunten, op het gratis plan van de laatste 7 dagen (30 dagen op het betaalde plan; bron: developers.cloudflare.com/d1/reference/time-travel). Verwijderde of geanonimiseerde gegevens kunnen dus nog tot 7 dagen in zo'n herstelkopie van Cloudflare staan.
+- **Beveiliging:** er is geen openbaar leesadres en geen beheerpagina: alleen de Worker bereikt de database, met vaste SQL en parameters. Er wordt niets gelogd (Workers Logs staan uit).
+
+### Eenmalig: de tabel aanmaken (door de eigenaar, **vóór** deze binding wordt uitgerold)
+
+Cloudflare-dashboard, Storage en databases, D1 SQL database, `marielle-madern`, tabblad Console: plak en voer uit (drie opdrachten; neemt de console er maar één tegelijk, voer ze dan een voor een uit):
+
+```sql
+CREATE TABLE berichten (
+  id TEXT PRIMARY KEY,
+  soort TEXT NOT NULL,
+  aangemaakt TEXT NOT NULL,
+  dag TEXT NOT NULL,
+  onderwerp TEXT NOT NULL,
+  naam TEXT,
+  email TEXT,
+  bericht TEXT,
+  extra TEXT,
+  status_hoofd TEXT NOT NULL DEFAULT 'wacht',
+  status_tweede TEXT NOT NULL DEFAULT 'nvt',
+  pogingen INTEGER,
+  laatste_poging TEXT,
+  geanonimiseerd_op TEXT
+);
+CREATE INDEX berichten_dag ON berichten (dag);
+CREATE INDEX berichten_open ON berichten (status_hoofd, status_tweede);
+```
+
+Zonder deze tabel mislukt het opslaan stil (de mails gaan wel gewoon uit). Controle daarna: `SELECT count(*) FROM berichten;` geeft `0`.
+
+### De cijfers en berichten bekijken (D1-console)
+
+`status_hoofd` is bij contact de mail aan Mariëlle en bij de bladmuziek de mail met de pdf aan de bezoeker; `status_tweede` is bij contact de bevestiging aan de bezoeker en bij de bladmuziek de nieuwsbriefmail (`nvt` als er geen nieuwsbrief was).
+
+```sql
+-- De laatste 20 berichten
+SELECT soort, dag, onderwerp, naam, email, status_hoofd, status_tweede FROM berichten ORDER BY aangemaakt DESC LIMIT 20;
+
+-- Wat nog niet (goed) is verstuurd
+SELECT id, soort, dag, onderwerp, status_hoofd, status_tweede, pogingen FROM berichten
+WHERE status_hoofd <> 'verzonden' OR status_tweede NOT IN ('verzonden', 'nvt');
+
+-- Per maand en soort
+SELECT substr(dag, 1, 7) AS maand, soort, count(*) AS aantal FROM berichten GROUP BY maand, soort ORDER BY maand;
+
+-- Per nummer (bladmuziek)
+SELECT onderwerp AS nummer, count(*) AS aantal FROM berichten WHERE soort = 'bladmuziek' GROUP BY onderwerp ORDER BY aantal DESC;
+
+-- Een bericht handmatig anonimiseren
+UPDATE berichten SET naam = NULL, email = NULL, bericht = NULL, extra = NULL, aangemaakt = dag,
+  pogingen = NULL, laatste_poging = NULL, geanonimiseerd_op = dag WHERE id = '...';
+
+-- Alles van één e-mailadres verwijderen (verzoek van een betrokkene)
+DELETE FROM berichten WHERE lower(email) = lower('naam@voorbeeld.nl');
+
+-- Een bericht verwijderen
+DELETE FROM berichten WHERE id = '...';
+```
 
 ## Let op
 
