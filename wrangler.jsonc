@@ -35,6 +35,10 @@
   // blijven 403. Dit is een gewone, niet-geheime variabele. De secrets (RESEND_API_KEY, TURNSTILE_SECRET) staan niet in
   // dit bestand maar alleen in het Cloudflare-dashboard. Zie README.md, "Het hoofdadres van de Worker".
   "vars": { "TOEGESTANE_HOSTS": "mariellemadern.mmadern.workers.dev" },
+  // Elke 5 minuten draait `scheduled` in worker/index.mjs (worker/onderhoud.mjs): berichten waarvan een mail niet is
+  // gelukt opnieuw versturen (tot 24 uur) en berichten van 30 dagen of ouder anonimiseren. Zonder de database
+  // (binding BERICHTEN) doet het niets. Het gratis plan kent 5 Cron Triggers per account; dit is er één.
+  "triggers": { "crons": ["*/5 * * * *"] },
   // Limieten per minuut (de binding kent alleen perioden van 10 of 60 seconden): 3 per IP-adres, 1 per e-mailadres en
   // 10 voor de hele site. De Worker gebruikt als sleutel een HMAC van het IP-adres of e-mailadres; niets wordt bewaard.
   "ratelimits": [

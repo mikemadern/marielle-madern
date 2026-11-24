@@ -47,6 +47,28 @@ function naarBase64(buffer) {
   return btoa(tekst)
 }
 
+// Leest de pdf van een nummer uit de privé-bucket; de sleutel volgt uit de naam van het nummer, nooit uit de invoer
+// zelf. Geeft { inhoud } (base64) of { fout: 'geen_bestand' | 'te_groot' }. Ook de herhaling (onderhoud.mjs) leest het
+// bestand zo opnieuw: de pdf wordt nooit in de database bewaard.
+export async function leesPdf(env, nummer) {
+  const bestand = await env.BLADMUZIEK.get(`bladmuziek/${nummer}.pdf`)
+  if (!bestand) return { fout: 'geen_bestand' }
+  if (bestand.size > MAX_PDF) return { fout: 'te_groot' }
+  return { inhoud: naarBase64(await bestand.arrayBuffer()) }
+}
+
+// De mail met de pdf aan de bezoeker, en de nieuwsbriefmail aan Mariëlle (eerste versie, geen nieuwsbriefsoftware)
+export const bladmuziekMail = ({ naam, email, nummer, titel, nieuwsbrief, inhoud }) => ({
+  to: [email],
+  ...mailBezoeker({ naam, titel, nieuwsbrief }),
+  attachments: [{ filename: `bladmuziek-${nummer}.pdf`, content: inhoud }],
+})
+export const nieuwsbriefMail = ({ naam, email, titel }) => ({
+  to: [ADRES_MARIELLE],
+  reply_to: email,
+  ...mailMarielle({ naam, email, titel, nieuwsbrief: true }),
+})
+
 // Controleert de velden. Geeft { fout, veld } bij een fout, anders de schone waarden.
 function controleer(invoer, lijst) {
   const naam =
@@ -105,11 +127,10 @@ export async function behandel(request, env, deps) {
   )
     return antwoord(429, { fout: 'te_vaak' }, { 'retry-after': '60' })
 
-  // Het bestand komt uit de privé-bucket; de sleutel volgt uit de naam van het nummer, nooit uit de invoer zelf
-  const bestand = await env.BLADMUZIEK.get(`bladmuziek/${v.nummer}.pdf`)
-  if (!bestand) return antwoord(404, { fout: 'geen_bestand' })
-  if (bestand.size > MAX_PDF) return antwoord(500, { fout: 'verzenden_mislukt' })
-  const inhoud = naarBase64(await bestand.arrayBuffer())
+  // Het bestand komt uit de privé-bucket
+  const pdf = await leesPdf(env, v.nummer)
+  if (pdf.fout === 'geen_bestand') return antwoord(404, { fout: 'geen_bestand' })
+  if (pdf.fout) return antwoord(500, { fout: 'verzenden_mislukt' })
 
   const titel = deps.lijst[v.nummer].titel
   const nu = deps.nu?.() ?? new Date()
@@ -126,7 +147,6 @@ export async function behandel(request, env, deps) {
     },
     nu,
   )
-  const bezoeker = mailBezoeker({ naam: v.naam, titel, nieuwsbrief: v.nieuwsbrief })
   const uitslag = await verstuurEnMarkeer(
     env,
     deps,
@@ -134,11 +154,7 @@ export async function behandel(request, env, deps) {
       id,
       welke: 'hoofd',
       afzender: AFZENDER,
-      mail: {
-        to: [v.email],
-        ...bezoeker,
-        attachments: [{ filename: `bladmuziek-${v.nummer}.pdf`, content: inhoud }],
-      },
+      mail: bladmuziekMail({ ...v, titel, inhoud: pdf.inhoud }),
     },
     nu,
   )
@@ -150,20 +166,14 @@ export async function behandel(request, env, deps) {
     return antwoord(502, { fout: 'verzenden_mislukt' })
   }
 
-  // Nieuwsbrief: een mail aan Mariëlle met de naam en het adres (eerste versie, geen nieuwsbriefsoftware)
+  // Nieuwsbrief: een mail aan Mariëlle met de naam en het adres
   let nieuwsbriefVerstuurd = false
   if (v.nieuwsbrief) {
-    const aanvraag = mailMarielle({ naam: v.naam, email: v.email, titel, nieuwsbrief: true })
     nieuwsbriefVerstuurd =
       (await verstuurEnMarkeer(
         env,
         deps,
-        {
-          id,
-          welke: 'tweede',
-          afzender: AFZENDER,
-          mail: { to: [ADRES_MARIELLE], reply_to: v.email, ...aanvraag },
-        },
+        { id, welke: 'tweede', afzender: AFZENDER, mail: nieuwsbriefMail({ ...v, titel }) },
         nu,
       )) === 'ok'
   }
