@@ -56,7 +56,7 @@ async function naarEersteFout() {
   if (emailFout.value) emailVeld.value?.focus()
 }
 
-const { bezig, klaar, melding, verstuur } = useFormulierVerzending({
+const { bezig, klaar, later, melding, verstuur } = useFormulierVerzending({
   pad: '/api/nieuwsbrief',
   turnstile: { krijgToken, nieuwToken, ruimOp },
   valVeld,
@@ -85,7 +85,7 @@ const { bezig, klaar, melding, verstuur } = useFormulierVerzending({
     <FormulierMelding ref="bevestiging" soort="goed" role="status" tabindex="-1">
       <div>
         <p class="melding__kop">{{ T.bevestigingKop }}</p>
-        <p>{{ T.bevestiging }}</p>
+        <p>{{ later ? T.bevestigingLater : T.bevestiging }}</p>
       </div>
     </FormulierMelding>
   </div>
@@ -196,6 +196,10 @@ const { bezig, klaar, melding, verstuur } = useFormulierVerzending({
     <div role="alert" class="houder">
       <FormulierMelding v-if="melding" soort="fout">
         <p v-if="melding === 'teVaak'">{{ F.teVaak }}</p>
+        <p v-else-if="melding === 'druk'">
+          {{ F.druk }}<a :href="`mailto:${MAIL}`">{{ MAIL }}</a
+          >{{ F.drukNa }}
+        </p>
         <p v-else>
           {{ F.mis }}<a :href="`mailto:${MAIL}`">{{ MAIL }}</a
           >{{ F.misNa }}
@@ -221,126 +225,3 @@ const { bezig, klaar, melding, verstuur } = useFormulierVerzending({
     </p>
   </form>
 </template>
-
-<style scoped>
-/* Ruimte zoals in het ontwerp (versie 3): 16 px tussen de onderdelen, 8 px tussen label en veld */
-.nb {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.nb :deep(.veld__label) {
-  margin-block-end: 0.5rem;
-}
-
-.nb__regel,
-.nb__uitleg {
-  margin: 0;
-}
-
-.nb__uitleg {
-  font-size: var(--tekst-klein);
-  line-height: 1.5;
-}
-
-.nb__uitleg a {
-  color: var(--link);
-  text-underline-offset: 0.15em;
-}
-
-/* Voornaam en achternaam naast elkaar zolang elk veld minstens 152 px breed is, anders onder elkaar (op 320 px) */
-.nb__namen {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
-  gap: 0.5rem;
-}
-
-/* Het verborgen veld tegen spam */
-.val {
-  position: absolute;
-  inset-inline-start: -10000px;
-  inline-size: 1px;
-  block-size: 1px;
-  overflow: hidden;
-}
-
-/* De uitleg bij een formulier dat niet laadt: onzichtbaar en zonder ruimte, en na 6 seconden zichtbaar (alleen als de
-   pagina dan nog niet is geladen). Zonder JavaScript staat de noscript-regel er al; dan blijft deze regel weg. */
-.zonder-script {
-  margin-block-end: -1rem;
-  block-size: 0;
-  overflow: hidden;
-  visibility: hidden;
-  animation: toon-uitleg 0.01s 6s forwards;
-}
-
-@keyframes toon-uitleg {
-  to {
-    margin-block-end: 0;
-    block-size: auto;
-    overflow: visible;
-    visibility: visible;
-  }
-}
-
-@media (scripting: none) {
-  .zonder-script {
-    display: none;
-  }
-}
-
-/* De melding-houder is er altijd (voor schermlezers) maar neemt geen ruimte als hij leeg is */
-.houder:not(:has(.melding)) {
-  margin-block-end: -1rem;
-}
-
-/* Alleen ruimte als Cloudflare een controlevak neerzet */
-.widget:not(.widget--open) {
-  margin-block-end: -1rem;
-}
-
-/* De knop is op mobiel zo breed als het formulier */
-.nb__knop {
-  inline-size: 100%;
-  padding-inline: 1rem;
-  border: 0;
-  font: inherit;
-  cursor: pointer;
-}
-
-.nb__knop[aria-disabled='true'] {
-  cursor: progress;
-}
-
-@media (min-width: 48rem) {
-  .nb__knop {
-    align-self: flex-start;
-    inline-size: auto;
-    padding-inline: 1.875rem;
-  }
-}
-
-.knop__rondje {
-  inline-size: 1.25rem;
-  block-size: 1.25rem;
-  margin-inline-end: 0.75rem;
-  border: 3px solid rgb(255 255 255 / 0.4);
-  border-block-start-color: var(--kleur-wit);
-  border-radius: 50%;
-  animation: draai 0.9s linear infinite;
-}
-
-@keyframes draai {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Voor wie minder beweging wil: het rondje staat stil, de tekst zegt genoeg */
-@media (prefers-reduced-motion: reduce) {
-  .knop__rondje {
-    animation: none;
-  }
-}
-</style>

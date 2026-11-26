@@ -23,11 +23,17 @@ export const TEKSTEN = {
     emailOngeldig:
       'Dit e-mailadres lijkt niet te kloppen. Controleer het, dan probeer je het nog eens.',
     teVaak: 'Even geduld: probeer het over een minuutje nog eens.',
-    // Ook bij drukte of een storing (503): de definitieve teksten kennen alleen 'te snel' en 'iets ging mis'
+    // Drukte of uitgeschakeld (503, site-breed): sectie 1, rij 'Drukte' (aangepast naar aanmelden)
+    druk: 'Het aanmelden lukt nu even niet. Probeer het later nog eens, of mail me op ',
+    drukNa: '.',
     mis: 'Er ging iets mis bij het aanmelden. Probeer het nog eens, of mail ',
     misNa: '.',
   },
   bevestigingKop: 'Dank je wel.',
   bevestiging:
     'Je bent aangemeld voor de nieuwsbrief. Je kunt je altijd weer afmelden via de link onderaan elke nieuwsbrief.',
+  // Alleen bij een antwoord met later:true (Brevo is even niet bereikbaar, de aanmelding wordt tot 24 uur herhaald):
+  // sectie 1c van design/teksten-nieuwsbrief.md. De gewone aanmelding houdt de Gelukt-tekst hierboven.
+  bevestigingLater:
+    'Je aanmelding is binnen. In elke nieuwsbrief staat een link om je af te melden.',
 } as const

@@ -7,7 +7,7 @@ export default defineNuxtConfig({
 
   modules: ['@nuxt/content', '@nuxtjs/seo', '@nuxt/image', '@nuxt/eslint'],
 
-  css: ['~/assets/css/tokens.css', '~/assets/css/basis.css'],
+  css: ['~/assets/css/tokens.css', '~/assets/css/basis.css', '~/assets/css/formulier.css'],
 
   app: {
     head: {
