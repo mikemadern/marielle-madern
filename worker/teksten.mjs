@@ -4,9 +4,11 @@
 export const AFZENDER = 'Mariëlle Madern <hallo@mariellemadern.nl>'
 export const ADRES_MARIELLE = 'hallo@mariellemadern.nl'
 
-// Extra alinea in de mail aan de bezoeker die de nieuwsbrief heeft aangevinkt. De tekst staat nog bij "te
-// bevestigen door Mariëlle" (wanneer en hoe de eerste nieuwsbrief komt), dus nu geen alinea: null.
-export const NIEUWSBRIEF_ALINEA = null
+// Extra alinea in de mail met de bladmuziek aan de bezoeker die het vakje voor de nieuwsbrief heeft aangevinkt: na 'Ik hoop dat
+// het nummer je iets brengt...' en vóór 'Liefs,'. Zonder vakje staat hij er niet. Vaste tekst van de Tekstschrijver
+// (design/teksten-nieuwsbrief.md, sectie 2; besluit van de eigenaar 2026-11-26), zonder gegevens van de bezoeker.
+export const NIEUWSBRIEF_ALINEA =
+  'Je bent ook aangemeld voor de nieuwsbrief. Via de link onderaan elke nieuwsbrief kun je je weer afmelden.'
 
 const html = (tekst) =>
   String(tekst).replace(

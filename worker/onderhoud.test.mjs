@@ -512,6 +512,36 @@ describe('anonimiseren na 30 dagen', () => {
   })
 })
 
+describe('de alinea over de nieuwsbrief in de herhaalde mail met de bladmuziek', () => {
+  const ALINEA =
+    'Je bent ook aangemeld voor de nieuwsbrief. Via de link onderaan elke nieuwsbrief kun je je weer afmelden.'
+  const bladmuziekRij = (env, extra) =>
+    zet(env.BERICHTEN, {
+      soort: 'bladmuziek',
+      onderwerp: 'hart-van-glas',
+      bericht: null,
+      extra,
+      status_hoofd: 'wacht',
+      status_tweede: extra.includes('true') ? 'wacht' : 'nvt',
+    })
+
+  test('met het vakje: de herhaalde mail bevat de alinea (platte tekst en HTML) vóór "Liefs,"', async () => {
+    const env = maakEnv()
+    bladmuziekRij(env, '{"nieuwsbrief":true}')
+    await draai(env)
+    const [mail] = mails()
+    assert.ok(mail.text.includes(ALINEA) && mail.html.includes(`<p>${ALINEA}</p>`))
+    assert.ok(mail.text.indexOf(ALINEA) < mail.text.indexOf('Liefs,'))
+  })
+  test('zonder het vakje: de herhaalde mail heeft de alinea niet', async () => {
+    const env = maakEnv()
+    bladmuziekRij(env, '{"nieuwsbrief":false}')
+    await draai(env)
+    const [mail] = mails()
+    assert.ok(!mail.text.includes('nieuwsbrief') && !mail.html.includes('nieuwsbrief'))
+  })
+})
+
 describe('de naam bij het vakje bij de bladmuziek (opnieuw proberen)', () => {
   const rijMetVakje = (env, r = {}) =>
     zet(env.BERICHTEN, {
