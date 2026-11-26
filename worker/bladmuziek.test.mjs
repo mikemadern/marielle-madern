@@ -652,6 +652,79 @@ describe('privacy', () => {
   })
 })
 
+describe('de alinea over de nieuwsbrief in de mail met de bladmuziek', () => {
+  const ALINEA =
+    'Je bent ook aangemeld voor de nieuwsbrief. Via de link onderaan elke nieuwsbrief kun je je weer afmelden.'
+  const ZONDER = [
+    'Dag Anna,',
+    'Fijn dat je de bladmuziek van Spiegel wilt hebben. Je vindt hem in de bijlage.',
+    'Ik hoop dat het nummer je iets brengt, wanneer je het speelt of zingt.',
+    'Liefs,',
+    'Mariëlle Madern',
+  ]
+  const MET = [...ZONDER.slice(0, 3), ALINEA, ...ZONDER.slice(3)]
+
+  test('zonder het vakje is de mail ongewijzigd (precies de bestaande tekst, platte tekst en HTML)', () => {
+    const mail = mailBezoeker({ naam: 'Anna', titel: 'Spiegel', nieuwsbrief: false })
+    assert.equal(mail.text, ZONDER.join('\n\n'))
+    assert.equal(mail.html, ZONDER.map((a) => `<p>${a}</p>`).join('\n'))
+    assert.ok(!mail.text.includes('nieuwsbrief') && !mail.html.includes('nieuwsbrief'))
+  })
+  test('met het vakje staat de alinea na "Ik hoop dat het nummer..." en vóór "Liefs," en "Mariëlle Madern", in platte tekst en HTML', () => {
+    const mail = mailBezoeker({ naam: 'Anna', titel: 'Spiegel', nieuwsbrief: true })
+    assert.equal(mail.text, MET.join('\n\n'))
+    assert.equal(mail.html, MET.map((a) => `<p>${a}</p>`).join('\n'))
+    assert.ok(mail.text.indexOf('Ik hoop dat het nummer') < mail.text.indexOf(ALINEA))
+    assert.ok(mail.text.indexOf(ALINEA) < mail.text.indexOf('Liefs,'))
+    assert.ok(mail.html.indexOf(ALINEA) < mail.html.indexOf('<p>Liefs,</p>'))
+    // de onderwerpregel blijft gelijk
+    assert.equal(mail.subject, 'De bladmuziek van Spiegel')
+  })
+  test('geen dubbele lege regels, geen lege alinea, geen em dash, geen persoonsgegevens in de alinea', () => {
+    for (const naam of ['Anna', '<b>Anna</b>', 'anna@voorbeeld.nl', '']) {
+      const mail = mailBezoeker({ naam, titel: 'Spiegel', nieuwsbrief: true })
+      assert.ok(!/\n{3,}/.test(mail.text), naam)
+      assert.ok(!mail.html.includes('<p></p>') && !/\n{2,}/.test(mail.html), naam)
+      assert.ok(!mail.text.includes('\u2014') && !mail.html.includes('\u2014'), naam)
+      assert.ok(mail.text.includes(ALINEA) && mail.html.includes(`<p>${ALINEA}</p>`), naam)
+    }
+    // de alinea zelf is vaste tekst: geen naam, adres, titel of link
+    assert.ok(!/[@:/]|http|www/.test(ALINEA))
+    // en hij verandert niet met de gegevens van de bezoeker
+    const een = mailBezoeker({ naam: 'Anna', titel: 'Spiegel', nieuwsbrief: true }).text
+    const twee = mailBezoeker({
+      naam: 'Jan de Vries',
+      titel: 'Hart van glas',
+      nieuwsbrief: true,
+    }).text
+    assert.ok(een.includes(ALINEA) && twee.includes(ALINEA))
+  })
+  test('bij een naam die niet gewoon is, staat er "Dag," en de alinea blijft op dezelfde plek', () => {
+    const mail = mailBezoeker({ naam: 'http://kwaad.example', titel: 'Spiegel', nieuwsbrief: true })
+    assert.match(mail.text, /^Dag,\n\n/)
+    assert.equal(mail.text, ['Dag,', ...MET.slice(1)].join('\n\n'))
+  })
+  test('via het eindpunt: met het vakje staat de alinea in de mail met de pdf, zonder vakje niet; geen tweede mail', async () => {
+    await run(verzoek({ ...GOED, nieuwsbrief: true }))
+    const mails = resendAanroepen().map((g) => JSON.parse(g.init.body))
+    assert.equal(mails.length, 1)
+    assert.ok(mails[0].text.includes(ALINEA) && mails[0].html.includes(`<p>${ALINEA}</p>`))
+    assert.ok(mails[0].text.indexOf(ALINEA) < mails[0].text.indexOf('Liefs,'))
+    assert.equal(mails[0].attachments.length, 1)
+    gesprekken = []
+    await run(verzoek({ ...GOED, nieuwsbrief: false }))
+    const zonder = resendAanroepen().map((g) => JSON.parse(g.init.body))
+    assert.equal(zonder.length, 1)
+    assert.ok(!zonder[0].text.includes('nieuwsbrief') && !zonder[0].html.includes('nieuwsbrief'))
+  })
+  test('de mail gaat ook uit met de alinea als de aanmelding bij Brevo mislukt (de mail komt eerst)', async () => {
+    await run(verzoek({ ...GOED, nieuwsbrief: true }), maakOmgeving(), maakFetch({ brevo: [500] }))
+    const mails = resendAanroepen().map((g) => JSON.parse(g.init.body))
+    assert.equal(mails.length, 1)
+    assert.ok(mails[0].text.includes(ALINEA))
+  })
+})
+
 describe('veiligeNaam met een eigen maximum (voor Brevo)', () => {
   test('standaard 40 tekens (de aanhef); met een maximum van 60 of 80 mogen langere namen', () => {
     const lang = 'Anna Maria van der Berg-Jansen Wilhelmina Oranje'.slice(0, 48)
